@@ -1,0 +1,120 @@
+
+# JDBC 接続情報（必須）
+jdbcUrl: jdbc:postgresql://localhost:56384/dbcodegen
+jdbcUser: dbcodegen
+jdbcPass: dbcodegen
+jdbcSchema: dbcodegen
+
+# Entity のパッケージ名（必須）
+entityPackage: jp.green_code.dbcodegen.test_app.entity
+
+# Repository のパッケージ名（必須）
+repositoryPackage: jp.green_code.dbcodegen.test_app.repository
+
+# Java 最上位フォルダ（必須）
+#   相対パスの場合はparam.yml のフォルダからの相対
+mainJavaDir: ../../../../test-app/src/main/java
+
+# Java Test 最上位フォルダ（テスト作成時必須）
+#   相対パスの場合はparam.yml のフォルダからの相対
+testJavaDir: ../../../../test-app/src/test/java
+
+# 対象外テーブル（省略可）
+#   記載のテーブルに対してはEntity, Repository, TestRepository のいずれも作成しない
+#excludedTableNames:
+#  - spring_session
+#  - spring_session_attributes
+
+# Enum 型登録（省略可）
+#   DBの型とJava (enum) の型を下の形式で指定します
+#   status_enum: jp.green_code.dbcodgen.test_app.StatusEnum
+enumJavaTypeMappings:
+  status_enum: jp.green_code.dbcodegen.test_app.StatusEnum
+
+# UPDATE 対象外カラム（省略可）
+#   テーブル名とカラム名を下の形式で指定します
+#   table_name:
+#     - column_name
+#   テーブルに* を指定すると全テーブルのカラムが対象となります
+excludeUpdateColumnsByTable:
+  "*":
+    - created_at
+    - created_by
+    - col_no_update_text_not_null_default_x
+
+# now() 更新カラム（省略可）
+#   insert やupdate の時に、sql のnow() をセットします
+#   java から値を指定することはできなくなります。
+#   テーブル名とカラム名を下の形式で指定します
+#   table_name:
+#     - column_name
+#   テーブルに* を指定すると全テーブルのカラムが対象となります
+setNowColumnsByTable:
+  "*":
+    - updated_at
+    - created_at
+  "only_pk3_now":
+    - pk2_now
+
+# 実体クラスの強制上書き（省略可）
+#   初期値 false(しない)
+#forceOverwriteImplementation: false
+
+# テスト対象テーブル（省略可）
+#   指定されたテーブルのcrud テストコードを作成します
+#   テーブルにPK がない場合はテストは作成されません
+testTargetTable:
+  - all_types
+  - normal_pk0
+  - normal_pk1
+  - normal_pk3
+  - omittable_pk0
+  - omittable_pk1
+  - omittable_pk3
+  - no_update_pk0
+  - no_update_pk1
+  - no_update_pk3
+  - now_pk0
+  - now_pk1
+  - now_pk3
+  - only_pk1
+  - only_pk3
+  - only_pk3_now
+  - all_types_as
+  - 日本語Table
+
+#
+# 以下、高度な設定
+#
+
+# 基底クラスのパッケージ名（省略可）
+#   初期値 base
+#basePackageName: base
+
+# Entity クラスの接頭辞（省略可）
+#   初期値 空文字列
+#entityClassNamePrefix: ""
+
+# Entity クラスの接尾辞（省略可）
+#   初期値 空文字列
+#entityClassNameSuffix: Entity
+
+# Repository クラスの接頭辞（省略可）
+#   初期値 空文字列
+#repositoryClassNamePrefix: ""
+
+# Repository クラスの接尾辞（省略可）
+#   初期値 Repository
+#repositoryClassNameSuffix: Repository
+
+# TestRepository クラスの接頭辞（省略可）
+#   初期値 Test
+testRepositoryClassNamePrefix: AutoTest
+
+# TestRepository クラスの接尾辞（省略可）
+#   初期値 空文字列
+#testRepositoryClassNameSuffix:
+
+# ヘルパークラス名（省略可）
+#   初期値 RepositoryHelper
+#repositoryHelperClassName: RepositoryHelper

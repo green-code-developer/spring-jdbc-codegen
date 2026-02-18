@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:56384/dbcodegen
+    username: dbcodegen
+    password: dbcodegen
+    driver-class-name: org.postgresql.Driver

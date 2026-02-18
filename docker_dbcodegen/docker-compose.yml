@@ -1,0 +1,12 @@
+services:
+  postgres:
+    build:
+      context: ./postgres
+    ports:
+      - "56384:5432"
+    environment:
+      - POSTGRES_USER=dbcodegen
+      - POSTGRES_PASSWORD=dbcodegen
+      - POSTGRES_DB=dbcodegen
+    healthcheck:
+      test: psql -Udbcodegen dbcodegen -c '\q'
