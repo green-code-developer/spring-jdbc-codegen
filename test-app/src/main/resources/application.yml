@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:56384/dbcodegen
-    username: dbcodegen
-    password: dbcodegen
+    url: jdbc:postgresql://localhost:56384/spring_jdbc_codegen
+    username: spring_jdbc_codegen
+    password: spring_jdbc_codegen
     driver-class-name: org.postgresql.Driver

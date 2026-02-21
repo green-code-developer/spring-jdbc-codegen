@@ -1,2 +1,2 @@
-rootProject.name = "dbcodegen"
+rootProject.name = "spring-jdbc-codegen"
 include 'generator', 'test-app'

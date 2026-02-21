@@ -1,47 +1,49 @@
-# DbCodeGen
+# spring jdbc codegen
 
 ## 機能概要
 
-DbCodeGen は、PostgreSQL + Spring JDBC 環境において
+spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 「SQL は手で書きたいが、定型的な Entity / Repository / Test を自動生成したい」
 という前提で作られたコード生成用 CLI ツールです。
 
 - コマンドライン実行型
-- PostgreSQL のみ対応
-- Spring JDBC 前提
 - Entity, Repository, TestRepository 自動生成
+- Spring JDBC 前提
+- PostgreSQL のみ対応
 - Enum 対応可能
 - Update Insert 除外カラム指定可能
 
 ## 導入と動かし方
 
-1. Jar をダウンロード
+1. spring-jdbc-codegen-x.x.jar  をダウンロード
 
-   TODO [https://example.com](https://example.com)
-
+   [https://github.com/green-code-developer/spring-jdbc-codegen/releases](https://github.com/green-code-developer/spring-jdbc-codegen/releases)
+   
 2. param.yml を記載
 
    データベース接続情報、パッケージ名、最上位フォルダ、を指定
 
    ```yml
    # JDBC 接続情報（必須）
-   jdbcUrl: jdbc:postgresql://localhost:56384/dbcodegen
-   jdbcUser: dbcodegen
-   jdbcPass: dbcodegen
-   jdbcSchema: dbcodegen
+   jdbcUrl: jdbc:postgresql://localhost:56384/spring_jdbc_codegen
+   jdbcUser: spring_jdbc_codegen
+   jdbcPass: spring_jdbc_codegen
+   jdbcSchema: spring_jdbc_codegen
    # Entity のパッケージ名（必須）
-   entityPackage: jp.green_code.dbcodegen.test_app.entity
+   entityPackage: jp.green_code.spring_jdbc_codegen.test_app.entity
    # Repository のパッケージ名（必須）
-   repositoryPackage: jp.green_code.dbcodegen.test_app.repository
+   repositoryPackage: jp.green_code.spring_jdbc_codegen.test_app.repository
    # Java 最上位フォルダ（必須）
    #   相対パスの場合はparam.yml のフォルダからの相対
    mainJavaDir: ../../../../test-app/src/main/java
    ```
+   
+　　全量は[こちら](https://github.com/green-code-developer/spring-jdbc-codegen/blob/main/generator/src/main/resources/param.yml)
 
 3. Jar 実行
 
    ```bash
-   java -jar dbcodegen-x.x.x.jar /path/to/param.yml
+   java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
    ```
    ※ Java 21 以上必須
 
@@ -71,12 +73,10 @@ dependencies {
 }
 ```
 ## テーブルやカラムの命名
-以下の前提が必要です
-- スネークケース
-- 予約語を使わない
-- 特殊な記号を使わない
-- テーブル名はJava のクラス名に変換可能であること。重複しないこと
-- カラム名はJava のフィールド名に変換可能であること。重複しないこと
+- スネークケースであれば安定動作します。
+- 予約語や特殊な記号をいれるとエラーになる可能性があります。
+- テーブル名はJava のクラス名に変換可能であること。重複しないこと。
+- カラム名はJava のフィールド名に変換可能であること。重複しないこと。
 
 ## {テーブル名}Repository クラスの使い方
 
@@ -89,27 +89,29 @@ not null 制約ありかつ初期値を持つカラムに対して、entity 中�
 ```java
 // java
 var account = new AccountEntity();
-account.setAccountId(null); // PK フィールドの値がnull
+// account_id はbigserial 型なので、省略時は自動採番されます
+account.setAccountId(null);
 account.setName("green-code-user");
 accountRepository.insert(account);
 var id = account.getAccountId(); // 自動採番されたPK を取得
 ```
 ```sql
--- DDL
-create table account(id bigserial primary key, name text);
+-- Spring JDBC に渡されるSQL
+insert into account (name) values (":name");
+-- パラメータの :name は "green-code-user" 
 ```
 
-### T updateByPk(T entity)
+### T update(T entity)
 
-プライマリーキーの1レコードに対してupdate を行います。
+entity のプライマリーキーをキーとして、該当するレコードを1件更新します。 プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
 ### Optional&lt;Entity&gt; findByPk(pk)
 
-プライマリーキーの1レコードを取得します。
+プライマリーキーの1レコードを取得します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
 ### int deleteByPk(pk)
 
-プライマリーキーの1レコードを削除します。戻り値は削除された件数です。
+プライマリーキーの1レコードを削除します。戻り値は削除された件数です。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
 ### class Columns
 
@@ -127,9 +129,9 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 - shouldSkipInInsert: Insert 対象外カラム判定
 - shouldSkipInUpdate: Update 対象外カラム判定
 
-#### Columns.MAP
+#### Columns.MAP<String, ColumnDefinition>
 
-カラム名（大文字）とカラム定義のマッピングを保持しています
+そのテーブルが持つ全てのカラム（class Columns のインスタンス）が、カラム名とカラム定義の形式でマップとして保持されています。
 
 ### Columns.selectAster()
 
@@ -242,7 +244,7 @@ generateTestData4{フィールド名}() をoverride することで実現でき�
 
 例）Base クラス
 ```java
-// TestBaseTodoRepository.java
+// TestBaseAccountRepository.java
 public AccountEntity generateTestData(int seed) {
     var entity = new AccountEntity();
     entity.setAccountId(generateTestData4accountId(seed++));
@@ -256,7 +258,7 @@ protected Long generateTestData4accountId(int seed) {
 
 Override した実体クラス
 ```java
-// TestTodoRepository.java
+// TestAccountRepository.java
 @Override
 protected Long generateTestData4updatedBy(int seed) {
     return -1L; // 固定値

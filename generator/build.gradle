@@ -28,7 +28,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'jp.green_code.dbcodegen.DbCodeGenMain'
+    mainClass = 'jp.green_code.spring_jdbc_codegen.Main'
 }
 
 jar {
@@ -38,8 +38,8 @@ jar {
 }
 
 tasks.register('fatJar', Jar) {
-    archiveBaseName.set('dbcodegen')
-    archiveVersion.set('1.0.0')
+    archiveBaseName.set('spring_jdbc_codegen')
+    archiveVersion.set('1.0')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes 'Main-Class': application.mainClass.get()

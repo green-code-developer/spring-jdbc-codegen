@@ -1,0 +1,12 @@
+services:
+  postgres:
+    build:
+      context: ./postgres
+    ports:
+      - "56384:5432"
+    environment:
+      - POSTGRES_USER=spring_jdbc_codegen
+      - POSTGRES_PASSWORD=spring_jdbc_codegen
+      - POSTGRES_DB=spring_jdbc_codegen
+    healthcheck:
+      test: psql -Uspring_jdbc_codegen spring_jdbc_codegen -c '\q'

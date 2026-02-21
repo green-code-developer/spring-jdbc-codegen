@@ -1,15 +1,15 @@
 
 # JDBC 接続情報（必須）
-jdbcUrl: jdbc:postgresql://localhost:56384/dbcodegen
-jdbcUser: dbcodegen
-jdbcPass: dbcodegen
-jdbcSchema: dbcodegen
+jdbcUrl: jdbc:postgresql://localhost:56384/spring_jdbc_codegen
+jdbcUser: spring_jdbc_codegen
+jdbcPass: spring_jdbc_codegen
+jdbcSchema: spring_jdbc_codegen
 
 # Entity のパッケージ名（必須）
-entityPackage: jp.green_code.dbcodegen.test_app.entity
+entityPackage: jp.green_code.spring_jdbc_codegen.test_app.entity
 
 # Repository のパッケージ名（必須）
-repositoryPackage: jp.green_code.dbcodegen.test_app.repository
+repositoryPackage: jp.green_code.spring_jdbc_codegen.test_app.repository
 
 # Java 最上位フォルダ（必須）
 #   相対パスの場合はparam.yml のフォルダからの相対
@@ -27,9 +27,9 @@ testJavaDir: ../../../../test-app/src/test/java
 
 # Enum 型登録（省略可）
 #   DBの型とJava (enum) の型を下の形式で指定します
-#   status_enum: jp.green_code.dbcodgen.test_app.StatusEnum
+#   status_enum: jp.green_code.spring_jdbc_codegen.test_app.StatusEnum
 enumJavaTypeMappings:
-  status_enum: jp.green_code.dbcodegen.test_app.StatusEnum
+  status_enum: jp.green_code.spring_jdbc_codegen.test_app.StatusEnum
 
 # UPDATE 対象外カラム（省略可）
 #   テーブル名とカラム名を下の形式で指定します
@@ -109,7 +109,7 @@ testTargetTable:
 
 # TestRepository クラスの接頭辞（省略可）
 #   初期値 Test
-testRepositoryClassNamePrefix: AutoTest
+#testRepositoryClassNamePrefix: Test
 
 # TestRepository クラスの接尾辞（省略可）
 #   初期値 空文字列
@@ -118,3 +118,7 @@ testRepositoryClassNamePrefix: AutoTest
 # ヘルパークラス名（省略可）
 #   初期値 RepositoryHelper
 #repositoryHelperClassName: RepositoryHelper
+
+# カラム定義クラス名（省略可）
+#   初期値 ColumnDefinition
+#columnDefinitionClassName: ColumnDefinition
