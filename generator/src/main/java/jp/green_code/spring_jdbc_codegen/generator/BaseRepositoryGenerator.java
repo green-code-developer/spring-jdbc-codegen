@@ -80,6 +80,9 @@ public class BaseRepositoryGenerator {
         table.pkColumns().stream().filter(c -> c.toJavaType().fqcn().contains(".")).forEach(c -> imports.add("%s".formatted(c.toJavaType().fqcn())));
         imports.add("%s.%s".formatted(param.repositoryPackage, param.repositoryHelperClassName));
         imports.add("%s.%s".formatted(param.repositoryPackage, param.columnDefinitionClassName));
+        if (!table.needReturningInUpdate()) {
+            imports.add("org.springframework.dao.EmptyResultDataAccessException");
+        }
 
         var statics = new TreeSet<String>();
         statics.add("java.lang.String.join");
@@ -286,7 +289,10 @@ public class BaseRepositoryGenerator {
             sb.add("    var ret = this.helper.single(__sql, __param, %s.class);".formatted(table.toEntityClassName()));
             sb.add("    __copyReturningValuesInUpdate(entity, ret);");
         } else {
-            sb.add("    this.helper.exec(__sql, __param);");
+            sb.add("    var res = this.helper.exec(__sql, __param);");
+            sb.add("    if (res != 1) {");
+            sb.add("        throw new EmptyResultDataAccessException(1);");
+            sb.add("    }");
         }
         sb.add("    return entity;");
         sb.add("}");

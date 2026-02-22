@@ -5,7 +5,11 @@ import jp.green_code.spring_jdbc_codegen.test_app.repository.OnlyPk1Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 
+import java.time.OffsetDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -32,5 +36,11 @@ public class TestOnlyPk1Repository {
         // 古い値は取得できないはず
         assertTrue(repository.findByPk(largeLong).isPresent());
         assertTrue(repository.findByPk(entity.getPk()).isEmpty());
+
+        // 存在しないpk の場合は例外発生するはず
+        //   内部でhelper.exec() を使っているケース
+        assertThrows(EmptyResultDataAccessException.class, () -> {
+            repository.update(entity);
+        });
     }
 }
