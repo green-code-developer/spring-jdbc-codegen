@@ -86,10 +86,14 @@ public class ColumnDefinition {
 
     /** Javaフィールド名と型キャスト */
     public String toParamColumn() {
+        return toParamColumn(toJavaFieldName());
+    }
+
+    public String toParamColumn(String javaFieldName) {
         if (isBlank(toJavaType().dbParamTemplate())) {
-            return ":" + toJavaFieldName();
+            return ":" + javaFieldName;
         } else {
-            return toJavaType().dbParamTemplate().replace("{javaFieldName}", toJavaFieldName());
+            return toJavaType().dbParamTemplate().replace("{javaFieldName}", javaFieldName);
         }
     }
 

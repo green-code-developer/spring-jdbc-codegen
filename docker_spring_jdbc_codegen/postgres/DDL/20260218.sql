@@ -237,8 +237,12 @@ CREATE TABLE all_types_as_pk
 );
 
 create table "日本語Table" (
-   "order" bigserial primary key,
+   "order" bigserial,
+   "param" bigserial,
+   "sql" bigserial,
+   "helper" bigserial,
    "where" timestamp,
    "select" text,
-   "Abc" text
+   "Abc" text,
+   PRIMARY KEY ("order", "param", "sql", "helper")
 );

@@ -141,10 +141,10 @@ public class BaseRepositoryGenerator {
         sb.add("        var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(\", \"));");
         sb.add("        sql.add(\"values (%s)\".formatted(insertValuesClause));");
         sb.add("    }");
-        sb.add("    var param = entityToParam(entity);");
+        sb.add("    var param = __entityToParam(entity);");
         sb.add("    var returningColumns = toInsertReturning(entity, insertColumns);");
         sb.add("    if (returningColumns.isEmpty()) {");
-        sb.add("        helper.exec(sql, param);");
+        sb.add("        this.helper.exec(sql, param);");
         sb.add("    } else {");
         sb.add("        var returningClause = returningColumns.stream().map(c -> Columns.MAP.get(c).toSelectColumn()).collect(joining(\", \"));");
         sb.add("        sql.add(\"returning %s\".formatted(returningClause));");
@@ -153,7 +153,7 @@ public class BaseRepositoryGenerator {
             // intelliJ が警告を出すので不要な場合は作成しない
             varRet = "var ret = ";
         }
-        sb.add("        %shelper.single(sql, param, %s.class);".formatted(varRet, table.toEntityClassName()));
+        sb.add("        %sthis.helper.single(sql, param, %s.class);".formatted(varRet, table.toEntityClassName()));
         if (table.needReturningInInsert()) {
             sb.add("        copyReturningValuesInInsert(entity, ret);");
         }
@@ -266,20 +266,27 @@ public class BaseRepositoryGenerator {
         sb.add("");
         var pkArgs = toPkArgs();
         sb.add("public %s updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
-        sb.add("    var sql = new ArrayList<String>();");
-        sb.add("    sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
+        sb.add("    var __sql = new ArrayList<String>();");
+        sb.add("    __sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
         var updateValues = toUpdateValues();
-        sb.add("    sql.add(\"set %s\");".formatted(join(", ", updateValues)));
-        var pkConditions = table.pkColumns().stream().map(c -> "\\\"%s\\\" = %s".formatted(c.columnName, c.toParamColumn())).collect(joining(" AND "));
-        sb.add("    sql.add(\"where %s\");".formatted(pkConditions));
-        sb.add("    var param = entityToParam(entity);");
+        sb.add("    __sql.add(\"set %s\");".formatted(join(", ", updateValues)));
+        var pkConditions = new ArrayList<String>();
+        sb.add("    var __param = __entityToParam(entity);");
+        var i = 0;
+        for (var col : table.pkColumns()) {
+            i++;
+            pkConditions.add("\\\"%s\\\" = %s".formatted(col.columnName, col.toParamColumn("__pk" + i)));
+            sb.add("    __param.put(\"__pk%d\", %s);".formatted(i, col.toJavaFieldName()));
+        }
+        sb.add("    __sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
+
         if (table.needReturningInUpdate()) {
             var returningColumns = table.columns.stream().filter(c -> !c.shouldSkipInUpdate() && c.isSetNowColumn()).toList();
-            sb.add("    sql.add(\"returning %s\");".formatted(returningColumns.stream().map(ColumnDefinition::toSelectColumn).collect(joining(", "))));
-            sb.add("    var ret = helper.single(sql, param, %s.class);".formatted(table.toEntityClassName()));
-            sb.add("    copyReturningValuesInUpdate(entity, ret);");
+            sb.add("    __sql.add(\"returning %s\");".formatted(returningColumns.stream().map(ColumnDefinition::toSelectColumn).collect(joining(", "))));
+            sb.add("    var ret = this.helper.single(__sql, __param, %s.class);".formatted(table.toEntityClassName()));
+            sb.add("    __copyReturningValuesInUpdate(entity, ret);");
         } else {
-            sb.add("    helper.exec(sql, param);");
+            sb.add("    this.helper.exec(__sql, __param);");
         }
         sb.add("    return entity;");
         sb.add("}");
@@ -300,7 +307,7 @@ public class BaseRepositoryGenerator {
 
     List<String> copyReturningValuesInUpdate() {
         var sb = new ArrayList<String>();
-        sb.add("protected void copyReturningValuesInUpdate(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("protected void __copyReturningValuesInUpdate(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
         for (var col : table.columns) {
             if (!col.shouldSkipInUpdate() && col.isSetNowColumn()) {
                 sb.add("    entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
@@ -312,7 +319,7 @@ public class BaseRepositoryGenerator {
 
     List<String> entityToParam() {
         var sb = new ArrayList<String>();
-        sb.add("public static Map<String, Object> entityToParam(%s entity) {".formatted(table.toEntityClassName()));
+        sb.add("public static Map<String, Object> __entityToParam(%s entity) {".formatted(table.toEntityClassName()));
         sb.add("    var param = new HashMap<String, Object>();");
         for (var col : table.columns) {
             sb.add("    param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression("entity.%s()".formatted(col.toGetter()))));
@@ -326,18 +333,18 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         var pkArgs = toPkArgs();
         sb.add("public Optional<%s> findByPk(%s) {".formatted(table.toEntityClassName(), pkArgs));
-        sb.add("    var sql = new ArrayList<String>();");
-        sb.add("    sql.add(\"select %s\".formatted(Columns.selectAster()));");
-        sb.add("    sql.add(\"from \\\"%s\\\"\");".formatted(table.tableName));
+        sb.add("    var __sql = new ArrayList<String>();");
+        sb.add("    __sql.add(\"select %s\".formatted(Columns.selectAster()));");
+        sb.add("    __sql.add(\"from \\\"%s\\\"\");".formatted(table.tableName));
         var pkConditions = table.pkColumns().stream().map(c -> "\\\"%s\\\" = %s".formatted(c.columnName, c.toParamColumn())).collect(joining(" AND "));
-        sb.add("    sql.add(\"where %s\");".formatted(pkConditions));
+        sb.add("    __sql.add(\"where %s\");".formatted(pkConditions));
         sb.add("");
-        sb.add("    var param = new HashMap<String, Object>();");
+        sb.add("    var __param = new HashMap<String, Object>();");
         for (var col : table.pkColumns()) {
-            sb.add("    param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression(col.toJavaFieldName())));
+            sb.add("    __param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression(col.toJavaFieldName())));
         }
         sb.add("");
-        sb.add("    return helper.optional(sql, param, %s.class);".formatted(table.toEntityClassName()));
+        sb.add("    return this.helper.optional(__sql, __param, %s.class);".formatted(table.toEntityClassName()));
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
@@ -346,17 +353,17 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         var pkArgs = toPkArgs();
         sb.add("public int deleteByPk(%s) {".formatted(pkArgs));
-        sb.add("    var sql = new ArrayList<String>();");
-        sb.add("    sql.add(\"delete from \\\"%s\\\"\");".formatted(table.tableName));
+        sb.add("    var __sql = new ArrayList<String>();");
+        sb.add("    __sql.add(\"delete from \\\"%s\\\"\");".formatted(table.tableName));
         var pkConditions = table.pkColumns().stream().map(c -> "\\\"%s\\\" = %s".formatted(c.columnName, c.toParamColumn())).collect(joining(" AND "));
-        sb.add("    sql.add(\"where %s\");".formatted(pkConditions));
+        sb.add("    __sql.add(\"where %s\");".formatted(pkConditions));
         sb.add("");
-        sb.add("    var param = new HashMap<String, Object>();");
+        sb.add("    var __param = new HashMap<String, Object>();");
         for (var col : table.pkColumns()) {
-            sb.add("    param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression(col.toJavaFieldName())));
+            sb.add("    __param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression(col.toJavaFieldName())));
         }
         sb.add("");
-        sb.add("    return helper.exec(sql, param);");
+        sb.add("    return this.helper.exec(__sql, __param);");
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
