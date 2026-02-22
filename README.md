@@ -103,7 +103,7 @@ insert into account (name) values (":name");
 
 ### T update(T entity)
 
-entity のプライマリーキーをキーとして、該当するレコードを1件更新します。 プライマリーキーを持たないテーブルには、このメソッドは生成されません。
+entity のプライマリーキーをキーとして、該当するレコードを1件更新します。 該当するレコードが存在しない場合は例外(EmptyResultDataAccessException)をスローします。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
 ### Optional&lt;Entity&gt; findByPk(pk)
 
