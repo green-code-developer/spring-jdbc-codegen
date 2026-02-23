@@ -48,9 +48,9 @@ public class BaseRepositoryGenerator {
         sb.add("");
         sb.addAll(entityToParam());
         if (!table.pkColumns().isEmpty()) {
-            // pk がない場合は、updateByOk とfindByPk とdeleteByPk は作れない
+            // pk がない場合は、update とfindByPk とdeleteByPk は作れない
             if (table.hasUpdateColumns()) {
-                // 全部Update 対象外で
+                // 全部Update 対象外の時はupdate を作れない
                 sb.addAll(update());
                 sb.add("");
                 sb.addAll(updateByPk());
@@ -95,7 +95,7 @@ public class BaseRepositoryGenerator {
     }
 
     List<String> columns() {
-        // カラム名の定数を提供
+        // カラム情報オブジェクトを作成
         var sb = new ArrayList<String>();
         sb.add("public static class Columns {");
         for (var col : table.columns) {
