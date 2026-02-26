@@ -9,15 +9,15 @@ import java.util.List;
 import static java.util.Comparator.comparing;
 import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
 
-public class TableDefinition {
+public class DbTableDefinition {
     final Parameter param;
 
-    public TableDefinition(Parameter param) {
+    public DbTableDefinition(Parameter param) {
         this.param = param;
     }
 
     public String tableName;
-    public List<ColumnDefinition> columns = new ArrayList<>();
+    public List<DbColumnDefinition> columns = new ArrayList<>();
 
     public String toJavaTableName() {
         return toCamelCase(tableName, true);
@@ -29,6 +29,10 @@ public class TableDefinition {
 
     public String toEntityClassName() {
         return param.entityClassNamePrefix + toJavaTableName() + param.entityClassNameSuffix;
+    }
+
+    public String toMapperClassName() {
+        return param.mapperClassNamePrefix + toJavaTableName() + param.mapperClassNameSuffix;
     }
 
     public String toBaseRepositoryClassName() {
@@ -48,8 +52,8 @@ public class TableDefinition {
     }
 
     // PK のカラム全てを返す
-    public List<ColumnDefinition> pkColumns() {
-        return columns.stream().filter(ColumnDefinition::isPrimaryKey).sorted(comparing(c -> c.primaryKeySeq)).toList();
+    public List<DbColumnDefinition> pkColumns() {
+        return columns.stream().filter(DbColumnDefinition::isPrimaryKey).sorted(comparing(c -> c.primaryKeySeq)).toList();
     }
 
     // テスト対象外テーブル判定
@@ -58,7 +62,7 @@ public class TableDefinition {
     }
 
     public boolean hasUpdateColumns() {
-        return !columns.stream().allMatch(ColumnDefinition::shouldSkipInUpdate);
+        return !columns.stream().allMatch(DbColumnDefinition::shouldSkipInUpdate);
     }
 
     // テストデータ作成にpickBySeed を使っているカラムがあるか判定（enum がこれに該当する）
@@ -74,6 +78,14 @@ public class TableDefinition {
 
     // Update 時にreturning が必要かどうか
     public boolean needReturningInUpdate() {
-        return columns.stream().anyMatch(ColumnDefinition::isSetNowColumn);
+        return columns.stream().anyMatch(DbColumnDefinition::isSetNowColumn);
+    }
+
+    public boolean needCustomMapper() {
+        return columns.stream().anyMatch(DbColumnDefinition::hasNameMapping);
+    }
+
+    public String toMapperOrEntityClass() {
+        return needCustomMapper() ? "ROW_MAPPER" : toEntityClassName() + ".class";
     }
 }

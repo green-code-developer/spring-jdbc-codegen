@@ -1,7 +1,7 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
 import jp.green_code.spring_jdbc_codegen.Parameter;
-import jp.green_code.spring_jdbc_codegen.db.TableDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
 
@@ -12,7 +12,7 @@ public class EntityGenerator {
         this.param = param;
     }
 
-    public String generateEntityCode(TableDefinition table) {
+    public String generateEntityCode(DbTableDefinition table) {
         var sb = new ArrayList<String>();
 
         // package

@@ -1,14 +1,14 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
 import jp.green_code.spring_jdbc_codegen.Parameter;
-import jp.green_code.spring_jdbc_codegen.db.ColumnDefinition;
-import jp.green_code.spring_jdbc_codegen.db.TableDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbColumnDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class BaseEntityGenerator {
     final Parameter param;
@@ -17,7 +17,7 @@ public class BaseEntityGenerator {
         this.param = param;
     }
 
-    public String generateBaseEntityCode(TableDefinition table) {
+    public String generateBaseEntityCode(DbTableDefinition table) {
         var sb = new ArrayList<String>();
 
         // package
@@ -35,14 +35,14 @@ public class BaseEntityGenerator {
         sb.add("public abstract class %s {".formatted(table.toBaseEntityClassName()));
 
         // fields
-        for (ColumnDefinition col : table.columns) {
+        for (var col : table.columns) {
             sb.add("");
             sb.add("    /** %s */".formatted(col.columnName));
-            sb.add("    protected %s %s;".formatted(col.javaSimpleTypeName(), col.toJavaFieldName()));
+            sb.add("    protected %s %s;".formatted(col.javaSimpleTypeName(), col.toJavaPropertyName()));
         }
 
         // getter & setter
-        for (ColumnDefinition col : table.columns) {
+        for (var col : table.columns) {
             sb.add("");
             var getter = generateGetterLines(col);
             sb.addAll(getter);
@@ -55,25 +55,23 @@ public class BaseEntityGenerator {
         return String.join("\n", sb);
     }
 
-    public static List<String> generateGetterLines(ColumnDefinition col) {
-        var fieldName = toCamelCase(col.columnName, false);
+    public static List<String> generateGetterLines(DbColumnDefinition col) {
         var sb = new ArrayList<String>();
-        sb.add("    public %s %s() {".formatted(col.javaSimpleTypeName(), col.toGetter()));
-        sb.add("        return %s;".formatted(fieldName));
-        sb.add("    }");
-        return sb;
+        sb.add("public %s %s() {".formatted(col.javaSimpleTypeName(), col.toGetter()));
+        sb.add("    return %s;".formatted(col.toJavaPropertyName()));
+        sb.add("}");
+        return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
 
-    public static List<String> generateSetterLines(ColumnDefinition col) {
-        var fieldName = toCamelCase(col.columnName, false);
+    public static List<String> generateSetterLines(DbColumnDefinition col) {
         var sb = new ArrayList<String>();
-        sb.add("    public void %s(%s %s) {".formatted(col.toSetter(), col.javaSimpleTypeName(), fieldName));
-        sb.add("        this.%s = %s;".formatted(fieldName, fieldName));
-        sb.add("    }");
-        return sb;
+        sb.add("public void %s(%s %s) {".formatted(col.toSetter(), col.javaSimpleTypeName(), col.toJavaPropertyName()));
+        sb.add("    this.%s = %s;".formatted(col.toJavaPropertyName(), col.toJavaPropertyName()));
+        sb.add("}");
+        return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
 
-    List<String> imports(List<ColumnDefinition> columnDefs) {
-        return columnDefs.stream().map(ColumnDefinition::importName).filter(c -> !StringUtils.isBlank(c)).distinct().sorted().map("import %s;"::formatted).toList();
+    List<String> imports(List<DbColumnDefinition> columnDefs) {
+        return columnDefs.stream().map(DbColumnDefinition::importName).filter(c -> !StringUtils.isBlank(c)).distinct().sorted().map("import %s;"::formatted).toList();
     }
 }

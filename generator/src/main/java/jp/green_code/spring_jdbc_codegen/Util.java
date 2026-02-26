@@ -1,6 +1,6 @@
 package jp.green_code.spring_jdbc_codegen;
 
-import jp.green_code.spring_jdbc_codegen.db.TableDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class Util {
         return sb.toString();
     }
 
-    public static void dumpTableDefinitions(List<TableDefinition> tables) {
+    public static void dumpTableDefinitions(List<DbTableDefinition> tables) {
         tables.forEach(t -> {
             System.out.println(t.tableName + " " + t.toEntityClassName());
             t.columns.forEach(c ->

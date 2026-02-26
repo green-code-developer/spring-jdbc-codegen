@@ -2,6 +2,10 @@ package jp.green_code.spring_jdbc_codegen.generator;
 
 import jp.green_code.spring_jdbc_codegen.Parameter;
 
+import java.util.ArrayList;
+
+import static java.lang.String.join;
+
 public class BaseColumnDefinitionGenerator {
     final Parameter param;
 
@@ -10,127 +14,134 @@ public class BaseColumnDefinitionGenerator {
     }
 
     public String generateHelper() {
-        var sb = """
-                package %s;
-                
-                import static org.apache.commons.lang3.StringUtils.isBlank;
-                
-                public class %s {
-                    /** DB カラム名 */
-                    private final String columnName;
-                    /** Java フィールド名 */
-                    private final String javaFieldName;
-                    /** Java 型 */
-                    private final String javaFqcn;
-                    /** DB カラム型 */
-                    private final String dbTypeName;
-                    /** DB jdbc type */
-                    private final Integer jdbcType;
-                    /** DB カラムサイズ */
-                    private final Integer columnSize;
-                    /** DB プライマリーキー順番（プライマリーキーでなければnull）*/
-                    private final Integer primaryKeySeq;
-                    /** DB null許可 */
-                    private final boolean nullable;
-                    /** DB デフォルト値あり */
-                    private final boolean hasDefault;
-                    /** Javaフィールド名と型キャスト用のテンプレート（内部用） */
-                    private final String dbParamTemplate;
-                    /** カラム名と型キャスト用のテンプレート（内部用） */
-                    private final String dbSelectTemplate;
-                    /** now() で上書きを行う */
-                    private final boolean isSetNow;
-                    /** Update 対象外 */
-                    private final boolean shouldSkipInUpdate;
-                
-                    public %s(String columnName, String javaFieldName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, Integer primaryKeySeq, boolean nullable, boolean hasDefault, String dbParamTemplate, String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate) {
-                        this.columnName = columnName;
-                        this.javaFieldName = javaFieldName;
-                        this.javaFqcn = javaFqcn;
-                        this.dbTypeName = dbTypeName;
-                        this.jdbcType = jdbcType;
-                        this.columnSize = columnSize;
-                        this.primaryKeySeq = primaryKeySeq;
-                        this.nullable = nullable;
-                        this.hasDefault = hasDefault;
-                        this.dbParamTemplate = dbParamTemplate;
-                        this.dbSelectTemplate = dbSelectTemplate;
-                        this.isSetNow = isSetNow;
-                        this.shouldSkipInUpdate = shouldSkipInUpdate;
-                    }
-                
-                    public String getColumnName() {
-                        return columnName;
-                    }
-                
-                    public String getJavaFieldName() {
-                        return javaFieldName;
-                    }
-                
-                    public String getJavaFqcn() {
-                        return javaFqcn;
-                    }
-                
-                    public String getDbTypeName() {
-                        return dbTypeName;
-                    }
-                
-                    public Integer getJdbcType() {
-                        return jdbcType;
-                    }
-                
-                    public Integer getColumnSize() {
-                        return columnSize;
-                    }
-                
-                    public Integer getPrimaryKeySeq() {
-                        return primaryKeySeq;
-                    }
-                
-                    public boolean isNullable() {
-                        return nullable;
-                    }
-                
-                    public boolean isHasDefault() {
-                        return hasDefault;
-                    }
-                
-                    public String getDbParamTemplate() {
-                        return dbParamTemplate;
-                    }
-                
-                    public String getDbSelectTemplate() {
-                        return dbSelectTemplate;
-                    }
-                
-                    /** Javaフィールド名と型キャスト */
-                    public String toParamColumn() {
-                        if (isBlank(dbParamTemplate)) {
-                            return ":" + javaFieldName;
-                        } else {
-                            return dbParamTemplate.replace("{javaFieldName}", javaFieldName);
-                        }
-                    }
-                
-                    /** カラム名と型キャスト */
-                    public String toSelectColumn() {
-                        var template = isBlank(dbSelectTemplate) ? "{columnName}" : dbSelectTemplate;
-                        return template.replace("{columnName}", "\\"" + columnName + "\\"");
-                    }
-                
-                    public boolean isSetNow() {
-                        return isSetNow;
-                    }
-                
-                    public boolean isShouldSkipInUpdate() {
-                        return shouldSkipInUpdate;
-                    }
-                
-                    public String toString() {
-                        return getColumnName();
-                    }
-                }
-                """;
-        return sb.formatted(param.baseRepositoryPackage(), param.toBaseColumnDefinitionClassName(), param.toBaseColumnDefinitionClassName());
+        var sb = new ArrayList<String>();
+        sb.add("package %s;".formatted(param.baseRepositoryPackage()));
+        sb.add("");
+        sb.add("import static org.apache.commons.lang3.StringUtils.isBlank;");
+        sb.add("");
+        sb.add("public class %s {".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("    /** DB カラム名 */");
+        sb.add("    private final String columnName;");
+        sb.add("    /** Java フィールド名 */");
+        sb.add("    private final String javaPropertyName;");
+        sb.add("    /** Java 型 */");
+        sb.add("    private final String javaFqcn;");
+        sb.add("    /** DB カラム型 */");
+        sb.add("    private final String dbTypeName;");
+        sb.add("    /** DB jdbc type */");
+        sb.add("    private final Integer jdbcType;");
+        sb.add("    /** DB カラムサイズ */");
+        sb.add("    private final Integer columnSize;");
+        sb.add("    /** DB プライマリーキー順番（プライマリーキーでなければnull）*/");
+        sb.add("    private final Integer primaryKeySeq;");
+        sb.add("    /** DB null許可 */");
+        sb.add("    private final boolean nullable;");
+        sb.add("    /** DB デフォルト値あり */");
+        sb.add("    private final boolean hasDefault;");
+        sb.add("    /** Javaフィールド名と型キャスト用のテンプレート（内部用） */");
+        sb.add("    private final String dbParamTemplate;");
+        sb.add("    /** カラム名と型キャスト用のテンプレート（内部用） */");
+        sb.add("    private final String dbSelectTemplate;");
+        sb.add("    /** now() で上書きを行う */");
+        sb.add("    private final boolean isSetNow;");
+        sb.add("    /** Update 対象外 */");
+        sb.add("    private final boolean shouldSkipInUpdate;");
+        sb.add("    /** Update 対象外 */");
+        sb.add("    private final boolean hasNameMapping;");
+        sb.add("");
+        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, Integer primaryKeySeq, boolean nullable, boolean hasDefault, String dbParamTemplate, String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("        this.columnName = columnName;");
+        sb.add("        this.javaPropertyName = javaPropertyName;");
+        sb.add("        this.javaFqcn = javaFqcn;");
+        sb.add("        this.dbTypeName = dbTypeName;");
+        sb.add("        this.jdbcType = jdbcType;");
+        sb.add("        this.columnSize = columnSize;");
+        sb.add("        this.primaryKeySeq = primaryKeySeq;");
+        sb.add("        this.nullable = nullable;");
+        sb.add("        this.hasDefault = hasDefault;");
+        sb.add("        this.dbParamTemplate = dbParamTemplate;");
+        sb.add("        this.dbSelectTemplate = dbSelectTemplate;");
+        sb.add("        this.isSetNow = isSetNow;");
+        sb.add("        this.shouldSkipInUpdate = shouldSkipInUpdate;");
+        sb.add("        this.hasNameMapping = hasNameMapping;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String getColumnName() {");
+        sb.add("        return columnName;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String getJavaPropertyName() {");
+        sb.add("        return javaPropertyName;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String getJavaFqcn() {");
+        sb.add("        return javaFqcn;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String getDbTypeName() {");
+        sb.add("        return dbTypeName;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public Integer getJdbcType() {");
+        sb.add("        return jdbcType;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public Integer getColumnSize() {");
+        sb.add("        return columnSize;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public Integer getPrimaryKeySeq() {");
+        sb.add("        return primaryKeySeq;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public boolean isNullable() {");
+        sb.add("        return nullable;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public boolean isHasDefault() {");
+        sb.add("        return hasDefault;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String getDbParamTemplate() {");
+        sb.add("        return dbParamTemplate;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String getDbSelectTemplate() {");
+        sb.add("        return dbSelectTemplate;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    /** Javaフィールド名と型キャスト */");
+        sb.add("    public String toParamColumn() {");
+        sb.add("        if (isBlank(dbParamTemplate)) {");
+        sb.add("            return \":\" + javaPropertyName;");
+        sb.add("        } else {");
+        sb.add("            return dbParamTemplate.replace(\"{javaPropertyName}\", javaPropertyName);");
+        sb.add("        }");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    /** カラム名と型キャスト */");
+        sb.add("    public String toSelectColumn() {");
+        sb.add("        var template = isBlank(dbSelectTemplate) ? \"{columnName}\" : dbSelectTemplate;");
+        sb.add("        return template.replace(\"{columnName}\", \"\\\"\" + columnName + \"\\\"\");");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public boolean isSetNow() {");
+        sb.add("        return isSetNow;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public boolean isShouldSkipInUpdate() {");
+        sb.add("        return shouldSkipInUpdate;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String toString() {");
+        sb.add("        return getColumnName();");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public String toUpdateSetClause() {");
+        sb.add("        var value = isSetNow() ? \"now()\" : toParamColumn();");
+        sb.add("        return \"\\\"%s\\\" = %s\".formatted(getColumnName(), value);");
+        sb.add("    }");
+        sb.add("}");
+        return join("\n", sb);
     }
 }

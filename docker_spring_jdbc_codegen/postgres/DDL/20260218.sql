@@ -97,84 +97,84 @@ create table normal_pk3 (
 
 -- 省略可能カラム PKなし
 create table omittable_pk0 (
-   col_text_not_null_default_x text not null default 'X'
+    col_text_not_null_default_x text not null default 'X'
 );
 
 -- 省略可能カラム PK1個
 create table omittable_pk1 (
-   pk bigserial primary key,
-   col_text_not_null_default_x text not null default 'X'
+    pk bigserial primary key,
+    col_text_not_null_default_x text not null default 'X'
 );
 
 -- 省略可能カラム PK3個
 create table omittable_pk3 (
-   pk1 bigserial,
-   pk2 timestamp with time zone not null default now(),
-   pk3 uuid default gen_random_uuid(),
-   col_text_not_null_default_x text not null default 'X',
-   primary key(pk1, pk2, pk3)
+    pk1 bigserial,
+    pk2 timestamp with time zone not null default now(),
+    pk3 uuid default gen_random_uuid(),
+    col_text_not_null_default_x text not null default 'X',
+    primary key(pk1, pk2, pk3)
 );
 
 -- Update 対象カラムなし PKなし
 create table no_update_pk0 (
-   col_no_update_text_not_null_default_x text not null default 'X'
+    col_no_update_text_not_null_default_x text not null default 'X'
 );
 
 -- Update 対象カラムなし PK1個
 create table no_update_pk1 (
-   pk bigserial primary key,
-   col_no_update_text_not_null_default_x text not null default 'X'
+    pk bigserial primary key,
+    col_no_update_text_not_null_default_x text not null default 'X'
 );
 
 -- Update 対象カラムなし PK3個
 create table no_update_pk3 (
-   pk1 bigserial,
-   pk2 timestamp with time zone not null default now(),
-   pk3 uuid default gen_random_uuid(),
-   col_no_update_text_not_null_default_x text not null default 'X',
-   primary key(pk1, pk2, pk3)
+    pk1 bigserial,
+    pk2 timestamp with time zone not null default now(),
+    pk3 uuid default gen_random_uuid(),
+    col_no_update_text_not_null_default_x text not null default 'X',
+    primary key(pk1, pk2, pk3)
 );
 
 -- Now のみ PKなし
 create table now_pk0 (
-   col_now timestamp with time zone not null default now()
+    col_now timestamp with time zone not null default now()
 );
 
 -- Now のみ PK1個
 create table now_pk1 (
-   pk bigserial primary key,
-   col_now timestamp with time zone not null default now()
+    pk bigserial primary key,
+    col_now timestamp with time zone not null default now()
 );
 
 -- Now のみ PK3個
 create table now_pk3 (
-   pk1 bigserial,
-   pk2 timestamp with time zone not null default now(),
-   pk3 uuid default gen_random_uuid(),
-   col_now timestamp with time zone not null default now(),
-   primary key(pk1, pk2, pk3)
+    pk1 bigserial,
+    pk2 timestamp with time zone not null default now(),
+    pk3 uuid default gen_random_uuid(),
+    col_now timestamp with time zone not null default now(),
+    primary key(pk1, pk2, pk3)
 );
 
 -- PK のみ PK1個
 create table only_pk1 (
-   pk bigserial primary key
+    pk bigserial primary key
 );
 
 -- PK のみ PK3個
 create table only_pk3 (
-   pk1 bigserial,
-   pk2 timestamp with time zone not null default now(),
-   pk3 uuid default gen_random_uuid(),
-   primary key(pk1, pk2, pk3)
+    pk1 bigserial,
+    pk2 timestamp with time zone not null default now(),
+    pk3 uuid default gen_random_uuid(),
+    primary key(pk1, pk2, pk3)
 );
 
 -- PK のみ PK3個 全てnow
 create table only_pk3_now (
-   pk1 timestamp with time zone not null default now(),
-   -- pk2_now は param.yml でsetNow を指定している
-   pk2_now timestamp with time zone not null,
-   pk3 timestamp with time zone not null default now(),
-   primary key(pk1, pk2_now, pk3)
+    pk1 timestamp with time zone not null default now(),
+    -- pk2_now は param.yml でsetNow を指定している
+    pk2_now timestamp with time zone not null,
+    pk3 timestamp with time zone not null default now(),
+    primary key(pk1, pk2_now, pk3)
 );
 
 -- 全てがPK
@@ -237,12 +237,15 @@ CREATE TABLE all_types_as_pk
 );
 
 create table "日本語Table" (
-   "order" bigserial,
-   "param" bigserial,
-   "sql" bigserial,
-   "helper" bigserial,
-   "where" timestamp,
-   "select" text,
-   "Abc" text,
-   PRIMARY KEY ("order", "param", "sql", "helper")
+    "order" bigserial,
+    "param" bigserial,
+    "sql" bigserial,
+    "helper" bigserial,
+    "joining" bigserial,
+    "List" bigserial,
+    rename text,
+    "where" timestamp,
+    "select" text,
+    "Abc" text,
+    PRIMARY KEY ("order", "param", "sql", "helper", "joining", "List", rename)
 );

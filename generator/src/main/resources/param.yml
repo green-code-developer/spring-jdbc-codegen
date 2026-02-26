@@ -56,6 +56,17 @@ setNowColumnsByTable:
   "only_pk3_now":
     - pk2_now
 
+# カラム名とJava プロパティ名の明示的マッピング設定（省略可）
+#   通常、Spring Jdbc BeanPropertyRowMapper を使っているため、
+#   スネークケースのカラム名をキャメルケースのJava のプロパティ名に自動変換されます
+#   デフォルト変換を使わずに、任意のカラム名とJava プロパティ名を直接対応付ける場合に設定します
+#   テーブル名とカラム名とJava プロパティ名を下の形式で指定します
+#   table_name:
+#     column_name: javaPropertyName
+columnName2javaPropertyMap:
+  "日本語Table":
+    rename: renamedJavaName
+
 # 実体クラスの強制上書き（省略可）
 #   初期値 false(しない)
 #forceOverwriteImplementation: false
@@ -122,3 +133,11 @@ testTargetTable:
 # カラム定義クラス名（省略可）
 #   初期値 ColumnDefinition
 #columnDefinitionClassName: ColumnDefinition
+
+# Mapper クラスの接頭辞（省略可）
+#   初期値 Test
+#mapperClassNamePrefix:
+
+# Mapper クラスの接尾辞（省略可）
+#   初期値 Mapper
+#mapperClassNameSuffix: Mapper

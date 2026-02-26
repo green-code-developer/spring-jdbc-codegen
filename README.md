@@ -1,6 +1,6 @@
 # spring jdbc codegen
 
-## 機能概要
+## 1. 機能概要
 
 spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 「SQL は手で書きたいが、定型的な Entity / Repository / Test を自動生成したい」
@@ -13,12 +13,12 @@ spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 - Enum 対応可能
 - Update Insert 除外カラム指定可能
 
-## 導入と動かし方
+## 2. 導入と動かし方
 
 1. spring-jdbc-codegen-x.x.jar  をダウンロード
 
    [https://github.com/green-code-developer/spring-jdbc-codegen/releases](https://github.com/green-code-developer/spring-jdbc-codegen/releases)
-   
+
 2. param.yml を記載
 
    データベース接続情報、パッケージ名、最上位フォルダ、を指定
@@ -49,14 +49,16 @@ spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 
 4. 指定したパッケージにJava コードが作成される
 
-## できないこと
+## 3. 制約
+
+### 3.1 できないこと
 
 - Postgres 以外のデータベース
 - Spring JDBC がない環境での動作
 - ORM (Object Relation Mapping)
   SQL を直接書かずJava でクエリーを構築すること
 
-## 導入するプロジェクト側に必要な構成
+### 3.2 導入するプロジェクト側に必要な構成
 
 - Spring JDBC
 - Apache Commons Lang3
@@ -72,15 +74,23 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 ```
-## テーブルやカラムの命名
-- スネークケースであれば安定動作します。
-- 予約語や特殊な記号をいれるとエラーになる可能性があります。
-- テーブル名はJava のクラス名に変換可能であること。重複しないこと。
-- カラム名はJava のフィールド名に変換可能であること。重複しないこと。
 
-## {テーブル名}Repository クラスの使い方
+### 3.3 テーブルやカラムの命名
+- スネークケースであれば問題なく動作します
+- 予約語や特殊記号を含む場合はエラーになる可能性があります
+- テーブル名はJava のクラス名に変換可能であること。重複しないこと
+- カラム名はJava のフィールド名に変換可能であること。重複しないこと
 
-### T insert(T entity)
+## 3.4 動作確認済みの構成
+
+- Java 21
+- Spring Boot 3.5.10
+- Spring JDBC
+- PostgreSQL 17
+
+## 4. {テーブル名}Repository クラスの使い方
+
+### 4.1 T insert(T entity)
 
 1レコードのinsert を行います。
 
@@ -101,19 +111,19 @@ insert into account (name) values (":name");
 -- パラメータの :name は "green-code-user" 
 ```
 
-### T update(T entity)
+### 4.2 T update(T entity)
 
 entity のプライマリーキーをキーとして、該当するレコードを1件更新します。 該当するレコードが存在しない場合は例外(EmptyResultDataAccessException)をスローします。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### Optional&lt;Entity&gt; findByPk(pk)
+### 4.3 Optional&lt;Entity&gt; findByPk(pk)
 
 プライマリーキーの1レコードを取得します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### int deleteByPk(pk)
+### 4.4 int deleteByPk(pk)
 
 プライマリーキーの1レコードを削除します。戻り値は削除された件数です。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### class Columns
+### 4.5 class Columns
 
 カラム定義に関する情報を持ったインスタンスが格納されています。
 
@@ -129,18 +139,18 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 - shouldSkipInInsert: Insert 対象外カラム判定
 - shouldSkipInUpdate: Update 対象外カラム判定
 
-#### Columns.MAP<String, ColumnDefinition>
+### 4.6 Columns.MAP<String, ColumnDefinition>
 
 そのテーブルが持つ全てのカラム（class Columns のインスタンス）が、カラム名とカラム定義の形式でマップとして保持されています。
 
-### Columns.selectAster()
+### 4.7 Columns.selectAster()
 
 全てのカラム名をカンマで区切ったものです。
 select * from table と書きたい時に、* の代わりにこの定数を使います。
 カラム名に加えて型変換が付与されています。
 例）col_xml::text
 
-### @Component RepositoryHelper
+### 4.8 @Component RepositoryHelper
 
 NamedParameterJdbcTemplate をラップして短く記載できるようにしたものです。
 
@@ -154,9 +164,13 @@ NamedParameterJdbcTemplate をラップして短く記載できるようにし�
 
 - helper.count(): Long 型の1カラムを取得するselect 文が対象。select count(*) ... を想定
 
-## 便利な使い方
+### 4.9 MAPPER (RowMapper)
 
-### Enum 型を追加する
+明示的な命名を行なったテーブルのみ作成されます。詳しくは「5.4 カラム名とJava プロパティ名の明示的なマッピング」を参照ください。
+
+## 5. 便利な使い方
+
+### 5.1 Enum 型を追加する
 
 param.yml のenumJavaTypeMappings に設定を入れてCI ツールを実行します。
 
@@ -182,7 +196,7 @@ CREATE TYPE todo_status AS ENUM ('NEW', 'DOING', 'DONE', 'DELETED');
 public enum TodoStatusEnum { NEW, DOING, DONE, DELETED; }
 ```
 
-### 作成者カラム、作成日時カラムをUpdate から除外する
+### 5.2 作成者カラム、作成日時カラムをUpdate から除外する
 
 作成者カラム、作成日時カラムのように、初回Insert 時以外は更新を行わないカラムについては、param.yml excludeUpdateColumnsByTable に登録します。
 登録されたカラムはUpdate 時に更新されなくなります。
@@ -199,7 +213,7 @@ excludeUpdateColumnsByTable:
 ```
 "*" は全てのテーブルを意味します。個別のテーブルを指定する場合は、テーブル名を記載します。
 
-### Insert, Update 時にデータベースの時刻 now() を指定したい
+### 5.3 Insert, Update 時にデータベースの時刻 now() を指定したい
 
 param.yml のsetNowColumnsByTable に設定すると、そのカラムの値はSQL の now() に置き換わります。
 指定されたカラムはrepository.insert() またはrepository.update() でJava で値を指定することができなくなります。
@@ -218,7 +232,30 @@ setNowColumnsByTable:
 update account set updated_at = now(), created_at = now() where ...
 ```
 
-## TestRepository の使い方
+### 5.4 カラム名とJava プロパティ名の明示的なマッピング
+
+通常、Spring Jdbc BeanPropertyRowMapper を使っているため、スネークケースのカラム名をキャメルケースのJava のプロパティ名に自動変換されます。
+デフォルト変換を使わずに、任意のカラム名とJava プロパティ名を直接対応付ける場合に設定します。
+テーブル名とカラム名とJava プロパティ名を下の形式で指定します。
+
+設定例
+```yml
+# param.yml
+columnName2javaPropertyMap:
+  table_name:
+    column_name: javaPropertyName
+```
+※ この指定を利用した場合のみ、Repository 内にRowMapper が生成されます。
+
+### 5.5 Base クラス
+
+Entity, Repository, TestRepository 等、いずれも Base クラスとその実体クラスという構成となっています。
+
+ツールを実行すると、Base クラスは毎回再作成されますが、実体クラスは初回以外変更しません。
+
+param.yml のforceOverwriteImplementation をtrue にすると実体クラスも再作成されます。（デフォルトfalse）
+
+## 6 TestRepository の使い方
 
 param.yml testTargetTable にテスト対象のテーブル名を記載するとテストコードが生成されます。
 insert, select, update, select, delete, select を順番に行います。
@@ -230,15 +267,7 @@ insert, select, update, select, delete, select を順番に行います。
 
 データの確認は assert4{フィールド名}() にて行います。こちらも必要に応じてoverride してください。
 
-## Base クラス
-
-Entity, Repository, TestRepository いずれも Base クラスとその実体クラスという構成となっています。
-
-ツールを実行すると、Base クラスは毎回再作成されますが、実体クラスは初回以外変更しません。
-
-param.yml のforceOverwriteImplementation をtrue にすると実体クラスも再作成されます。（デフォルトfalse）
-
-### テストデータ作成で固定値を指定したい
+### 6.2 テストデータ作成で固定値を指定したい
 
 generateTestData4{フィールド名}() をoverride することで実現できます。
 
@@ -265,14 +294,7 @@ protected Long generateTestData4updatedBy(int seed) {
 }
 ```
 
-## 確認済みの構成
-
-- Java 21
-- Spring Boot 3.5.10
-- Spring JDBC
-- PostgreSQL 17
-
-## DB 型とJava 型の変換表
+## 7. DB 型とJava 型の変換表
 
 | 区分     | PostgreSQL 型                | Java 型                   | 備考              |
 |--------|-----------------------------|--------------------------|-----------------|
@@ -323,7 +345,9 @@ protected Long generateTestData4updatedBy(int seed) {
 | 幾何     | polygon                     | java.lang.String         | SELECT 時 ::text |
 | 幾何     | circle                      | java.lang.String         | SELECT 時 ::text |
 
-### 対応外の型
+※ null を扱うため、primitive 型は使用しません。
+
+### 7.2 対応外の型
 
 | 区分   | DB 型          | Java 型 |
 |------|---------------|--------|

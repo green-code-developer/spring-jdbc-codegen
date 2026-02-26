@@ -1,8 +1,8 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
 import jp.green_code.spring_jdbc_codegen.Parameter;
-import jp.green_code.spring_jdbc_codegen.db.ColumnDefinition;
-import jp.green_code.spring_jdbc_codegen.db.TableDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbColumnDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +16,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class BaseRepositoryGenerator {
     final Parameter param;
-    final TableDefinition table;
+    final DbTableDefinition table;
 
-    public BaseRepositoryGenerator(Parameter param, TableDefinition table) {
+    public BaseRepositoryGenerator(Parameter param, DbTableDefinition table) {
         this.param = param;
         this.table = table;
     }
@@ -38,6 +38,10 @@ public class BaseRepositoryGenerator {
         sb.add("public abstract class %s {".formatted(table.toBaseRepositoryClassName()));
         sb.add("");
         sb.add("    protected final %s helper;".formatted(param.repositoryHelperClassName));
+        if (table.needCustomMapper()) {
+            sb.add("");
+            sb.add("    public static final %s ROW_MAPPER = new %s();".formatted(table.toMapperClassName(), table.toMapperClassName()));
+        }
         sb.add("");
         sb.addAll(columns());
         sb.add("");
@@ -51,14 +55,19 @@ public class BaseRepositoryGenerator {
             // pk がない場合は、update とfindByPk とdeleteByPk は作れない
             if (table.hasUpdateColumns()) {
                 // 全部Update 対象外の時はupdate を作れない
+                sb.add("");
                 sb.addAll(update());
                 sb.add("");
                 sb.addAll(updateByPk());
-                sb.add("");
             }
+            sb.add("");
             sb.addAll(findByPk());
             sb.add("");
             sb.addAll(deleteByPk());
+            if (table.needCustomMapper()) {
+                sb.add("");
+                sb.addAll(customMapper());
+            }
         }
         sb.add("}");
         return join("\n", sb);
@@ -83,6 +92,11 @@ public class BaseRepositoryGenerator {
         if (!table.needReturningInUpdate()) {
             imports.add("org.springframework.dao.EmptyResultDataAccessException");
         }
+        if (table.needCustomMapper()) {
+            imports.add("org.jspecify.annotations.NullMarked");
+            imports.add("org.jspecify.annotations.Nullable");
+            imports.add("org.springframework.jdbc.core.BeanPropertyRowMapper");
+        }
 
         var statics = new TreeSet<String>();
         statics.add("java.lang.String.join");
@@ -99,7 +113,7 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("public static class Columns {");
         for (var col : table.columns) {
-            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(), param.columnDefinitionClassName, col.columnName, col.toJavaFieldName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.shouldSkipInUpdate()));
+            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.shouldSkipInUpdate(), col.hasNameMapping()));
         }
         sb.add("");
         sb.add("    public static final Map<String, %s> MAP = new LinkedHashMap<>();".formatted(param.columnDefinitionClassName));
@@ -144,7 +158,7 @@ public class BaseRepositoryGenerator {
         sb.add("        var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(\", \"));");
         sb.add("        sql.add(\"values (%s)\".formatted(insertValuesClause));");
         sb.add("    }");
-        sb.add("    var param = __entityToParam(entity);");
+        sb.add("    var param = entityToParam(entity);");
         sb.add("    var returningColumns = toInsertReturning(entity, insertColumns);");
         sb.add("    if (returningColumns.isEmpty()) {");
         sb.add("        this.helper.exec(sql, param);");
@@ -156,7 +170,7 @@ public class BaseRepositoryGenerator {
             // intelliJ が警告を出すので不要な場合は作成しない
             varRet = "var ret = ";
         }
-        sb.add("        %sthis.helper.single(sql, param, %s.class);".formatted(varRet, table.toEntityClassName()));
+        sb.add("        %sthis.helper.single(sql, param, %s);".formatted(varRet, table.toMapperOrEntityClass()));
         if (table.needReturningInInsert()) {
             sb.add("        copyReturningValuesInInsert(entity, ret);");
         }
@@ -263,31 +277,30 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         if (table.needReturningInUpdate()) {
             // intelliJ が警告を出すので不要な場合は作成しない
-            sb.add("");
             sb.addAll(copyReturningValuesInUpdate());
         }
         sb.add("");
         var pkArgs = toPkArgs();
         sb.add("public %s updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
         sb.add("    var __sql = new ArrayList<String>();");
+        sb.add("    var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
         sb.add("    __sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
-        var updateValues = toUpdateValues();
-        sb.add("    __sql.add(\"set %s\");".formatted(join(", ", updateValues)));
+        sb.add("    __sql.add(\"set %s\".formatted(setClause));");
         var pkConditions = new ArrayList<String>();
-        sb.add("    var __param = __entityToParam(entity);");
+        sb.add("    var __param = entityToParam(entity);");
         var i = 0;
         for (var col : table.pkColumns()) {
             i++;
             pkConditions.add("\\\"%s\\\" = %s".formatted(col.columnName, col.toParamColumn("__pk" + i)));
-            sb.add("    __param.put(\"__pk%d\", %s);".formatted(i, col.toJavaFieldName()));
+            sb.add("    __param.put(\"__pk%d\", %s);".formatted(i, col.toJavaPropertyName()));
         }
         sb.add("    __sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
 
         if (table.needReturningInUpdate()) {
             var returningColumns = table.columns.stream().filter(c -> !c.shouldSkipInUpdate() && c.isSetNowColumn()).toList();
-            sb.add("    __sql.add(\"returning %s\");".formatted(returningColumns.stream().map(ColumnDefinition::toSelectColumn).collect(joining(", "))));
-            sb.add("    var ret = this.helper.single(__sql, __param, %s.class);".formatted(table.toEntityClassName()));
-            sb.add("    __copyReturningValuesInUpdate(entity, ret);");
+            sb.add("    __sql.add(\"returning %s\");".formatted(returningColumns.stream().map(DbColumnDefinition::toSelectColumn).collect(joining(", "))));
+            sb.add("    var ret = this.helper.single(__sql, __param, %s);".formatted(table.toMapperOrEntityClass()));
+            sb.add("    copyReturningValuesInUpdate(entity, ret);");
         } else {
             sb.add("    var res = this.helper.exec(__sql, __param);");
             sb.add("    if (res != 1) {");
@@ -299,21 +312,9 @@ public class BaseRepositoryGenerator {
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
 
-    List<String> toUpdateValues() {
-        var res = new ArrayList<String>();
-        for (var col : table.columns) {
-            if (col.isSetNowColumn()) {
-                res.add("\\\"%s\\\" = now()".formatted(col.columnName));
-            } else if (!col.shouldSkipInUpdate()) {
-                res.add("\\\"%s\\\" = %s".formatted(col.columnName, col.toParamColumn()));
-            }
-        }
-        return res;
-    }
-
     List<String> copyReturningValuesInUpdate() {
         var sb = new ArrayList<String>();
-        sb.add("protected void __copyReturningValuesInUpdate(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("protected void copyReturningValuesInUpdate(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
         for (var col : table.columns) {
             if (!col.shouldSkipInUpdate() && col.isSetNowColumn()) {
                 sb.add("    entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
@@ -325,10 +326,10 @@ public class BaseRepositoryGenerator {
 
     List<String> entityToParam() {
         var sb = new ArrayList<String>();
-        sb.add("public static Map<String, Object> __entityToParam(%s entity) {".formatted(table.toEntityClassName()));
+        sb.add("public static Map<String, Object> entityToParam(%s entity) {".formatted(table.toEntityClassName()));
         sb.add("    var param = new HashMap<String, Object>();");
         for (var col : table.columns) {
-            sb.add("    param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression("entity.%s()".formatted(col.toGetter()))));
+            sb.add("    param.put(\"%s\", %s);".formatted(col.toJavaPropertyName(), col.toJavaValueExpression("entity.%s()".formatted(col.toGetter()))));
         }
         sb.add("    return param;");
         sb.add("}");
@@ -347,10 +348,10 @@ public class BaseRepositoryGenerator {
         sb.add("");
         sb.add("    var __param = new HashMap<String, Object>();");
         for (var col : table.pkColumns()) {
-            sb.add("    __param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression(col.toJavaFieldName())));
+            sb.add("    __param.put(\"%s\", %s);".formatted(col.toJavaPropertyName(), col.toJavaValueExpression(col.toJavaPropertyName())));
         }
         sb.add("");
-        sb.add("    return this.helper.optional(__sql, __param, %s.class);".formatted(table.toEntityClassName()));
+        sb.add("    return this.helper.optional(__sql, __param, %s);".formatted(table.toMapperOrEntityClass()));
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
@@ -366,7 +367,7 @@ public class BaseRepositoryGenerator {
         sb.add("");
         sb.add("    var __param = new HashMap<String, Object>();");
         for (var col : table.pkColumns()) {
-            sb.add("    __param.put(\"%s\", %s);".formatted(col.toJavaFieldName(), col.toJavaValueExpression(col.toJavaFieldName())));
+            sb.add("    __param.put(\"%s\", %s);".formatted(col.toJavaPropertyName(), col.toJavaValueExpression(col.toJavaPropertyName())));
         }
         sb.add("");
         sb.add("    return this.helper.exec(__sql, __param);");
@@ -375,6 +376,27 @@ public class BaseRepositoryGenerator {
     }
 
     String toPkArgs() {
-        return table.pkColumns().stream().map(c -> c.javaSimpleTypeName() + " " + c.toJavaFieldName()).collect(joining(", "));
+        return table.pkColumns().stream().map(c -> c.javaSimpleTypeName() + " " + c.toJavaPropertyName()).collect(joining(", "));
+    }
+
+    List<String> customMapper() {
+        var sb = new ArrayList<String>();
+        sb.add("@NullMarked");
+        sb.add("public static class %s extends BeanPropertyRowMapper<%s> {".formatted(table.toMapperClassName(), table.toEntityClassName()));
+        sb.add("    public %s() {".formatted(table.toMapperClassName()));
+        sb.add("        super(%s.class);".formatted(table.toEntityClassName()));
+        sb.add("    }");
+        sb.add("");
+        sb.add("    @Override");
+        sb.add("    protected String underscoreName(@Nullable String name) {");
+        for (var col : table.columns.stream().filter(DbColumnDefinition::hasNameMapping).toList()) {
+            sb.add("        if (\"%s\".equals(name)) {".formatted(col.toJavaPropertyName()));
+            sb.add("            return \"%s\";".formatted(col.columnName));
+            sb.add("        }");
+        }
+        sb.add("        return super.underscoreName(name);");
+        sb.add("    }");
+        sb.add("}");
+        return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
 }

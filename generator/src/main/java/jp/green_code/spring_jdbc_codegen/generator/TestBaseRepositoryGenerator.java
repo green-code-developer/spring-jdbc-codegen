@@ -1,7 +1,7 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
 import jp.green_code.spring_jdbc_codegen.Parameter;
-import jp.green_code.spring_jdbc_codegen.db.TableDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +11,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class TestBaseRepositoryGenerator {
     final Parameter param;
-    final TableDefinition table;
+    final DbTableDefinition table;
 
-    public TestBaseRepositoryGenerator(Parameter param, TableDefinition table) {
+    public TestBaseRepositoryGenerator(Parameter param, DbTableDefinition table) {
         this.param = param;
         this.table = table;
     }
@@ -81,7 +81,7 @@ public class TestBaseRepositoryGenerator {
             sb.add("    // insert 後の確認");
             sb.add("    var stored = res.orElseThrow();");
             for (var col : table.columns) {
-                sb.add("    assert4%s(data.%s(), stored.%s());".formatted(col.toJavaFieldName(), col.toGetter(), col.toGetter()));
+                sb.add("    assert4%s(data.%s(), stored.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
             }
             sb.add("");
             sb.add("    // update");
@@ -103,9 +103,9 @@ public class TestBaseRepositoryGenerator {
                 sb.add("");
                 if (col.shouldSkipInUpdate()) {
                     sb.add("    // %s はupdate 対象外のため変更前と変わらないことを確認".formatted(col.columnName));
-                    sb.add("    assert4%s(stored.%s(), stored2.%s());".formatted(col.toJavaFieldName(), col.toGetter(), col.toGetter()));
+                    sb.add("    assert4%s(stored.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
                 } else {
-                    sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaFieldName(), col.toGetter(), col.toGetter()));
+                    sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
                 }
             }
             sb.add("");
@@ -127,7 +127,7 @@ public class TestBaseRepositoryGenerator {
         sb.add("    var entity = new %s();".formatted(table.toEntityClassName()));
         for (var col : table.columns) {
             var plusplus = table.columns.getLast() == col ? "" : "++";
-            sb.add("    entity.%s(generateTestData4%s(seed%s));".formatted(col.toSetter(), col.toJavaFieldName(), plusplus));
+            sb.add("    entity.%s(generateTestData4%s(seed%s));".formatted(col.toSetter(), col.toJavaPropertyName(), plusplus));
         }
         sb.add("    return entity;");
         sb.add("}");
@@ -136,7 +136,7 @@ public class TestBaseRepositoryGenerator {
             if (isBlank(col.toJavaType().generateDateSnippet())) {
                 System.out.printf("致命的 table:%s column:%s 対応できない型です(javaTestSnippet not found)%n", table.tableName, col.columnName);
             } else {
-                sb.add("protected %s generateTestData4%s(int seed) {".formatted(col.javaSimpleTypeName(), col.toJavaFieldName()));
+                sb.add("protected %s generateTestData4%s(int seed) {".formatted(col.javaSimpleTypeName(), col.toJavaPropertyName()));
                 sb.add("    %s".formatted(col.toJavaType().generateDateSnippet()));
                 sb.add("}");
             }
@@ -148,7 +148,7 @@ public class TestBaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         for (var col : table.columns) {
             sb.add("");
-            sb.add("protected void assert4%s(%s expected, %s value) {".formatted(col.toJavaFieldName(), col.javaSimpleTypeName(), col.javaSimpleTypeName()));
+            sb.add("protected void assert4%s(%s expected, %s value) {".formatted(col.toJavaPropertyName(), col.javaSimpleTypeName(), col.javaSimpleTypeName()));
             if (isBlank(col.toJavaType().assertSnippet())) {
                 sb.add("    assertEquals(expected, value);");
             } else {

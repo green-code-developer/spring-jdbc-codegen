@@ -23,8 +23,8 @@ public class ColumnDefinitionGenerator {
         sb.add("");
 
         sb.add("public class %s extends %s {".formatted(param.columnDefinitionClassName, param.toBaseColumnDefinitionClassName()));
-        sb.add("    public %s(String columnName, String javaFieldName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, Integer primaryKeySeq, boolean nullable, boolean hasDefault, String dbParamTemplate, String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate) {".formatted(param.columnDefinitionClassName));
-        sb.add("        super(columnName, javaFieldName, javaFqcn, dbTypeName, jdbcType, columnSize, primaryKeySeq, nullable, hasDefault, dbParamTemplate, dbSelectTemplate, isSetNow, shouldSkipInUpdate);");
+        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, Integer primaryKeySeq, boolean nullable, boolean hasDefault, String dbParamTemplate, String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {".formatted(param.columnDefinitionClassName));
+        sb.add("        super(columnName, javaPropertyName, javaFqcn, dbTypeName, jdbcType, columnSize, primaryKeySeq, nullable, hasDefault, dbParamTemplate, dbSelectTemplate, isSetNow, shouldSkipInUpdate, hasNameMapping);");
         sb.add("    }");
         sb.add("}");
         return join("\n", sb);

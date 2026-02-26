@@ -36,6 +36,8 @@ public class Parameter {
     public String mainJavaDir;
     /** 本体プロジェクトの test/main/java */
     public String testJavaDir;
+    /** カラム名とJava プロパティ名のマッピング */
+    public Map<String, Map<String, String>> columnName2javaPropertyMap = Map.of();
 
     // 以下高度なカスタマイズ用設定
     /** 規定クラスのパッケージ名 base */
@@ -58,6 +60,10 @@ public class Parameter {
     public String columnDefinitionClassName = "ColumnDefinition";
     /** 実装クラスが存在していても再作成する */
     public boolean forceOverwriteImplementation = false;
+    /** Mapper クラスの接尾辞 */
+    public String mapperClassNamePrefix = "";
+    /** Mapper クラスの接尾辞 Mapper */
+    public String mapperClassNameSuffix = "Mapper";
 
     public String baseEntityPackage() {
         return entityPackage + "." + basePackageName;

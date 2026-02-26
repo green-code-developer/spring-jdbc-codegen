@@ -5,9 +5,10 @@ import java.util.Map;
 
 import static jp.green_code.spring_jdbc_codegen.Parameter.param;
 import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
+import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-public class ColumnDefinition {
+public class DbColumnDefinition {
     public String tableName;
     public String columnName;
     public String dbTypeName;
@@ -22,7 +23,16 @@ public class ColumnDefinition {
         return columnName + " [" + dbTypeName + "] " + (nullable ? "nullable" : "nonnull") + " " + (isPrimaryKey() ? "pk(" + primaryKeySeq + " " + primaryKeyName + ")" : "") + " default[" + defaultExpression + "]";
     }
 
-    public String toJavaFieldName() {
+    public String toJavaPropertyName() {
+        var map = param.columnName2javaPropertyMap;
+        if (map.containsKey("*") && map.get("*").containsKey(columnName)) {
+            // テーブル名に「*」で登録されているカラム
+            return map.get("*").get(columnName);
+        } else if (map.containsKey(tableName) && map.get(tableName).containsKey(columnName)) {
+            // テーブル名とカラム名で登録されている
+            return map.get(tableName).get(columnName);
+        }
+        // カラム名はスネークケースで、Java のフィールド名はキャメルケース
         return toCamelCase(columnName, false);
     }
 
@@ -39,12 +49,12 @@ public class ColumnDefinition {
     }
 
     public String toGetter() {
-        String methodName = toCamelCase(columnName, true);
+        String methodName = capitalize(toJavaPropertyName());
         return "get%s".formatted(methodName);
     }
 
     public String toSetter() {
-        String methodName = toCamelCase(columnName, true);
+        String methodName = capitalize(toJavaPropertyName());
         return "set%s".formatted(methodName);
     }
 
@@ -86,14 +96,14 @@ public class ColumnDefinition {
 
     /** Javaフィールド名と型キャスト */
     public String toParamColumn() {
-        return toParamColumn(toJavaFieldName());
+        return toParamColumn(toJavaPropertyName());
     }
 
-    public String toParamColumn(String javaFieldName) {
+    public String toParamColumn(String javaPropertyName) {
         if (isBlank(toJavaType().dbParamTemplate())) {
-            return ":" + javaFieldName;
+            return ":" + javaPropertyName;
         } else {
-            return toJavaType().dbParamTemplate().replace("{javaFieldName}", javaFieldName);
+            return toJavaType().dbParamTemplate().replace("{javaPropertyName}", javaPropertyName);
         }
     }
 
@@ -110,5 +120,17 @@ public class ColumnDefinition {
     public String toJavaValueExpression(String javaValue) {
         var template = isBlank(toJavaType().javaCastSnippetInEntityToParam()) ? "{value}" : toJavaType().javaCastSnippetInEntityToParam();
         return template.replace("{value}", javaValue);
+    }
+
+    public boolean hasNameMapping() {
+        var map = param.columnName2javaPropertyMap;
+        if (map.containsKey("*") && map.get("*").containsKey(columnName)) {
+            // テーブル名に「*」で登録されているカラム
+            return true;
+        } else if (map.containsKey(tableName) && map.get(tableName).containsKey(columnName)) {
+            // テーブル名とカラム名で登録されている
+            return true;
+        }
+        return false;
     }
 }

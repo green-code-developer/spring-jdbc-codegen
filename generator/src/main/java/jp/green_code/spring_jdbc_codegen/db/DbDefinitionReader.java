@@ -14,8 +14,8 @@ import static jp.green_code.spring_jdbc_codegen.Parameter.param;
 
 public class DbDefinitionReader {
 
-    public List<TableDefinition> readDefinition() throws Exception {
-        var result = new ArrayList<TableDefinition>();
+    public List<DbTableDefinition> readDefinition() throws Exception {
+        var result = new ArrayList<DbTableDefinition>();
         try (Connection conn = DriverManager.getConnection(param.jdbcUrl, param.jdbcUser, param.jdbcPass)) {
             var meta = conn.getMetaData();
             var rs = meta.getTables(null, param.jdbcSchema, "%", new String[]{"TABLE"});
@@ -29,8 +29,8 @@ public class DbDefinitionReader {
         return result;
     }
 
-    TableDefinition readTableDefinition(DatabaseMetaData meta, ResultSet tableRs) throws Exception {
-        var table = new TableDefinition(param);
+    DbTableDefinition readTableDefinition(DatabaseMetaData meta, ResultSet tableRs) throws Exception {
+        var table = new DbTableDefinition(param);
         table.tableName = tableRs.getString("TABLE_NAME");
         if (param.excludedTableNames.contains(table.tableName)) {
             return null;
@@ -57,8 +57,8 @@ public class DbDefinitionReader {
         return table;
     }
 
-    ColumnDefinition readColumnDefinition(String tableName, ResultSet columnRs) throws Exception {
-        var result = new ColumnDefinition();
+    DbColumnDefinition readColumnDefinition(String tableName, ResultSet columnRs) throws Exception {
+        var result = new DbColumnDefinition();
         result.tableName = tableName;
         result.columnName = columnRs.getString("COLUMN_NAME");
         result.dbTypeName = columnRs.getString("TYPE_NAME");
@@ -75,7 +75,7 @@ public class DbDefinitionReader {
         return result;
     }
 
-    void readPKDefinition(TableDefinition tableDef, ResultSet pkRs) throws Exception {
+    void readPKDefinition(DbTableDefinition tableDef, ResultSet pkRs) throws Exception {
         var columnName = pkRs.getString("COLUMN_NAME");
         // PK のカラムがとれないことはないはず
         var columnDef = tableDef.columns.stream().filter(c -> Strings.CI.equals(c.columnName, columnName)).findFirst().orElseThrow();

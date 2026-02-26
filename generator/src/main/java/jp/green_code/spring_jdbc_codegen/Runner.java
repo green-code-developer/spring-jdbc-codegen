@@ -3,7 +3,7 @@ package jp.green_code.spring_jdbc_codegen;
 import jp.green_code.spring_jdbc_codegen.db.DbDefinitionReader;
 import jp.green_code.spring_jdbc_codegen.db.DbTypeMapper;
 import jp.green_code.spring_jdbc_codegen.db.JavaType;
-import jp.green_code.spring_jdbc_codegen.db.TableDefinition;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 import jp.green_code.spring_jdbc_codegen.generator.BaseColumnDefinitionGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.BaseEntityGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.BaseHelperGenerator;
@@ -77,7 +77,7 @@ public class Runner {
 
     void appendEnum() {
         param.enumJavaTypeMappings.forEach((key, value) -> {
-            var javaType = new JavaType(value, ":{javaFieldName}::" + key);
+            var javaType = new JavaType(value, ":{javaPropertyName}::" + key);
             DbTypeMapper.put(key, javaType);
         });
     }
@@ -101,7 +101,7 @@ public class Runner {
         return Path.of(param.paramYmlDir.toUri().getPath(), param.testJavaDir).toUri().getPath();
     }
 
-    void writeEntity(TableDefinition tableDef) throws IOException {
+    void writeEntity(DbTableDefinition tableDef) throws IOException {
         var baseGenerator = new BaseEntityGenerator(param);
         var baseCode = baseGenerator.generateBaseEntityCode(tableDef);
         writeJavaCode(toMainJavaDir(), param.baseEntityPackage(), tableDef.toBaseEntityClassName(), baseCode);
@@ -150,7 +150,7 @@ public class Runner {
         writeJavaCode(toMainJavaDir(), param.repositoryPackage, param.columnDefinitionClassName, columnCode);
     }
 
-    void writeRepository(TableDefinition table) throws IOException {
+    void writeRepository(DbTableDefinition table) throws IOException {
         var baseGenerator = new BaseRepositoryGenerator(param, table);
         var baseCode = baseGenerator.generateBaseRepositoryCode();
         writeJavaCode(toMainJavaDir(), param.baseRepositoryPackage(), table.toBaseRepositoryClassName(), baseCode);
@@ -160,7 +160,7 @@ public class Runner {
         writeJavaCodeIfAbsent(toMainJavaDir(), param.repositoryPackage, table.toRepositoryClassName(), normalCode);
     }
 
-    void writeTestRepository(TableDefinition table) throws IOException {
+    void writeTestRepository(DbTableDefinition table) throws IOException {
         var testBaseGenerator = new TestBaseRepositoryGenerator(param, table);
         var testBaseCode = testBaseGenerator.generateBaseTestCode();
         writeJavaCode(toTestJavaDir(), param.baseRepositoryPackage(), table.toTestBaseRepositoryClassName(), testBaseCode);
