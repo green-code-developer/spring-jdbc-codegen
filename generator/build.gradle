@@ -39,7 +39,7 @@ jar {
 
 tasks.register('fatJar', Jar) {
     archiveBaseName.set('spring_jdbc_codegen')
-    archiveVersion.set('2.0')
+    archiveVersion.set('2.1')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes 'Main-Class': application.mainClass.get()
