@@ -86,7 +86,7 @@ public class BaseRepositoryGenerator {
         if (!table.pkColumns().isEmpty()) {
             imports.add("java.util.Optional");
         }
-        table.pkColumns().stream().filter(c -> c.toJavaType().fqcn().contains(".")).forEach(c -> imports.add("%s".formatted(c.toJavaType().fqcn())));
+        table.pkColumns().stream().filter(c -> c.toJavaType().fqcn().contains(".") && !c.toJavaType().fqcn().matches("^java\\.lang\\.[A-Za-z_$][A-Za-z0-9_$]*$")).forEach(c -> imports.add("%s".formatted(c.toJavaType().fqcn())));
         imports.add("%s.%s".formatted(param.repositoryPackage, param.repositoryHelperClassName));
         imports.add("%s.%s".formatted(param.repositoryPackage, param.columnDefinitionClassName));
         if (!table.needReturningInUpdate()) {

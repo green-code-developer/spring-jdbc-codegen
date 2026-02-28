@@ -131,13 +131,14 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 
 主な情報
 - columnName: カラム名
-- javaFieldName: Javaフィールド名
-- toParamColumn(): Javaフィールド名と型キャスト。Update やInsert のSQL 中で使う。例) :colXml:xml
-- toSelectColumn(): カラム名と型キャスト。Select のSQL 中で使う。例）col_xml::text 
+- javaPropertyName: Javaプロパティ名
+- toParamColumn(): Javaプロパティ名とSQLの型キャスト。Update やInsert のSQL 中で使う。例) :colXml:xml
+- toSelectColumn(): SQLのカラム名と型キャスト。Select 句のカラム指定で使う。例）col_xml::text 
 - nullable: null許可判定
 - isSetNow: now()を設定するか判定
 - shouldSkipInInsert: Insert 対象外カラム判定
 - shouldSkipInUpdate: Update 対象外カラム判定
+- hasNameMapping: Java プロパティ名の明示的なマッピングを行ったカラムはtrue
 
 ### 4.6 Columns.MAP<String, ColumnDefinition>
 
