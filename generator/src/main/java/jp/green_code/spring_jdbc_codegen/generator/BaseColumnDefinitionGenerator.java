@@ -46,7 +46,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    private final boolean isSetNow;");
         sb.add("    /** Update 対象外 */");
         sb.add("    private final boolean shouldSkipInUpdate;");
-        sb.add("    /** Update 対象外 */");
+        sb.add("    /** カラム名とJava プロパティ名の明示的マッピング */");
         sb.add("    private final boolean hasNameMapping;");
         sb.add("");
         sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, Integer primaryKeySeq, boolean nullable, boolean hasDefault, String dbParamTemplate, String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName()));
