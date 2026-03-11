@@ -11,12 +11,13 @@ import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
 
 public class DbTableDefinition {
     final Parameter param;
+    public final String tableName;
 
-    public DbTableDefinition(Parameter param) {
+    public DbTableDefinition(Parameter param, String tableName) {
         this.param = param;
+        this.tableName = tableName;
     }
 
-    public String tableName;
     public List<DbColumnDefinition> columns = new ArrayList<>();
 
     public String toJavaTableName() {

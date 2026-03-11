@@ -1,6 +1,7 @@
 package jp.green_code.spring_jdbc_codegen.db;
 
 import org.apache.commons.lang3.Strings;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -29,9 +30,9 @@ public class DbDefinitionReader {
         return result;
     }
 
-    DbTableDefinition readTableDefinition(DatabaseMetaData meta, ResultSet tableRs) throws Exception {
-        var table = new DbTableDefinition(param);
-        table.tableName = tableRs.getString("TABLE_NAME");
+    @Nullable DbTableDefinition readTableDefinition(DatabaseMetaData meta, ResultSet tableRs) throws Exception {
+        var tableName = tableRs.getString("TABLE_NAME");
+        var table = new DbTableDefinition(param, tableName);
         if (param.excludedTableNames.contains(table.tableName)) {
             return null;
         }

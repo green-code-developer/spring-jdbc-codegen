@@ -1,17 +1,24 @@
 package jp.green_code.spring_jdbc_codegen.db;
 
+import org.jspecify.annotations.Nullable;
+
 public record JavaType(
         /* Java の型 Full Qualified Class Name */
         String fqcn,
         /* entity のフィールドをJDBC のパラメータとして渡す際の型変換コード。省略時は変換なし */
+        @Nullable
         String javaCastSnippetInEntityToParam,
         /* Insert Update 時に行うキャストするコード。省略時は :%s (%sはJavaフィールド名)  */
+        @Nullable
         String dbParamTemplate,
         /* Select 時に行うキャストするコード。省略時は %s (%sはカラム名)  */
+        @Nullable
         String dbSelectTemplate,
         /* テストデータを自動作成するコード。テストに必要な場合は省略不可 */
+        @Nullable
         String generateDateSnippet,
         /* テストのassertion コード。省略時は assertEquals() となる */
+        @Nullable
         String assertSnippet) {
 
     // param.yml enumJavaTypeMappings から読み込む場合

@@ -6,10 +6,12 @@ import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import static java.lang.String.join;
+import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -114,14 +116,14 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("public static class Columns {");
         for (var col : table.columns) {
-            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.shouldSkipInUpdate(), col.hasNameMapping()));
+            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.shouldSkipInUpdate(), col.hasNameMapping()));
         }
         sb.add("");
         sb.add("    public static final Map<String, %s> MAP = new LinkedHashMap<>();".formatted(param.columnDefinitionClassName));
         sb.add("");
         sb.add("    static {");
         for (var col : table.columns) {
-            sb.add("        MAP.put(\"%s\", %s);".formatted(col.columnName, col.columnName.toUpperCase()));
+            sb.add("        MAP.put(\"%s\", %s);".formatted(col.columnName, col.columnName.toUpperCase(ROOT)));
         }
         sb.add("    }");
         sb.add("");

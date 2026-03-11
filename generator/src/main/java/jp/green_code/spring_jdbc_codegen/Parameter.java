@@ -1,11 +1,14 @@
 package jp.green_code.spring_jdbc_codegen;
 
+import org.jspecify.annotations.NullUnmarked;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
 
+@NullUnmarked
 public class Parameter {
     public static Parameter param;
     /** param.yml のパス */

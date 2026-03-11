@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id "net.ltgt.errorprone" version "5.1.0"
 }
 
 java {
@@ -19,12 +20,17 @@ dependencies {
     // フォルダ削除
     implementation 'commons-io:commons-io:2.18.0'
     // yml 読み込み
-    implementation("org.yaml:snakeyaml:2.2")
+    implementation 'org.yaml:snakeyaml:2.2'
     // jdbc
     runtimeOnly 'org.postgresql:postgresql:42.7.7'
     // JUnit
     testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // JSpecify (@Nullable) spring boot を使っているプロジェクトは不要
+    implementation 'org.jspecify:jspecify:1.0.0'
+    // ErrorProne
+    errorprone 'com.google.errorprone:error_prone_core:2.48.0'
+    errorprone 'com.uber.nullaway:nullaway:0.13.1'
 }
 
 application {
@@ -56,3 +62,19 @@ test {
     useJUnitPlatform()
     systemProperty "user.dir", projectDir
 }
+
+// ErrorProne ここから
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+        option("NullAway:AnnotatedPackages", "jp.green_code")
+    }
+}
+tasks.compileJava {
+    options.errorprone.error("NullAway")
+}
+tasks {
+    compileTestJava {
+        options.errorprone.enabled = false
+    }
+}
+// ErrorProne ここまで

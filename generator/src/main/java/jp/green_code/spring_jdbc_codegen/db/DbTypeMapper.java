@@ -3,6 +3,7 @@ package jp.green_code.spring_jdbc_codegen.db;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Locale.ROOT;
 import static jp.green_code.spring_jdbc_codegen.db.JavaType.BIG_DECIMAL;
 import static jp.green_code.spring_jdbc_codegen.db.JavaType.BOOLEAN;
 import static jp.green_code.spring_jdbc_codegen.db.JavaType.BOX;
@@ -80,7 +81,7 @@ public final class DbTypeMapper {
 
     public static JavaType map(String dbTypeName) {
         if (dbTypeName == null) throw new RuntimeException("dbTypeName is null ");
-        var result = MAP.get(dbTypeName.toLowerCase());
+        var result = MAP.get(dbTypeName.toLowerCase(ROOT));
         if (result == null) throw new RuntimeException("対応できない型です " + dbTypeName);
         return result;
     }
