@@ -64,8 +64,11 @@ public class DbColumnDefinition {
 
     public String javaSimpleTypeName() {
         var javaFqcn = toJavaType().fqcn();
+        if (toJavaType().isPrimitive()) {
+            return javaFqcn;
+        }
         int idx = javaFqcn.lastIndexOf('.');
-        return (idx >= 0) ? javaFqcn.substring(idx + 1) : javaFqcn;
+        return javaFqcn.substring(idx + 1);
     }
 
     public String importName() {

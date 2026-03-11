@@ -256,6 +256,20 @@ Entity, Repository, TestRepository 等、いずれも Base クラスとその実
 
 param.yml のforceOverwriteImplementation をtrue にすると実体クラスも再作成されます。（デフォルトfalse）
 
+### 5.6 @NullMarked 対応
+
+@NullMarked を使用しているプロジェクトの場合、Entity のパッケージに @NullUnmarked を付与する必要があります。
+
+Entity クラスでは、データベースの値などを扱うためnull を許容するケースがあるためです。
+
+こちらの設定を入れると、パッケージに@NullUnmarked を付与したpackage-info.java ファイルを作成します。また、必要な箇所に @Nullable を追加します。
+
+設定例
+```yml
+# param.yml
+enableNullUnmarkedForEntityPackages: true
+```
+
 ## 6 TestRepository の使い方
 
 param.yml testTargetTable にテスト対象のテーブル名を記載するとテストコードが生成されます。

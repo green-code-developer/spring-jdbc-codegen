@@ -3,6 +3,7 @@ package jp.green_code.spring_jdbc_codegen.generator;
 import jp.green_code.spring_jdbc_codegen.Parameter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.String.join;
 
@@ -15,8 +16,15 @@ public class BaseColumnDefinitionGenerator {
 
     public String generateHelper() {
         var sb = new ArrayList<String>();
+        var nullable = "";
+
         sb.add("package %s;".formatted(param.baseRepositoryPackage()));
         sb.add("");
+        if (param.enableNullUnmarkedForEntityPackages) {
+            sb.add("import org.jspecify.annotations.Nullable;");
+            sb.add("");
+            nullable = param.toNullable() + " ";
+        }
         sb.add("import static org.apache.commons.lang3.StringUtils.isBlank;");
         sb.add("");
         sb.add("public class %s {".formatted(param.toBaseColumnDefinitionClassName()));
@@ -33,14 +41,17 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    /** DB カラムサイズ */");
         sb.add("    private final Integer columnSize;");
         sb.add("    /** DB プライマリーキー順番（プライマリーキーでなければnull）*/");
+        addNullableIfNeed(sb);
         sb.add("    private final Integer primaryKeySeq;");
         sb.add("    /** DB null許可 */");
         sb.add("    private final boolean nullable;");
         sb.add("    /** DB デフォルト値あり */");
         sb.add("    private final boolean hasDefault;");
         sb.add("    /** Javaフィールド名と型キャスト用のテンプレート（内部用） */");
+        addNullableIfNeed(sb);
         sb.add("    private final String dbParamTemplate;");
         sb.add("    /** カラム名と型キャスト用のテンプレート（内部用） */");
+        addNullableIfNeed(sb);
         sb.add("    private final String dbSelectTemplate;");
         sb.add("    /** now() で上書きを行う */");
         sb.add("    private final boolean isSetNow;");
@@ -49,7 +60,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    /** カラム名とJava プロパティ名の明示的マッピング */");
         sb.add("    private final boolean hasNameMapping;");
         sb.add("");
-        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, Integer primaryKeySeq, boolean nullable, boolean hasDefault, String dbParamTemplate, String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, %sInteger primaryKeySeq, boolean nullable, boolean hasDefault, %sString dbParamTemplate, %sString dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName(), nullable, nullable, nullable));
         sb.add("        this.columnName = columnName;");
         sb.add("        this.javaPropertyName = javaPropertyName;");
         sb.add("        this.javaFqcn = javaFqcn;");
@@ -90,6 +101,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        return columnSize;");
         sb.add("    }");
         sb.add("");
+        addNullableIfNeed(sb);
         sb.add("    public Integer getPrimaryKeySeq() {");
         sb.add("        return primaryKeySeq;");
         sb.add("    }");
@@ -102,12 +114,18 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        return hasDefault;");
         sb.add("    }");
         sb.add("");
+        addNullableIfNeed(sb);
         sb.add("    public String getDbParamTemplate() {");
         sb.add("        return dbParamTemplate;");
         sb.add("    }");
         sb.add("");
+        addNullableIfNeed(sb);
         sb.add("    public String getDbSelectTemplate() {");
         sb.add("        return dbSelectTemplate;");
+        sb.add("    }");
+        sb.add("");
+        sb.add("    public boolean getHasNameMapping() {");
+        sb.add("        return hasNameMapping;");
         sb.add("    }");
         sb.add("");
         sb.add("    /** Javaフィールド名と型キャスト */");
@@ -133,6 +151,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        return shouldSkipInUpdate;");
         sb.add("    }");
         sb.add("");
+        sb.add("    @Override");
         sb.add("    public String toString() {");
         sb.add("        return getColumnName();");
         sb.add("    }");
@@ -143,5 +162,11 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    }");
         sb.add("}");
         return join("\n", sb);
+    }
+
+    void addNullableIfNeed(List<String> sb) {
+        if (param.enableNullUnmarkedForEntityPackages) {
+            sb.add("    " + param.toNullable());
+        }
     }
 }

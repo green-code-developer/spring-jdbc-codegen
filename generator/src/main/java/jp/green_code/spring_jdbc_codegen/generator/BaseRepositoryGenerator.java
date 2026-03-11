@@ -83,6 +83,7 @@ public class BaseRepositoryGenerator {
         imports.add("java.util.HashSet");
         imports.add("java.util.LinkedHashMap");
         imports.add("java.util.Map");
+        imports.add("java.util.Objects");
         if (!table.pkColumns().isEmpty()) {
             imports.add("java.util.Optional");
         }
@@ -163,7 +164,7 @@ public class BaseRepositoryGenerator {
         sb.add("    if (returningColumns.isEmpty()) {");
         sb.add("        this.helper.exec(sql, param);");
         sb.add("    } else {");
-        sb.add("        var returningClause = returningColumns.stream().map(c -> Columns.MAP.get(c).toSelectColumn()).collect(joining(\", \"));");
+        sb.add("        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));");
         sb.add("        sql.add(\"returning %s\".formatted(returningClause));");
         var varRet = "";
         if (table.needReturningInInsert()) {

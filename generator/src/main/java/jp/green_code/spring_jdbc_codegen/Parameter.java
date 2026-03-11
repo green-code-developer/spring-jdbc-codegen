@@ -38,6 +38,8 @@ public class Parameter {
     public String testJavaDir;
     /** カラム名とJava プロパティ名のマッピング */
     public Map<String, Map<String, String>> columnName2javaPropertyMap = Map.of();
+    /** Entity パッケージに @NullMarked を付けるかどうか */
+    public boolean enableNullUnmarkedForEntityPackages;
 
     // 以下高度なカスタマイズ用設定
     /** 規定クラスのパッケージ名 base */
@@ -64,6 +66,10 @@ public class Parameter {
     public String mapperClassNamePrefix = "";
     /** Mapper クラスの接尾辞 Mapper */
     public String mapperClassNameSuffix = "Mapper";
+    /** &#064;Nullable のfqcn */
+    public String nullableFqcn = "org.jspecify.annotations.Nullable";
+    /** &#064;NullMarked のfqcn */
+    public String nullUnmarkedFqcn = "org.jspecify.annotations.NullUnmarked";
 
     public String baseEntityPackage() {
         return entityPackage + "." + basePackageName;
@@ -79,5 +85,15 @@ public class Parameter {
 
     public String toBaseHelperRepositoryClassName() {
         return toCamelCase(param.basePackageName, true) + param.repositoryHelperClassName;
+    }
+
+    public String toNullable() {
+        int idx = nullableFqcn.lastIndexOf('.');
+        return "@" + nullableFqcn.substring(idx + 1);
+    }
+
+    public String toNullUnmarked() {
+        int idx = nullUnmarkedFqcn.lastIndexOf('.');
+        return "@" + nullUnmarkedFqcn.substring(idx + 1);
     }
 }

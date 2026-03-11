@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -24,7 +25,7 @@ public class TestOnlyPk3NowRepository {
 
         // 存在しないpk の場合は例外発生するはず
         //   内部でhelper.single() を使っているケース
-        entity.setPk1(OffsetDateTime.now());
+        entity.setPk1(OffsetDateTime.now(ZoneId.systemDefault()));
         assertThrows(EmptyResultDataAccessException.class, () -> {
             repository.update(entity);
         });

@@ -1,4 +1,3 @@
-
 # JDBC 接続情報（必須）
 jdbcUrl: jdbc:postgresql://localhost:56384/spring_jdbc_codegen
 jdbcUser: spring_jdbc_codegen
@@ -66,6 +65,11 @@ setNowColumnsByTable:
 columnName2javaPropertyMap:
   "日本語Table":
     rename: renamedJavaName
+
+# Entity パッケージに @NullUnmarked を付けるかどうか（省略可）
+#   初期値 false(付けない)
+#   付ける場合{entityPackage} と{entityPackage}.{basePackageName} にpackage-info.java を作成します。また、必要な箇所に @Nullable を追加します。
+enableNullUnmarkedForEntityPackages: true
 
 # 実体クラスの強制上書き（省略可）
 #   初期値 false(しない)
@@ -141,3 +145,11 @@ testTargetTable:
 # Mapper クラスの接尾辞（省略可）
 #   初期値 Mapper
 #mapperClassNameSuffix: Mapper
+
+# @Nullable のfqcn（省略可）
+#   初期値 org.jspecify.annotations.Nullable
+#nullableFqcn: org.jspecify.annotations.Nullable
+
+# @NullUnmarked のfqcn（省略可）
+#   初期値 org.jspecify.annotations.NullMarked
+#nullUnmarkedFqcn: org.jspecify.annotations.NullUnmarked

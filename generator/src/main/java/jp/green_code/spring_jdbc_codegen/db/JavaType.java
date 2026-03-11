@@ -19,6 +19,10 @@ public record JavaType(
         this(fqcn, "String.valueOf({value})", dbParamTemplate, null, "return pickBySeed(%s.class, seed);".formatted(fqcn), null);
     }
 
+    public boolean isPrimitive() {
+        return fqcn.lastIndexOf('.') < 0;
+    }
+
     // 文字列
     public static final JavaType STRING = new JavaType("java.lang.String", null, null, null, "return String.valueOf(seed);", "assertEquals(expected, value.trim());");
     public static final JavaType UUID = new JavaType("java.util.UUID", null, null, null, "return UUID.fromString(\"9529478b-20d7-4232-ba79-\"+String.format(\"%012d\", seed));", null);
@@ -57,5 +61,5 @@ public record JavaType(
     public static final JavaType CIRCLE = new JavaType("java.lang.String", null, ":{javaPropertyName}::circle", "{columnName}::text", "return \"<(0,0),%d>\".formatted(seed);", null);
 
     // バイト配列
-    public static final JavaType BYTE_ARRAY = new JavaType("byte[]", null, null, null, "return new byte[]{(byte)(seed), (byte)(seed >> 8), (byte)(seed >> 16), (byte)(seed >> 24)};", "org.junit.jupiter.api.Assertions.assertArrayEquals(expected, value);");
+    public static final JavaType BYTE_ARRAY = new JavaType("byte[]", null, null, null, "return new byte[]{(byte)seed, (byte)(seed >> 8), (byte)(seed >> 16), (byte)(seed >> 24)};", "org.junit.jupiter.api.Assertions.assertArrayEquals(expected, value);");
 }

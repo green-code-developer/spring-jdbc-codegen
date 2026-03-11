@@ -1,9 +1,9 @@
 package jp.green_code.spring_jdbc_codegen;
 
 import jp.green_code.spring_jdbc_codegen.db.DbDefinitionReader;
+import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 import jp.green_code.spring_jdbc_codegen.db.DbTypeMapper;
 import jp.green_code.spring_jdbc_codegen.db.JavaType;
-import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 import jp.green_code.spring_jdbc_codegen.generator.BaseColumnDefinitionGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.BaseEntityGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.BaseHelperGenerator;
@@ -11,6 +11,7 @@ import jp.green_code.spring_jdbc_codegen.generator.BaseRepositoryGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.ColumnDefinitionGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.EntityGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.HelperGenerator;
+import jp.green_code.spring_jdbc_codegen.generator.NullMarkedGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.RepositoryGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.TestBaseRepositoryGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.TestRepositoryGenerator;
@@ -109,6 +110,16 @@ public class Runner {
         var generator = new EntityGenerator(param);
         var code = generator.generateEntityCode(tableDef);
         writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, tableDef.toEntityClassName(), code);
+
+        if (param.enableNullUnmarkedForEntityPackages) {
+            var nullMarkedGenerator = new NullMarkedGenerator(param);
+
+            var baseNullMarkedCode = nullMarkedGenerator.generateNullMarkedPackageInfoCode(param.baseEntityPackage());
+            writeJavaCode(toMainJavaDir(), param.baseEntityPackage(), "package-info", baseNullMarkedCode);
+
+            var nullMarkedCode = nullMarkedGenerator.generateNullMarkedPackageInfoCode(param.entityPackage);
+            writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, "package-info", nullMarkedCode);
+        }
     }
 
     void writeJavaCode(String dir, String packageName, String className, String code) throws IOException {

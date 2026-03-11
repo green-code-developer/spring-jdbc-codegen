@@ -3,6 +3,7 @@ package jp.green_code.spring_jdbc_codegen.generator;
 import jp.green_code.spring_jdbc_codegen.Parameter;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static java.lang.String.join;
 
@@ -70,7 +71,9 @@ public class BaseHelperGenerator {
         sb.add("");
         sb.add("    public <T> T single(String sql, Map<String, ?> param, Class<T> clazz) {");
         sb.add("        if (clazz.isPrimitive() || Number.class.isAssignableFrom(clazz) || clazz == String.class) {");
-        sb.add("            return namedParameterJdbcTemplate.queryForObject(sql, param, clazz);");
+        sb.add("            return Optional.ofNullable(");
+        sb.add("                    namedParameterJdbcTemplate.queryForObject(sql, param, clazz)");
+        sb.add("            ).orElseThrow();");
         sb.add("        } else {");
         sb.add("            return single(sql, param, new BeanPropertyRowMapper<>(clazz));");
         sb.add("        }");
@@ -81,7 +84,9 @@ public class BaseHelperGenerator {
         sb.add("    }");
         sb.add("");
         sb.add("    public <T> T single(String sql, Map<String, ?> param, RowMapper<T> mapper) {");
-        sb.add("        return namedParameterJdbcTemplate.queryForObject(sql, param, mapper);");
+        sb.add("        return Optional.ofNullable(");
+        sb.add("                namedParameterJdbcTemplate.queryForObject(sql, param, mapper)");
+        sb.add("        ).orElseThrow();");
         sb.add("    }");
         sb.add("");
         sb.add("    public <T> Optional<T> optional(List<String> sql, Map<String, ?> param, Class<T> clazz) {");
