@@ -95,7 +95,7 @@ testTargetTable:
   - only_pk1
   - only_pk3
   - only_pk3_now
-  - all_types_as
+  - all_types_as_pk
   - 日本語Table
 
 #

@@ -295,7 +295,7 @@ public class BaseRepositoryGenerator {
         for (var col : table.pkColumns()) {
             i++;
             pkConditions.add("\\\"%s\\\" = %s".formatted(col.columnName, col.toParamColumn("__pk" + i)));
-            sb.add("    __param.put(\"__pk%d\", %s);".formatted(i, col.toJavaPropertyName()));
+            sb.add("    __param.put(\"__pk%d\", %s);".formatted(i, col.toJavaValueExpression(col.toJavaPropertyName())));
         }
         sb.add("    __sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
 
