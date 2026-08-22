@@ -55,6 +55,9 @@ make jar            # fat jar のビルド
 - `TestGolden` — `src/test/resources/golden/param.yml` で `build/golden-actual/` へ生成し、
   `golden/expected/` と完全一致するか検証する
 
+どちらも入力が DB なので Gradle の up-to-date 判定が効かない。
+`test` タスクには `outputs.upToDateWhen { false }` を指定して常に実行させている。
+
 ## 注意点
 
 - Java 21 必須

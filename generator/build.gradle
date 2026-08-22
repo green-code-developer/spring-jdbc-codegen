@@ -61,6 +61,17 @@ tasks.register('fatJar', Jar) {
 test {
     useJUnitPlatform()
     systemProperty "user.dir", projectDir
+    // 入力がDB のためGradle のup-to-date 判定が効かない。常に実行する
+    outputs.upToDateWhen { false }
+}
+
+// golden 更新用の生成。make golden-update から使う
+tasks.register('generateGolden', JavaExec) {
+    description = 'golden 更新用に build/golden-actual へ生成する'
+    mainClass = 'jp.green_code.spring_jdbc_codegen.Main'
+    classpath = sourceSets.main.runtimeClasspath
+    args file('src/test/resources/golden/param.yml').absolutePath
+    outputs.upToDateWhen { false }
 }
 
 // ErrorProne ここから
