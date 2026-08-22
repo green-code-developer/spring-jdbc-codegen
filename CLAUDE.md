@@ -14,6 +14,7 @@ Entity / Repository / TestRepository を生成する CLI ツール。
 | `test-app/` | 生成結果の検証用 Spring Boot アプリ。生成物は git 管理外 |
 | `docker_spring_jdbc_codegen/` | 検証用 PostgreSQL と DDL |
 | `docs/spec/` | 仕様書（単一の真実） |
+| `generator/src/test/resources/golden/` | golden テストの入力(param.yml)と期待値(expected) |
 
 generator の主要クラス:
 
@@ -28,7 +29,8 @@ generator の主要クラス:
 
 1. `docs/spec/` の該当仕様を先に更新し、diff をユーザーに提示して承認を得る
 2. 承認後に `generator/` を実装する
-3. コード生成を再実行し、test-app のコンパイルとテストで生成結果を検証する
+3. `make verify` で検証する。golden の差分が出たら意図通りか確認し、
+   `make golden-update` で更新する。**この差分が仕様変更の実体なので必ずレビューする**
 4. コミットメッセージに対応する仕様 ID を含める
 
 ルール:
@@ -41,18 +43,17 @@ generator の主要クラス:
 ## コマンド
 
 ```bash
-# 検証用 DB の起動
-cd docker_spring_jdbc_codegen && make docker
-
-# fat jar のビルド
-make jar
-
-# コード生成（generator/src/main/resources/param.yml を使い test-app へ出力）
-cd generator && ../gradlew test
-
-# 生成結果のコンパイルとテスト
-cd test-app && ../gradlew test
+make docker         # 検証用 DB の起動（他のコマンドの前提）
+make verify         # golden 比較 + test-app のコンパイルとテスト
+make golden-update  # golden を現在の生成結果で更新する
+make jar            # fat jar のビルド
 ```
+
+`cd generator && ../gradlew test` は 2 つのテストを実行する。
+
+- `TestMain` — `src/main/resources/param.yml` で test-app へ生成する。検証はしない
+- `TestGolden` — `src/test/resources/golden/param.yml` で `build/golden-actual/` へ生成し、
+  `golden/expected/` と完全一致するか検証する
 
 ## 注意点
 
@@ -63,3 +64,7 @@ cd test-app && ../gradlew test
   実体クラスは初回のみ生成され、以降は上書きしない
   （`forceOverwriteImplementation: true` で強制上書き）
 - test-app の生成物は `.gitignore` 済み。生成コードを直接編集しない
+- golden の `expected/` は git 管理下に置く。生成コードの差分をレビュー可能にするため
+- `golden/param.yml` は `src/main/resources/param.yml` のコピー。
+  出力先と `forceOverwriteImplementation` のみ異なるので、main 側を変更したら追随させる
+- `Parameter.param` が static のためテストは逐次実行が前提。`maxParallelForks` を上げない
