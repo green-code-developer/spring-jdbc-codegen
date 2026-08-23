@@ -153,6 +153,10 @@ Base クラスの内部に `public static class Columns` を生成する。
 | `toSelectColumn()` | SELECT 変換を適用したカラム指定 |
 | `toUpdateSetClause()` | UPDATE の set 句 1 項目 |
 
+null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` には、
+フィールドとコンストラクタ引数の双方に `@Nullable` を付与する。
+`nullableFqcn`（[PARAM-011](10-param.md)）で差し替えられる。
+
 ## REPO-051 RowMapper
 
 `columnName2javaPropertyMap`（[PARAM-008](10-param.md)）で命名マッピングを指定した
@@ -164,7 +168,7 @@ Base クラスの内部に `public static class Columns` を生成する。
 指定がないテーブルは `BeanPropertyRowMapper` の既定変換（スネークケース →
 キャメルケース）で足りるため生成しない。
 
-このクラスにのみ `@Nullable` と `@NullMarked` を出力する。
+このクラスには `@NullMarked` を付与し、`underscoreName()` の引数に `@Nullable` を付与する。
 
 ## REPO-060 RepositoryHelper
 

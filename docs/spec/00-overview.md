@@ -46,6 +46,8 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 
 引数がない場合は使い方を表示して正常終了する。生成は行わない。
 
+終了コードは [CORE-007](#core-007-終了コードとエラー時の扱い) を参照。
+
 ## CORE-003 実行フロー
 
 `Runner.run()` は次の順序で処理する。
@@ -54,11 +56,16 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 2. `enumJavaTypeMappings` の内容を型マッピングへ追加する（[TYPE-010](20-type-mapping.md)）
 3. JDBC メタデータからテーブル定義を読み取る
 4. 読み取った定義を標準出力へダンプする
-5. Base クラスのディレクトリを削除する（[CORE-005](#core-005-base-クラスと実体クラス)）
-6. 全テーブルの Entity を生成する
-7. Helper と ColumnDefinition を生成する
-8. 全テーブルの Repository を生成する
-9. `testTargetTable` に指定されたテーブルの TestRepository を生成する
+5. param.yml の設定を検証する（[PARAM-020](10-param.md)）。結果の出力は 10 で行う
+6. Base クラスのディレクトリを削除する（[CORE-005](#core-005-base-クラスと実体クラス)）
+7. 全テーブルの Entity を生成する
+8. Helper と ColumnDefinition を生成する
+9. 全テーブルの Repository を生成する
+10. `testTargetTable` に指定されたテーブルの TestRepository を生成する
+11. 5 の検証結果を警告として出力する
+
+検証（5）は生成を中断しない。生成をすべて終えたうえで警告を出力し、
+終了コードで呼び出し元へ伝える。
 
 ## CORE-004 生成されるファイル
 
@@ -104,7 +111,16 @@ JDBC メタデータから `jdbcSchema` に属する `TABLE` 種別のオブジ�
 `excludedTableNames` に列挙されたテーブルは Entity / Repository / TestRepository の
 いずれも生成しない。
 
-## CORE-007 エラー時の扱い
+## CORE-007 終了コードとエラー時の扱い
+
+| 終了コード | 状態 | 生成物 |
+| --- | --- | --- |
+| 0 | 正常終了 | 生成される |
+| 1 | param.yml に有効でない設定があった（[PARAM-020](10-param.md)） | **生成される** |
+| 1 以外の異常終了 | 例外による中断 | 中途半端な状態で残る可能性がある |
+
+終了コード 1 は生成が完了したうえで返す。設定の誤りは生成を妨げないが、
+気付かないまま使い続けると意図しない結果になるため、呼び出し元へ伝える。
 
 次の場合は例外を送出して異常終了する。生成物を中途半端な状態で残す可能性がある。
 

@@ -80,4 +80,8 @@ import org.jspecify.annotations.NullUnmarked;
 
 **Entity のフィールドや getter / setter に `@Nullable` は付与しない。**
 パッケージ単位で `@NullUnmarked` にすることで null 許容を表現する。
-`@Nullable` を出力するのは Repository 側のみ（[REPO-051](31-repository.md)）。
+
+`@Nullable` を出力するのは Repository 側だけで、対象は次の 2 つ。
+
+- `ColumnDefinition` と `BaseColumnDefinition`（[REPO-050](31-repository.md)）
+- RowMapper を生成した Repository（[REPO-051](31-repository.md)）

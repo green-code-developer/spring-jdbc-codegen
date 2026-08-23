@@ -22,22 +22,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.util.stream.Collectors.toSet;
 import static jp.green_code.spring_jdbc_codegen.Parameter.param;
-import static jp.green_code.spring_jdbc_codegen.Util.dumpTableDefinitions;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class Runner {
+
+    /** param.yml の有効でない設定。実行後に参照する */
+    public final List<String> warnings = new ArrayList<>();
 
     public void run(String paramPath) throws Exception {
         param = readParameter(paramPath);
         var dbDefinitionReader = new DbDefinitionReader();
         appendEnum();
         var tables = dbDefinitionReader.readDefinition();
-        dumpTableDefinitions(tables);
+        warnings.addAll(validateParameter(tables, dbDefinitionReader.excludedTables));
         deleteBaseSources();
         for (var t : tables) {
             writeEntity(t);
@@ -54,6 +62,77 @@ public class Runner {
                 System.out.printf("%s はテスト対象外 param.yml記載なし%n", t.tableName);
             }
         }
+        printWarnings();
+    }
+
+    /**
+     * param.yml の設定が実在するテーブル・カラムを指しているか検証する。
+     * 打ち間違いやテーブル定義の変更で設定が無効化されても、通常はエラーにならず
+     * 気付けないため、生成の最後にまとめて警告する。
+     */
+    List<String> validateParameter(List<DbTableDefinition> tables, List<String> excludedTables) {
+        var warnings = new ArrayList<String>();
+        var tableNames = tables.stream().map(t -> t.tableName).collect(toSet());
+
+        for (var t : param.excludedTableNames) {
+            if (!excludedTables.contains(t)) {
+                warnings.add("excludedTableNames のテーブル \"%s\" は存在しません".formatted(t));
+            }
+        }
+        for (var t : param.testTargetTable) {
+            if (!tableNames.contains(t)) {
+                warnings.add("testTargetTable のテーブル \"%s\" は存在しません".formatted(t));
+            }
+        }
+        warnings.addAll(validateColumnSetting("excludeUpdateColumnsByTable", param.excludeUpdateColumnsByTable, tables));
+        warnings.addAll(validateColumnSetting("setNowColumnsByTable", param.setNowColumnsByTable, tables));
+        var mappingKeys = new LinkedHashMap<String, Collection<String>>();
+        param.columnName2javaPropertyMap.forEach((k, v) -> mappingKeys.put(k, v.keySet()));
+        warnings.addAll(validateColumnSetting("columnName2javaPropertyMap", mappingKeys, tables));
+
+        var dbTypeNames = tables.stream().flatMap(t -> t.columns.stream()).map(c -> c.dbTypeName).collect(toSet());
+        for (var dbType : param.enumJavaTypeMappings.keySet()) {
+            if (!dbTypeNames.contains(dbType)) {
+                warnings.add("enumJavaTypeMappings の型 \"%s\" を使っているカラムはありません".formatted(dbType));
+            }
+        }
+        return warnings;
+    }
+
+    /** テーブル名とカラム名を指定する形式の設定を検証する */
+    List<String> validateColumnSetting(String settingName, Map<String, ? extends Collection<String>> setting, List<DbTableDefinition> tables) {
+        var warnings = new ArrayList<String>();
+        setting.forEach((tableName, columnNames) -> {
+            List<DbTableDefinition> targets;
+            if ("*".equals(tableName)) {
+                targets = tables;
+            } else {
+                targets = tables.stream().filter(t -> t.tableName.equals(tableName)).toList();
+                if (targets.isEmpty()) {
+                    warnings.add("%s のテーブル \"%s\" は存在しません".formatted(settingName, tableName));
+                    return;
+                }
+            }
+            var columnsInTargets = targets.stream().flatMap(t -> t.columns.stream()).map(c -> c.columnName).collect(toSet());
+            for (var columnName : columnNames) {
+                if (!columnsInTargets.contains(columnName)) {
+                    var where = "*".equals(tableName) ? "どのテーブルにも" : "テーブル \"%s\" に".formatted(tableName);
+                    warnings.add("%s のカラム \"%s\" は%s存在しません".formatted(settingName, columnName, where));
+                }
+            }
+        });
+        return warnings;
+    }
+
+    void printWarnings() {
+        if (warnings.isEmpty()) {
+            return;
+        }
+        System.out.println();
+        System.out.println("========================================");
+        System.out.printf("param.yml に有効でない設定が %d 件あります%n", warnings.size());
+        warnings.forEach(w -> System.out.println("  警告: " + w));
+        System.out.println("========================================");
     }
 
     static Parameter readParameter(String paramPath) throws IOException {
@@ -70,7 +149,6 @@ public class Runner {
             try (InputStream is = new FileInputStream(path.toFile())) {
                 param = yaml.loadAs(is, Parameter.class);
                 param.paramYmlDir = path.toAbsolutePath().getParent();
-                System.out.println(param.paramYmlDir.toUri().getPath());
             }
         }
         return param;
@@ -125,7 +203,6 @@ public class Runner {
     void writeJavaCode(String dir, String packageName, String className, String code) throws IOException {
         var packagePath = packageName.replace(".", "/");
         Path file = Path.of(dir, packagePath, "%s.java".formatted(className));
-        System.out.printf("java code: %s%n", file.toAbsolutePath());
         Files.createDirectories(file.getParent());
         Files.writeString(file, code, CREATE, TRUNCATE_EXISTING);
     }

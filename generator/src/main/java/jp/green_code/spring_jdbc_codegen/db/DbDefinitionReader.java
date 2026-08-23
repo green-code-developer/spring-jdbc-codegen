@@ -15,6 +15,9 @@ import static jp.green_code.spring_jdbc_codegen.Parameter.param;
 
 public class DbDefinitionReader {
 
+    /** excludedTableNames により実際に除外したテーブル名 */
+    public final List<String> excludedTables = new ArrayList<>();
+
     public List<DbTableDefinition> readDefinition() throws Exception {
         var result = new ArrayList<DbTableDefinition>();
         try (Connection conn = DriverManager.getConnection(param.jdbcUrl, param.jdbcUser, param.jdbcPass)) {
@@ -34,6 +37,7 @@ public class DbDefinitionReader {
         var tableName = tableRs.getString("TABLE_NAME");
         var table = new DbTableDefinition(param, tableName);
         if (param.excludedTableNames.contains(table.tableName)) {
+            excludedTables.add(table.tableName);
             return null;
         }
         int index = 0;

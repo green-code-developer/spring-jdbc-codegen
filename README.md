@@ -1,5 +1,38 @@
 # spring jdbc codegen
 
+## 目次
+
+- [1. 機能概要](#1-機能概要)
+- [2. 導入と動かし方](#2-導入と動かし方)
+  - [2.1 終了コード](#21-終了コード)
+- [3. 制約](#3-制約)
+  - [3.1 できないこと](#31-できないこと)
+  - [3.2 導入するプロジェクト側に必要な構成](#32-導入するプロジェクト側に必要な構成)
+  - [3.3 テーブルやカラムの命名](#33-テーブルやカラムの命名)
+  - [3.4 動作確認済みの構成](#34-動作確認済みの構成)
+- [4. {テーブル名}Repository クラスの使い方](#4-テーブル名repository-クラスの使い方)
+  - [4.1 T insert(T entity)](#41-t-insertt-entity)
+  - [4.2 T update(T entity)](#42-t-updatet-entity)
+  - [4.3 T updateByPk(T entity, pk)](#43-t-updatebypkt-entity-pk)
+  - [4.4 Optional&lt;Entity&gt; findByPk(pk)](#44-optionalentity-findbypkpk)
+  - [4.5 int deleteByPk(pk)](#45-int-deletebypkpk)
+  - [4.6 class Columns](#46-class-columns)
+  - [4.7 Columns.MAP<String, ColumnDefinition>](#47-columnsmapstring-columndefinition)
+  - [4.8 Columns.selectAster()](#48-columnsselectaster)
+  - [4.9 @Component RepositoryHelper](#49-component-repositoryhelper)
+  - [4.10 MAPPER (RowMapper)](#410-mapper-rowmapper)
+- [5. 便利な使い方](#5-便利な使い方)
+  - [5.1 Enum 型を追加する](#51-enum-型を追加する)
+  - [5.2 作成者カラム、作成日時カラムをUpdate から除外する](#52-作成者カラム作成日時カラムをupdate-から除外する)
+  - [5.3 Insert, Update 時にデータベースの時刻 now() を指定したい](#53-insert-update-時にデータベースの時刻-now-を指定したい)
+  - [5.4 カラム名とJava プロパティ名の明示的なマッピング](#54-カラム名とjava-プロパティ名の明示的なマッピング)
+  - [5.5 Base クラス](#55-base-クラス)
+  - [5.6 @NullMarked 対応](#56-nullmarked-対応)
+- [6. TestRepository の使い方](#6-testrepository-の使い方)
+  - [6.1 テストデータ作成で固定値を指定したい](#61-テストデータ作成で固定値を指定したい)
+- [7. DB 型とJava 型の変換表](#7-db-型とjava-型の変換表)
+  - [7.1 対応外の型](#71-対応外の型)
+
 ## 1. 機能概要
 
 spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
@@ -11,7 +44,7 @@ spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 - Spring JDBC 前提
 - PostgreSQL のみ対応
 - Enum 対応可能
-- Update Insert 除外カラム指定可能
+- Update Insert 除外カラム指定
 
 ## 2. 導入と動かし方
 
@@ -49,6 +82,21 @@ spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 
 4. 指定したパッケージにJava コードが作成される
 
+### 2.1 終了コード
+
+| 終了コード | 意味 |
+| --- | --- |
+| 0 | 正常終了 |
+| 1 | コードは生成されたが、param.yml に有効でない設定があった |
+| 1 以外の異常終了 | DB へ接続できない、対応していない型があるなど。コードは生成されない |
+
+param.yml のテーブル名やカラム名を打ち間違えた場合、あるいはテーブル定義の変更で
+設定が実態と合わなくなった場合、その設定は**エラーにならず無効化されます**。
+「設定したのに効かない」という状態に気付けるよう、実行の最後に警告を表示し、終了コード 1 を返します。
+コードの生成自体は完了しているため、警告を承知の上で使い続けることもできます。
+CI で確実に検知したい場合は終了コードを判定してください。
+なお、テーブル名に `"*"` を指定した設定は、**どのテーブルにも 1 つも存在しない場合のみ**警告します。一部のテーブルにしか無いカラムを `"*"` で指定するのは正当な使い方のためです。
+
 ## 3. 制約
 
 ### 3.1 できないこと
@@ -81,10 +129,10 @@ dependencies {
 - テーブル名はJava のクラス名に変換可能であること。重複しないこと
 - カラム名はJava のフィールド名に変換可能であること。重複しないこと
 
-## 3.4 動作確認済みの構成
+### 3.4 動作確認済みの構成
 
 - Java 21
-- Spring Boot 3.5.10
+- Spring Boot 4.0.2
 - Spring JDBC
 - PostgreSQL 17
 
@@ -107,23 +155,27 @@ var id = account.getAccountId(); // 自動採番されたPK を取得
 ```
 ```sql
 -- Spring JDBC に渡されるSQL
-insert into account (name) values (":name");
+insert into "account" ("name") values (:name);
 -- パラメータの :name は "green-code-user" 
 ```
 
 ### 4.2 T update(T entity)
 
-entity のプライマリーキーをキーとして、該当するレコードを1件更新します。 該当するレコードが存在しない場合は例外(EmptyResultDataAccessException)をスローします。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
+entity のプライマリーキーをキーとして、該当するレコードを1件更新します。該当するレコードが存在しない場合は例外(EmptyResultDataAccessException)をスローします。プライマリーキーを持たないテーブルやUpdate 対象カラムが存在しないテーブルには、このメソッドは生成されません。
 
-### 4.3 Optional&lt;Entity&gt; findByPk(pk)
+### 4.3 T updateByPk(T entity, pk)
+
+pk をキーとして、該当するレコードを1件更新します。update() との違いは、entity 内のプライマリーキーをキーとしない点です。PK をUpdate する場合に使用します。その他の性質はupdate() と同じです。
+
+### 4.4 `Optional<Entity> findByPk(pk)`
 
 プライマリーキーの1レコードを取得します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### 4.4 int deleteByPk(pk)
+### 4.5 int deleteByPk(pk)
 
 プライマリーキーの1レコードを削除します。戻り値は削除された件数です。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### 4.5 class Columns
+### 4.6 class Columns
 
 カラム定義に関する情報を持ったインスタンスが格納されています。
 
@@ -132,26 +184,27 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 主な情報
 - columnName: カラム名
 - javaPropertyName: Javaプロパティ名
-- toParamColumn(): Javaプロパティ名とSQLの型キャスト。Update やInsert のSQL 中で使う。例) :colXml:xml
+- toParamColumn(): Javaプロパティ名とSQLの型キャスト。Update やInsert のSQL 中で使う。例) :colXml::xml
 - toSelectColumn(): SQLのカラム名と型キャスト。Select 句のカラム指定で使う。例）col_xml::text 
 - nullable: null許可判定
+- hasDefault: DB カラムに初期値が定義されているか判定
+- primaryKeySeq: プライマリーキーの順序。プライマリーキーでない場合はnull
 - isSetNow: now()を設定するか判定
-- shouldSkipInInsert: Insert 対象外カラム判定
-- shouldSkipInUpdate: Update 対象外カラム判定
+- shouldSkipInUpdate: param.yml のexcludeUpdateColumnsByTable でUpdate 対象外カラムと指定された場合true
 - hasNameMapping: Java プロパティ名の明示的なマッピングを行ったカラムはtrue
 
-### 4.6 Columns.MAP<String, ColumnDefinition>
+### 4.7 Columns.MAP<String, ColumnDefinition>
 
 そのテーブルが持つ全てのカラム（class Columns のインスタンス）が、カラム名とカラム定義の形式でマップとして保持されています。
 
-### 4.7 Columns.selectAster()
+### 4.8 Columns.selectAster()
 
-全てのカラム名をカンマで区切ったものです。
-select * from table と書きたい時に、* の代わりにこの定数を使います。
+全てのカラム名をカンマで区切ったものを返すメソッドです。
+select * from table と書きたい時に、* の代わりにこのメソッドを使います。
 カラム名に加えて型変換が付与されています。
 例）col_xml::text
 
-### 4.8 @Component RepositoryHelper
+### 4.9 @Component RepositoryHelper
 
 NamedParameterJdbcTemplate をラップして短く記載できるようにしたものです。
 
@@ -163,9 +216,9 @@ NamedParameterJdbcTemplate をラップして短く記載できるようにし�
 
 - helper.exec(): namedJdbc.update() のラップ
 
-- helper.count(): Long 型の1カラムを取得するselect 文が対象。select count(*) ... を想定
+- long helper.count(): 数値1カラムを取得するselect 文が対象。select count(*) ... を想定
 
-### 4.9 MAPPER (RowMapper)
+### 4.10 MAPPER (RowMapper)
 
 明示的な命名を行なったテーブルのみ作成されます。詳しくは「5.4 カラム名とJava プロパティ名の明示的なマッピング」を参照ください。
 
@@ -220,7 +273,6 @@ param.yml のsetNowColumnsByTable に設定すると、そのカラムの値はS
 指定されたカラムはrepository.insert() またはrepository.update() でJava で値を指定することができなくなります。
 また、Insert やUpdate 完了時に、DB でセットされた時刻を引数のentity にセットします。
 
-設定例
 ```yml
 # param.yml
 setNowColumnsByTable:
@@ -262,7 +314,7 @@ param.yml のforceOverwriteImplementation をtrue にすると実体クラスも
 
 Entity クラスでは、データベースの値などを扱うためnull を許容するケースがあるためです。
 
-こちらの設定を入れると、パッケージに@NullUnmarked を付与したpackage-info.java ファイルを作成します。また、必要な箇所に @Nullable を追加します。
+こちらの設定を入れると、{entityPackage} と{entityPackage}.base にpackage-info.java ファイルを作成し、@NullUnmarked を付与します。
 
 設定例
 ```yml
@@ -270,7 +322,10 @@ Entity クラスでは、データベースの値などを扱うためnull を�
 enableNullUnmarkedForEntityPackages: true
 ```
 
-## 6 TestRepository の使い方
+また、BaseRepository 内のカラム定義などに @Nullable をfウヨします。
+
+
+## 6. TestRepository の使い方
 
 param.yml testTargetTable にテスト対象のテーブル名を記載するとテストコードが生成されます。
 insert, select, update, select, delete, select を順番に行います。
@@ -282,7 +337,7 @@ insert, select, update, select, delete, select を順番に行います。
 
 データの確認は assert4{フィールド名}() にて行います。こちらも必要に応じてoverride してください。
 
-### 6.2 テストデータ作成で固定値を指定したい
+### 6.1 テストデータ作成で固定値を指定したい
 
 generateTestData4{フィールド名}() をoverride することで実現できます。
 
@@ -362,7 +417,7 @@ protected Long generateTestData4updatedBy(int seed) {
 
 ※ null を扱うため、primitive 型は使用しません。
 
-### 7.2 対応外の型
+### 7.1 対応外の型
 
 | 区分   | DB 型          | Java 型 |
 |------|---------------|--------|

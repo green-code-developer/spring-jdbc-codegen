@@ -14,5 +14,10 @@ public class Main {
         var runner = new Runner();
         runner.run(args[0]);
         System.out.println("end");
+        if (!runner.warnings.isEmpty()) {
+            // コード生成は完了しているが、param.yml に有効でない設定があることを
+            // 呼び出し元(CI など)へ伝えるため異常終了とする
+            System.exit(1);
+        }
     }
 }
