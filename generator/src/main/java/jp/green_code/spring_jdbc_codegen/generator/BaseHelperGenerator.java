@@ -3,7 +3,6 @@ package jp.green_code.spring_jdbc_codegen.generator;
 import jp.green_code.spring_jdbc_codegen.Parameter;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 import static java.lang.String.join;
 

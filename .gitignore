@@ -40,3 +40,9 @@ out/
 test-app/src/main/java/jp/green_code/spring_jdbc_codegen/test_app/entity/**
 test-app/src/main/java/jp/green_code/spring_jdbc_codegen/test_app/repository/**
 test-app/src/test/java/jp/green_code/spring_jdbc_codegen/test_app/repository/**
+
+### IDE がtest-app 用に生成するGradle wrapper
+###   ビルドはルートのwrapper を使うため不要
+test-app/gradlew
+test-app/gradlew.bat
+test-app/gradle/
