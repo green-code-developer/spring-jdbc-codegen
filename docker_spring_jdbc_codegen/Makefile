@@ -5,7 +5,8 @@ docker:
 	@make up
 	@make ps
 up:
-	docker compose up -d
+	# DDL はイメージに焼き込まれるため --build が必要
+	docker compose up -d --build
 down:
 	-docker compose down
 prune:
