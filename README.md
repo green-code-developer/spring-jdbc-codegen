@@ -14,7 +14,7 @@
   - [4.1 T insert(T entity)](#41-t-insertt-entity)
   - [4.2 T update(T entity)](#42-t-updatet-entity)
   - [4.3 T updateByPk(T entity, pk)](#43-t-updatebypkt-entity-pk)
-  - [4.4 Optional&lt;Entity&gt; findByPk(pk)](#44-optionalentity-findbypkpk)
+  - [4.4 `Optional<Entity> findByPk(pk)`](#44-optionalentity-findbypkpk)
   - [4.5 int deleteByPk(pk)](#45-int-deletebypkpk)
   - [4.6 class Columns](#46-class-columns)
   - [4.7 Columns.MAP<String, ColumnDefinition>](#47-columnsmapstring-columndefinition)
@@ -32,6 +32,14 @@
   - [6.1 テストデータ作成で固定値を指定したい](#61-テストデータ作成で固定値を指定したい)
 - [7. DB 型とJava 型の変換表](#7-db-型とjava-型の変換表)
   - [7.1 対応外の型](#71-対応外の型)
+- [8. 手書きSQL の書き方](#8-手書きsql-の書き方)
+  - [8.1 どこに書くか](#81-どこに書くか)
+  - [8.2 SQL の組み立て方](#82-sql-の組み立て方)
+  - [8.3 select 句には Columns.selectAster() を使う](#83-select-句には-columnsselectaster-を使う)
+  - [8.4 条件を指定して更新する、削除する](#84-条件を指定して更新する削除する)
+  - [8.5 更新前の値を条件にする（楽観ロック）](#85-更新前の値を条件にする楽観ロック)
+  - [8.6 件数を取得する、単一カラムを取得する](#86-件数を取得する単一カラムを取得する)
+  - [8.7 集計やJOIN の結果を受け取る](#87-集計やjoin-の結果を受け取る)
 
 ## 1. 機能概要
 
@@ -428,3 +436,158 @@ protected Long generateTestData4updatedBy(int seed) {
 | 内部   | pg_lsn        | 対応外    |
 | 内部   | txid_snapshot | 対応外    |
 | その他  | 記載のないもの       | 対応外    |
+
+## 8. 手書きSQL の書き方
+
+生成される Repository はプライマリーキーの操作しか持ちません。条件を指定した検索や更新、集計などは RepositoryHelper を使って手書きします。
+
+このツールは「SQL は手で書く」前提のため、手書きが例外ではなく通常の使い方です。
+
+動作する完全な例は [ExampleHelperUsage.java](test-app/src/test/java/jp/green_code/spring_jdbc_codegen/test_app/test/ExampleHelperUsage.java) にあります。以下の例はそこから抜粋したものです。
+
+### 8.1 どこに書くか
+
+Repository の実体クラスに追加します。実体クラスは初回のみ生成され、以降は上書きされないため、書いたコードが消えることはありません。
+
+helper は Base クラスが `protected final` で保持しているため、そのまま使えます。
+
+```java
+// AccountRepository.java（実体クラス）
+@Repository
+public class AccountRepository extends BaseAccountRepository {
+    public AccountRepository(RepositoryHelper helper) {
+        super(helper);
+    }
+
+    // ここに手書きのメソッドを追加する
+    public List<AccountEntity> findByStatus(String status) {
+        return helper.list("""
+                select %s
+                from account
+                where status = :status
+                """.formatted(Columns.selectAster()),
+                Map.of("status", status), AccountEntity.class);
+    }
+}
+```
+
+### 8.2 SQL の組み立て方
+
+helper のメソッドは SQL を `String` と `List<String>` のどちらでも受け取ります。
+
+- **固定の SQL** はテキストブロック（`"""`）で書きます。そのまま psql に貼れる形になります
+- **条件によって変わる SQL** は `List<String>` で組み立てます。要素は半角スペースで連結されます
+
+パラメータは `Map` で渡します。SQL 中では `:name` の形で参照します（Spring JDBC の名前付きパラメータ）。
+
+両方を組み合わせることもできます。固定部分をテキストブロックで書き、条件だけを行として足す形です。
+
+```java
+var sql = new ArrayList<String>();
+sql.add("""
+        select %s
+        from account
+        where 1 = 1
+        """.formatted(Columns.selectAster()));
+var param = new HashMap<String, Object>();
+
+if (name != null) {
+    sql.add("and name like :name");
+    param.put("name", name + "%");
+}
+sql.add("order by account_id");
+
+var list = helper.list(sql, param, AccountEntity.class);
+```
+
+`where 1 = 1` を置いておくと、条件が 0 個でも 1 個でも `and` を足すだけで済みます。
+
+### 8.3 select 句には Columns.selectAster() を使う
+
+`select *` と書かず `Columns.selectAster()` を使ってください。`interval` 型のように SELECT 時の型変換が必要なカラムを正しく取得するためです。詳しくは「4.8 Columns.selectAster()」を参照してください。
+
+### 8.4 条件を指定して更新する、削除する
+
+`helper.exec()` を使います。戻り値は更新（削除）された件数です。
+
+```java
+var count = helper.exec("""
+        update account
+        set status = :newStatus
+        where status = :oldStatus
+        """, Map.of("newStatus", "DONE", "oldStatus", "DOING"));
+```
+
+```java
+var count = helper.exec("""
+        delete from account
+        where status = :status
+        """, Map.of("status", "DELETED"));
+```
+
+### 8.5 更新前の値を条件にする（楽観ロック）
+
+`update()` は プライマリーキーだけを条件にするため、他者が先に更新したことを検知できません。楽観ロックが必要な場合は、更新前の値を where 句に含めて手書きします。
+
+更新件数が 0 であれば、読み込んでから更新するまでの間に他者が更新したことになります。
+
+```java
+var sql = """
+        update account
+        set status = :newStatus, version = version + 1
+        where account_id = :accountId
+          and version = :expectedVersion
+        """;
+var count = helper.exec(sql, Map.of(
+        "newStatus", "DONE",
+        "accountId", accountId,
+        "expectedVersion", expectedVersion));
+
+if (count == 0) {
+    throw new OptimisticLockException(); // 競合を検知
+}
+```
+
+### 8.6 件数を取得する、単一カラムを取得する
+
+数値 1 カラムの select 文は `helper.count()` で取得します。戻り値は `long` です。
+
+```java
+var count = helper.count("""
+        select count(*) from account
+        where status = :status
+        """, Map.of("status", "DOING"));
+```
+
+Class 引数に数値型や String を渡すと、Entity ではなくその型のリストが返ります。
+
+```java
+List<Long> idList = helper.list("""
+        select account_id from account
+        where status = :status
+        order by account_id
+        """, Map.of("status", "DOING"), Long.class);
+```
+
+### 8.7 集計やJOIN の結果を受け取る
+
+Entity に当てはまらない結果は、受け取り用のクラスを用意すれば取得できます。setter が必要です。
+
+BeanPropertyRowMapper が動くため、スネークケースの列名はキャメルケースのプロパティへ自動で変換されます。列名が合わない場合は `as` で別名を付けてください。
+
+```java
+public class AccountSummary {
+    private String status;
+    private Long rowCount;   // row_count が入る
+    // getter / setter
+}
+```
+
+```java
+List<AccountSummary> list = helper.list("""
+        select a.status, count(t.todo_id) as row_count
+        from account a
+        left join todo t on t.account_id = a.account_id
+        group by a.status
+        """, Map.of(), AccountSummary.class);
+```
