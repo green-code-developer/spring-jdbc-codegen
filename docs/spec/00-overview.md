@@ -55,16 +55,15 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 1. param.yml を読み込む
 2. `enumJavaTypeMappings` の内容を型マッピングへ追加する（[TYPE-010](20-type-mapping.md)）
 3. JDBC メタデータからテーブル定義を読み取る
-4. 読み取った定義を標準出力へダンプする
-5. param.yml の設定を検証する（[PARAM-020](10-param.md)）。結果の出力は 10 で行う
-6. Base クラスのディレクトリを削除する（[CORE-005](#core-005-base-クラスと実体クラス)）
-7. 全テーブルの Entity を生成する
-8. Helper と ColumnDefinition を生成する
-9. 全テーブルの Repository を生成する
-10. `testTargetTable` に指定されたテーブルの TestRepository を生成する
-11. 5 の検証結果を警告として出力する
+4. param.yml の設定を検証する（[PARAM-020](10-param.md)）。結果の出力は 9 で行う
+5. Base クラスのディレクトリを削除する（[CORE-005](#core-005-base-クラスと実体クラス)）
+6. 全テーブルの Entity を生成する
+7. Helper と ColumnDefinition を生成する
+8. 全テーブルの Repository を生成する
+9. `testTargetTable` に指定されたテーブルの TestRepository を生成する
+10. 4 の検証結果を警告として出力する
 
-検証（5）は生成を中断しない。生成をすべて終えたうえで警告を出力し、
+検証（4）は生成を中断しない。生成をすべて終えたうえで警告を出力し、
 終了コードで呼び出し元へ伝える。
 
 ## CORE-004 生成されるファイル
