@@ -82,6 +82,9 @@ import org.jspecify.annotations.NullUnmarked;
 パッケージ単位で `@NullUnmarked` にすることで null 許容を表現する。
 
 `@Nullable` を出力するのは Repository 側だけで、対象は次の 2 つ。
+両者は出力条件が異なる。
 
-- `ColumnDefinition` と `BaseColumnDefinition`（[REPO-050](31-repository.md)）
-- RowMapper を生成した Repository（[REPO-051](31-repository.md)）
+| 対象 | 条件 |
+| --- | --- |
+| `ColumnDefinition` と `BaseColumnDefinition`（[REPO-050](31-repository.md)） | `enableNullUnmarkedForEntityPackages: true` のときだけ |
+| RowMapper を生成した Repository（[REPO-051](31-repository.md)） | 命名マッピングがあれば無条件 |

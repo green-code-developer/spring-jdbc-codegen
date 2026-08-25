@@ -36,7 +36,13 @@ JDBC メタデータが返す `TYPE_NAME` を小文字化してマッピング�
 
 `json` は `jsonb` と同じ扱いになる。`json` 列へも `::jsonb` でバインドする。
 
-文字列型の assert は `value.trim()` を比較対象とする。`bpchar` の空白埋めを許容するため。
+`bpchar` / `varchar` / `text` の assert は `value.trim()` を比較対象とする。
+`bpchar` の空白埋めを許容するため。同じ `String` にマップされる `xml` / `json` /
+`jsonb` や、[TYPE-006](#type-006-ネットワーク) / [TYPE-007](#type-007-幾何) の型は
+`trim()` を行わない。
+
+`json` / `jsonb` はパラメータ変換 `String.valueOf({value})` を持つ。
+null の場合は文字列 `"null"` として JDBC へ渡る。
 
 ## TYPE-004 数値・真偽
 

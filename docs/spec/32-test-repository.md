@@ -8,10 +8,11 @@
 `testTargetTable`（[PARAM-003](10-param.md)）に列挙されたテーブルのみが対象。
 指定がなければ何も生成しない。
 
-**PK を持たないテーブルは指定しても生成しない。** `findByPk` と `deleteByPk` が
-存在せず、検証の手段がないため。
+PK を持たないテーブルも生成する。ただし `findByPk` / `deleteByPk` が存在せず
+検証できないため、`test()` の中身は insert のみになる。
 
-実在しないテーブル名を指定してもエラーにはならず、単に生成されない。
+実在しないテーブル名を指定しても生成は中断しないが、警告が出力され
+終了コードは 2 になる（[PARAM-020](10-param.md)）。
 
 ## TESTREPO-002 クラス構成
 
@@ -27,7 +28,8 @@
 
 `test()` は 1 つのレコードに対して次を順に実行する。
 
-1. seed 1 でテストデータを生成し、PK を null にして `insert`
+1. seed 1 でテストデータを生成し、**insert 省略可能な PK**（[REPO-011](31-repository.md)）を
+   null にして `insert`
 2. `findByPk` で取得できることを確認
 3. insert した値と取得した値を比較
 4. seed 2 でテストデータを生成し、PK を 1 で採番された値に差し替えて `update`
@@ -35,7 +37,14 @@
 6. `deleteByPk` で 1 件削除されることを確認
 7. `findByPk` が空を返すことを確認
 
-PK を null にしてから insert するため、自動採番されるテーブルを前提とする。
+1 で null にするのは PK のうち「not null かつ既定値を持つ」カラムだけで、
+DB の自動採番を働かせるため。それ以外の PK は生成した値のまま insert する。
+
+次の場合は 1 の insert までで終わり、2 以降を行わない。
+
+- PK を持たないテーブル（[TESTREPO-001](#testrepo-001-生成条件)）
+- 全カラムが UPDATE 対象外のテーブル。`update` が生成されないため
+  （[REPO-002](31-repository.md)）
 
 ## TESTREPO-011 検証の対象
 

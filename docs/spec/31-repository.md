@@ -95,8 +95,13 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 
 ## REPO-021 update の結果判定
 
-`setNowColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を取得して
-entity へ書き戻す。該当レコードがなければ Spring JDBC が例外を送出する。
+**`setNowColumnsByTable` 対象かつ UPDATE 対象外でない**カラムがある場合、
+`returning` 句で更新後の値を取得して entity へ書き戻す。該当レコードがなければ
+Spring JDBC が例外を送出する。
+
+UPDATE 対象外のカラムは set 句に含まれず値が変わらないため、setNow 対象であっても
+`returning` の対象にしない。setNow 対象のカラムがすべて UPDATE 対象外であれば
+`returning` 句自体を出力しない。
 
 対象がない場合は更新件数を確認し、1 件でなければ `EmptyResultDataAccessException` を
 送出する。
@@ -153,9 +158,12 @@ Base クラスの内部に `public static class Columns` を生成する。
 | `toSelectColumn()` | SELECT 変換を適用したカラム指定 |
 | `toUpdateSetClause()` | UPDATE の set 句 1 項目 |
 
-null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` には、
-フィールドとコンストラクタ引数の双方に `@Nullable` を付与する。
+null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` には
+`@Nullable` を付与する。対象はフィールド、コンストラクタ引数、getter の 3 箇所。
 `nullableFqcn`（[PARAM-011](10-param.md)）で差し替えられる。
+
+**この付与は `enableNullUnmarkedForEntityPackages: true` のときだけ行う。**
+既定（`false`）では `@Nullable` も import も出力しない。
 
 ## REPO-051 RowMapper
 
@@ -187,4 +195,10 @@ null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` �
 | `count()` | `long` 1 カラムを取得する |
 | `pickBySeed()` | enum の定数を seed で選ぶ。テスト用 |
 
-各メソッドは戻り値の型を `Class<T>` または `RowMapper<T>` で受け取る 2 系統を持つ。
+`list()` / `optional()` / `single()` は、戻り値の型を `Class<T>` で受け取るものと
+`RowMapper<T>` で受け取るものの 2 系統を持つ。`exec()` / `count()` / `pickBySeed()` に
+この区別はない。
+
+`Class<T>` を受け取る系統は、`Class` がプリミティブ・`Number` のサブクラス・`String`
+のいずれかであれば単一カラムとして扱い、それ以外は `BeanPropertyRowMapper` で
+マッピングする。Entity 以外の任意のクラスにも対応できる。
