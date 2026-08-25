@@ -16,8 +16,9 @@ public class Main {
         System.out.println("end");
         if (!runner.warnings.isEmpty()) {
             // コード生成は完了しているが、param.yml に有効でない設定があることを
-            // 呼び出し元(CI など)へ伝えるため異常終了とする
-            System.exit(1);
+            // 呼び出し元(CI など)へ伝えるため異常終了とする。
+            // 例外による中断は終了コード1 になるため、区別できるよう2 を返す
+            System.exit(2);
         }
     }
 }
