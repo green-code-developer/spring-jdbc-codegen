@@ -203,7 +203,8 @@ public abstract class BaseCoverageTestRepository {
         var __param = entityToParam(entity);
         __param.put("__pk1", pk);
         __sql.add("where \"pk\" = :__pk1");
-        __sql.add("returning col_now_with_default, updated_at");
+        var __returning = List.of("col_now_with_default", "updated_at").stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        __sql.add("returning %s".formatted(__returning));
         var ret = this.helper.single(__sql, __param, ROW_MAPPER);
         copyReturningValuesInUpdate(entity, ret);
         return entity;

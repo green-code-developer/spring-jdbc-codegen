@@ -65,10 +65,11 @@ public class BaseRepositoryGenerator {
             sb.addAll(findByPk());
             sb.add("");
             sb.addAll(deleteByPk());
-            if (table.needCustomMapper()) {
-                sb.add("");
-                sb.addAll(customMapper());
-            }
+        }
+        if (table.needCustomMapper()) {
+            // Mapper はPK の有無に関係なく必要。ROW_MAPPER の宣言と条件を揃える
+            sb.add("");
+            sb.addAll(customMapper());
         }
         sb.add("}");
         return join("\n", sb);
@@ -300,7 +301,10 @@ public class BaseRepositoryGenerator {
 
         if (table.needReturningInUpdate()) {
             var returningColumns = table.columns.stream().filter(c -> !c.shouldSkipInUpdate() && c.isSetNowColumn()).toList();
-            sb.add("    __sql.add(\"returning %s\");".formatted(returningColumns.stream().map(DbColumnDefinition::toSelectColumn).collect(joining(", "))));
+            // カラム名のクォートと型変換は ColumnDefinition に任せる（実行時に評価する）
+            var returningNames = returningColumns.stream().map(c -> "\"%s\"".formatted(c.columnName)).collect(joining(", "));
+            sb.add("    var __returning = List.of(%s).stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));".formatted(returningNames));
+            sb.add("    __sql.add(\"returning %s\".formatted(__returning));");
             sb.add("    var ret = this.helper.single(__sql, __param, %s);".formatted(table.toMapperOrEntityClass()));
             sb.add("    copyReturningValuesInUpdate(entity, ret);");
         } else {

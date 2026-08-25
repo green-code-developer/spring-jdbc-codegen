@@ -79,7 +79,8 @@ public class DbTableDefinition {
 
     // Update 時にreturning が必要かどうか
     public boolean needReturningInUpdate() {
-        return columns.stream().anyMatch(DbColumnDefinition::isSetNowColumn);
+        // UPDATE 対象外のカラムは set 句に含まれず値が変わらないため returning しない
+        return columns.stream().anyMatch(c -> c.isSetNowColumn() && !c.shouldSkipInUpdate());
     }
 
     public boolean needCustomMapper() {

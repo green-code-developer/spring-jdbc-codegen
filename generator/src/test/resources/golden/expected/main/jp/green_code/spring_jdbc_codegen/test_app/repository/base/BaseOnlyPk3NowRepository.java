@@ -148,7 +148,8 @@ public abstract class BaseOnlyPk3NowRepository {
         __param.put("__pk2", pk2Now);
         __param.put("__pk3", pk3);
         __sql.add("where \"pk1\" = :__pk1 AND \"pk2_now\" = :__pk2 AND \"pk3\" = :__pk3");
-        __sql.add("returning pk2_now");
+        var __returning = List.of("pk2_now").stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        __sql.add("returning %s".formatted(__returning));
         var ret = this.helper.single(__sql, __param, OnlyPk3NowEntity.class);
         copyReturningValuesInUpdate(entity, ret);
         return entity;
