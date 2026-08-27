@@ -93,12 +93,12 @@ public class BaseRepositoryGenerator {
         imports.add("%s.%s".formatted(param.repositoryPackage, param.repositoryHelperClassName));
         imports.add("%s.%s".formatted(param.repositoryPackage, param.columnDefinitionClassName));
         if (!table.needReturningInUpdate()) {
-            imports.add("org.springframework.dao.EmptyResultDataAccessException");
+            imports.add(Fqcn.EMPTY_RESULT_DATA_ACCESS_EXCEPTION);
         }
         if (table.needCustomMapper()) {
-            imports.add("org.jspecify.annotations.NullMarked");
-            imports.add("org.jspecify.annotations.Nullable");
-            imports.add("org.springframework.jdbc.core.BeanPropertyRowMapper");
+            imports.add(Fqcn.NULL_MARKED);
+            imports.add(Fqcn.NULLABLE);
+            imports.add(Fqcn.BEAN_PROPERTY_ROW_MAPPER);
         }
 
         var statics = new TreeSet<String>();
@@ -387,7 +387,7 @@ public class BaseRepositoryGenerator {
 
     List<String> customMapper() {
         var sb = new ArrayList<String>();
-        sb.add("@NullMarked");
+        sb.add(Fqcn.toAnnotation(Fqcn.NULL_MARKED));
         sb.add("public static class %s extends BeanPropertyRowMapper<%s> {".formatted(table.toMapperClassName(), table.toEntityClassName()));
         sb.add("    public %s() {".formatted(table.toMapperClassName()));
         sb.add("        super(%s.class);".formatted(table.toEntityClassName()));

@@ -44,8 +44,8 @@ public class TestBaseRepositoryGenerator {
         packages.stream().distinct().sorted().map("import %s;"::formatted).forEach(sb::add);
 
         var statics = new ArrayList<String>();
-        statics.add("org.junit.jupiter.api.Assertions.assertTrue");
-        statics.add("org.junit.jupiter.api.Assertions.assertEquals");
+        statics.add(Fqcn.ASSERT_TRUE);
+        statics.add(Fqcn.ASSERT_EQUALS);
         if (table.hasPickBySeed()) {
             statics.add("%s.%s.pickBySeed".formatted(param.baseRepositoryPackage(), param.toBaseHelperRepositoryClassName()));
         }

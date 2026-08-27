@@ -22,8 +22,8 @@ public class ColumnDefinitionGenerator {
 
         sb.add("import %s.%s;".formatted(param.baseRepositoryPackage(), param.toBaseColumnDefinitionClassName()));
         if (param.enableNullUnmarkedForEntityPackages) {
-            sb.add("import org.jspecify.annotations.Nullable;");
-            nullable = param.toNullable() + " ";
+            sb.add("import %s;".formatted(Fqcn.NULLABLE));
+            nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
         }
         sb.add("");
 

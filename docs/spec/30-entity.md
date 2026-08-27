@@ -69,7 +69,8 @@ null か否かで動作するため。
 - `{entityPackage}.{base}` — 毎回上書きする
 - `{entityPackage}` — 初回のみ生成する
 
-内容は次のとおり。`@NullUnmarked` の FQCN は `nullUnmarkedFqcn` で差し替えられる。
+内容は次のとおり。`@NullUnmarked` は `org.jspecify.annotations.NullUnmarked` で
+固定とし、差し替えられない。
 
 ```java
 @NullUnmarked

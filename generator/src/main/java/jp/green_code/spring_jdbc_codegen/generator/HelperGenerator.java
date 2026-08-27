@@ -17,8 +17,8 @@ public class HelperGenerator {
         sb.add("package %s;".formatted(param.repositoryPackage));
         sb.add("");
 
-        sb.add("import org.springframework.stereotype.Component;");
-        sb.add("import javax.sql.DataSource;");
+        sb.add("import %s;".formatted(Fqcn.COMPONENT));
+        sb.add("import %s;".formatted(Fqcn.DATA_SOURCE));
         sb.add("import %s.%s;".formatted(param.baseRepositoryPackage(), param.toBaseHelperRepositoryClassName()));
         sb.add("");
 

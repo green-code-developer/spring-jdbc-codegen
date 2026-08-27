@@ -69,10 +69,6 @@ public class Parameter {
     public String mapperClassNamePrefix = "";
     /** Mapper クラスの接尾辞 Mapper */
     public String mapperClassNameSuffix = "Mapper";
-    /** &#064;Nullable のfqcn */
-    public String nullableFqcn = "org.jspecify.annotations.Nullable";
-    /** &#064;NullMarked のfqcn */
-    public String nullUnmarkedFqcn = "org.jspecify.annotations.NullUnmarked";
 
     public String baseEntityPackage() {
         return entityPackage + "." + basePackageName;
@@ -90,13 +86,4 @@ public class Parameter {
         return toCamelCase(param.basePackageName, true) + param.repositoryHelperClassName;
     }
 
-    public String toNullable() {
-        int idx = nullableFqcn.lastIndexOf('.');
-        return "@" + nullableFqcn.substring(idx + 1);
-    }
-
-    public String toNullUnmarked() {
-        int idx = nullUnmarkedFqcn.lastIndexOf('.');
-        return "@" + nullUnmarkedFqcn.substring(idx + 1);
-    }
 }

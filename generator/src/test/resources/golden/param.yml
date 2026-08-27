@@ -163,11 +163,3 @@ testTargetTable:
 # Mapper クラスの接尾辞（省略可）
 #   初期値 Mapper
 #mapperClassNameSuffix: Mapper
-
-# @Nullable のfqcn（省略可）
-#   初期値 org.jspecify.annotations.Nullable
-#nullableFqcn: org.jspecify.annotations.Nullable
-
-# @NullUnmarked のfqcn（省略可）
-#   初期値 org.jspecify.annotations.NullMarked
-#nullUnmarkedFqcn: org.jspecify.annotations.NullUnmarked

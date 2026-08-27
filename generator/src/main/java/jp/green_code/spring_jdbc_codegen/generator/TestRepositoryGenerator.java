@@ -39,9 +39,9 @@ public class TestRepositoryGenerator {
     List<String> imports() {
         var packages = new TreeSet<String>();
         packages.add(param.baseRepositoryPackage() + "." + table.toTestBaseRepositoryClassName());
-        packages.add("org.junit.jupiter.api.Test");
-        packages.add("org.springframework.beans.factory.annotation.Autowired");
-        packages.add("org.springframework.boot.test.context.SpringBootTest");
+        packages.add(Fqcn.TEST);
+        packages.add(Fqcn.AUTOWIRED);
+        packages.add(Fqcn.SPRING_BOOT_TEST);
         return packages.stream().map("import %s;"::formatted).toList();
     }
 }

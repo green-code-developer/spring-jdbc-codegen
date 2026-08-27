@@ -115,15 +115,6 @@ columnName2javaPropertyMap:
 | `mapperClassNamePrefix` | 空 | RowMapper クラスの接頭辞 |
 | `mapperClassNameSuffix` | `Mapper` | RowMapper クラスの接尾辞 |
 
-## PARAM-011 アノテーションの差し替え
-
-| キー | 既定 |
-| --- | --- |
-| `nullableFqcn` | `org.jspecify.annotations.Nullable` |
-| `nullUnmarkedFqcn` | `org.jspecify.annotations.NullUnmarked` |
-
-FQCN の最後のドット以降を単純名として取り出し、`@単純名` の形で出力する。
-
 ## PARAM-020 設定の検証
 
 param.yml の設定が実在するテーブル・カラムを指しているかを検証し、

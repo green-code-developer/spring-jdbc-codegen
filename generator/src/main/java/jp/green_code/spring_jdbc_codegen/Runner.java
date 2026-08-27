@@ -10,8 +10,8 @@ import jp.green_code.spring_jdbc_codegen.generator.BaseHelperGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.BaseRepositoryGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.ColumnDefinitionGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.EntityGenerator;
+import jp.green_code.spring_jdbc_codegen.generator.Fqcn;
 import jp.green_code.spring_jdbc_codegen.generator.HelperGenerator;
-import jp.green_code.spring_jdbc_codegen.generator.NullMarkedGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.RepositoryGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.TestBaseRepositoryGenerator;
 import jp.green_code.spring_jdbc_codegen.generator.TestRepositoryGenerator;
@@ -190,14 +190,20 @@ public class Runner {
         writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, tableDef.toEntityClassName(), code);
 
         if (param.enableNullUnmarkedForEntityPackages) {
-            var nullMarkedGenerator = new NullMarkedGenerator(param);
-
-            var baseNullMarkedCode = nullMarkedGenerator.generateNullMarkedPackageInfoCode(param.baseEntityPackage());
-            writeJavaCode(toMainJavaDir(), param.baseEntityPackage(), "package-info", baseNullMarkedCode);
-
-            var nullMarkedCode = nullMarkedGenerator.generateNullMarkedPackageInfoCode(param.entityPackage);
-            writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, "package-info", nullMarkedCode);
+            writeJavaCode(toMainJavaDir(), param.baseEntityPackage(), "package-info",
+                    toPackageInfoCode(param.baseEntityPackage()));
+            writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, "package-info",
+                    toPackageInfoCode(param.entityPackage));
         }
+    }
+
+    /** Entity のパッケージに @NullUnmarked を付ける package-info を組み立てる */
+    static String toPackageInfoCode(String packageName) {
+        return """
+                %s
+                package %s;
+
+                import %s;""".formatted(Fqcn.toAnnotation(Fqcn.NULL_UNMARKED), packageName, Fqcn.NULL_UNMARKED);
     }
 
     void writeJavaCode(String dir, String packageName, String className, String code) throws IOException {

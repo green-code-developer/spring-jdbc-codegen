@@ -160,7 +160,7 @@ Base クラスの内部に `public static class Columns` を生成する。
 
 null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` には
 `@Nullable` を付与する。対象はフィールド、コンストラクタ引数、getter の 3 箇所。
-`nullableFqcn`（[PARAM-011](10-param.md)）で差し替えられる。
+アノテーションは `org.jspecify.annotations.Nullable` で固定とし、差し替えられない。
 
 **この付与は `enableNullUnmarkedForEntityPackages: true` のときだけ行う。**
 既定（`false`）では `@Nullable` も import も出力しない。

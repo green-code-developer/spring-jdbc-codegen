@@ -22,7 +22,7 @@ public class RepositoryGenerator {
         sb.add("");
 
         // import
-        sb.add("import org.springframework.stereotype.Repository;");
+        sb.add("import %s;".formatted(Fqcn.REPOSITORY));
         sb.add("import %s.%s;".formatted(param.baseRepositoryPackage(), table.toBaseRepositoryClassName()));
         sb.add("");
 

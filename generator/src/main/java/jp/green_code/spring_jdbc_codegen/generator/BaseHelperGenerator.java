@@ -17,12 +17,12 @@ public class BaseHelperGenerator {
         var sb = new ArrayList<String>();
         sb.add("package %s;".formatted(param.baseRepositoryPackage()));
         sb.add("");
-        sb.add("import org.springframework.jdbc.core.BeanPropertyRowMapper;");
-        sb.add("import org.springframework.jdbc.core.RowMapper;");
-        sb.add("import org.springframework.jdbc.core.JdbcTemplate;");
-        sb.add("import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;");
+        sb.add("import %s;".formatted(Fqcn.BEAN_PROPERTY_ROW_MAPPER));
+        sb.add("import %s;".formatted(Fqcn.ROW_MAPPER));
+        sb.add("import %s;".formatted(Fqcn.JDBC_TEMPLATE));
+        sb.add("import %s;".formatted(Fqcn.NAMED_PARAMETER_JDBC_TEMPLATE));
         sb.add("");
-        sb.add("import javax.sql.DataSource;");
+        sb.add("import %s;".formatted(Fqcn.DATA_SOURCE));
         sb.add("import java.util.List;");
         sb.add("import java.util.Map;");
         sb.add("import java.util.Optional;");

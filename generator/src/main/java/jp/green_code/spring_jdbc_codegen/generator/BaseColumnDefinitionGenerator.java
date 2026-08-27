@@ -21,9 +21,9 @@ public class BaseColumnDefinitionGenerator {
         sb.add("package %s;".formatted(param.baseRepositoryPackage()));
         sb.add("");
         if (param.enableNullUnmarkedForEntityPackages) {
-            sb.add("import org.jspecify.annotations.Nullable;");
+            sb.add("import %s;".formatted(Fqcn.NULLABLE));
             sb.add("");
-            nullable = param.toNullable() + " ";
+            nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
         }
         sb.add("import static org.apache.commons.lang3.StringUtils.isBlank;");
         sb.add("");
@@ -166,7 +166,7 @@ public class BaseColumnDefinitionGenerator {
 
     void addNullableIfNeed(List<String> sb) {
         if (param.enableNullUnmarkedForEntityPackages) {
-            sb.add("    " + param.toNullable());
+            sb.add("    " + Fqcn.toAnnotation(Fqcn.NULLABLE));
         }
     }
 }
