@@ -27,8 +27,21 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 | `deleteByPk` | PK がある |
 | `ROW_MAPPER` と Mapper クラス | 命名マッピングを持つカラムがある |
 
-PK を持たないテーブルには `insert` しか生成されない。UPDATE 対象カラムが 1 つもない
-場合（全カラムが `excludeUpdateColumnsByTable` 対象）は `update` を生成しない。
+PK を持たないテーブルには、上の表のうち `insert` と RowMapper しか生成されない。
+UPDATE 対象カラムが 1 つもない場合（全カラムが `excludeUpdateColumnsByTable` 対象）は
+`update` を生成しない。
+
+表に挙げたメソッドのほかに、テーブルの構造によらず次を毎回生成する。
+利用者が override して挙動を変えることを想定している。
+
+| メソッド | 用途 |
+| --- | --- |
+| `entityToParam()` | entity を SQL パラメータの Map へ変換する |
+| `toInsertColumns()` | INSERT 対象カラムを決める（[REPO-011](#repo-011-insert-対象カラムの決定)） |
+| `toInsertValues()` | INSERT の値を決める |
+| `toInsertReturning()` | INSERT の returning 対象を決める |
+| `copyReturningValuesInInsert()` | INSERT 後に entity へ書き戻す |
+| `copyReturningValuesInUpdate()` | UPDATE 後に entity へ書き戻す。update を生成する場合のみ |
 
 ## REPO-010 insert
 
@@ -125,8 +138,9 @@ public int deleteByPk({PK の型} pk1, ...)
 
 ## REPO-041 PK 引数の順序
 
-`update` / `findByPk` / `deleteByPk` の PK 引数は、**主キー制約における順序**
-（`KEY_SEQ`）で並べる。カラムの定義順ではない。
+`updateByPk` / `findByPk` / `deleteByPk` の PK 引数は、**主キー制約における順序**
+（`KEY_SEQ`）で並べる。カラムの定義順ではない。`update` は entity から PK を
+取り出すため引数を持たない。
 
 ## REPO-050 Columns クラス
 
@@ -148,6 +162,8 @@ Base クラスの内部に `public static class Columns` を生成する。
 | `javaFqcn` | Java の型の FQCN |
 | `dbTypeName` | DB の型名 |
 | `jdbcType` / `columnSize` | JDBC メタデータの値 |
+| `dbParamTemplate` | バインド変換のテンプレート。変換しない場合は null |
+| `dbSelectTemplate` | SELECT 変換のテンプレート。変換しない場合は null |
 | `primaryKeySeq` | PK の順序。PK でなければ null |
 | `nullable` | null 許可か |
 | `hasDefault` | 既定値を持つか |
@@ -180,8 +196,8 @@ null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` �
 
 ## REPO-060 RepositoryHelper
 
-テーブルに依存しない共通クラス。`Base{repositoryHelperClassName}` と実体クラスを
-1 つずつ生成する。**実体クラスも毎回上書きする**（[CORE-004](00-overview.md)）。
+テーブルに依存しない共通クラス。`{basePackageName の先頭大文字}{repositoryHelperClassName}`
+と実体クラスを 1 つずつ生成する（[NAMING-003](40-naming.md)）。**実体クラスも毎回上書きする**（[CORE-004](00-overview.md)）。
 
 `NamedParameterJdbcTemplate` を薄くラップし、SQL を `List<String>` でも
 `String` でも渡せるようにする。

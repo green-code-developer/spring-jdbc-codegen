@@ -8,14 +8,14 @@
 | クラス | パッケージ | 内容 |
 | --- | --- | --- |
 | `Base{テーブル}Entity` | `{entityPackage}.{base}` | 抽象クラス。フィールドと getter / setter |
-| `{テーブル}Entity` | `{entityPackage}` | Base を継承した空のクラス |
+| `{テーブル}Entity` | `{entityPackage}` | Base を継承したクラス。メンバーは持たない |
 
 Base クラスは毎回再生成し、実体クラスは初回のみ生成する（[CORE-005](00-overview.md)）。
 利用者が独自のメソッドを追加する場所は実体クラス。
 
 ## ENTITY-002 クラスコメント
 
-Base クラスには元のテーブル名をコメントとして出力する。
+Base クラスと実体クラスの双方に、元のテーブル名をコメントとして出力する。
 
 ```java
 /**

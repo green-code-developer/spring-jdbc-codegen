@@ -87,6 +87,7 @@ public final class DbTypeMapper {
     }
 
     public static void put(String dbType, JavaType javaType) {
-        MAP.put(dbType, javaType);
+        // map() が小文字化して引くため、登録側も揃える
+        MAP.put(dbType.toLowerCase(ROOT), javaType);
     }
 }

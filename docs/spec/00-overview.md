@@ -55,7 +55,7 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 1. param.yml を読み込む
 2. `enumJavaTypeMappings` の内容を型マッピングへ追加する（[TYPE-010](20-type-mapping.md)）
 3. JDBC メタデータからテーブル定義を読み取る
-4. param.yml の設定を検証する（[PARAM-020](10-param.md)）。結果の出力は 9 で行う
+4. param.yml の設定を検証する（[PARAM-020](10-param.md)）。結果の出力は 10 で行う
 5. Base クラスのディレクトリを削除する（[CORE-005](#core-005-base-クラスと実体クラス)）
 6. 全テーブルの Entity を生成する
 7. Helper と ColumnDefinition を生成する
@@ -76,10 +76,10 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 | `{entityPackage}` | `{テーブル}Entity` | テーブルごと | 初回のみ |
 | `{repositoryPackage}.{base}` | `Base{テーブル}Repository` | テーブルごと | 毎回 |
 | `{repositoryPackage}` | `{テーブル}Repository` | テーブルごと | 初回のみ |
-| `{repositoryPackage}.{base}` | `BaseRepositoryHelper` | 1 つ | 毎回 |
-| `{repositoryPackage}` | `RepositoryHelper` | 1 つ | 毎回 |
-| `{repositoryPackage}.{base}` | `BaseColumnDefinition` | 1 つ | 毎回 |
-| `{repositoryPackage}` | `ColumnDefinition` | 1 つ | 毎回 |
+| `{repositoryPackage}.{base}` | `{Base}{repositoryHelperClassName}` | 1 つ | 毎回 |
+| `{repositoryPackage}` | `{repositoryHelperClassName}` | 1 つ | 毎回 |
+| `{repositoryPackage}.{base}` | `{Base}{columnDefinitionClassName}` | 1 つ | 毎回 |
+| `{repositoryPackage}` | `{columnDefinitionClassName}` | 1 つ | 毎回 |
 | テスト側 `{repositoryPackage}.{base}` | `TestBase{テーブル}Repository` | テスト対象のみ | 毎回 |
 | テスト側 `{repositoryPackage}` | `Test{テーブル}Repository` | テスト対象のみ | 初回のみ |
 | `{entityPackage}` と `.{base}` | `package-info` | 各 1 つ | 下記参照 |
@@ -93,8 +93,8 @@ Entity / Repository / TestRepository の実体クラスとは扱いが異なる�
 ## CORE-005 Base クラスと実体クラス
 
 生成物はすべて「Base クラスとそれを継承する実体クラス」の 2 層構成をとる。
-Base クラスは `abstract` とする。ただし `BaseColumnDefinition` だけは
-そのままインスタンス化するため `abstract` を付けない。
+Base クラスは `abstract` とする。ただし `BaseColumnDefinition` にだけは
+`abstract` を付けない。
 
 - **Base クラス** — 実行のたびにディレクトリごと削除して再生成する。手で編集してはならない
 - **実体クラス** — 存在しない場合のみ生成する。利用者が自由に編集できる
