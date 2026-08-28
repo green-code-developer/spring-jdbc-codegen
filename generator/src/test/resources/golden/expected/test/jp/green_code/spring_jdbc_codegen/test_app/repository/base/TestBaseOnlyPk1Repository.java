@@ -1,6 +1,5 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
-import java.lang.Long;
 import jp.green_code.spring_jdbc_codegen.test_app.entity.OnlyPk1Entity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

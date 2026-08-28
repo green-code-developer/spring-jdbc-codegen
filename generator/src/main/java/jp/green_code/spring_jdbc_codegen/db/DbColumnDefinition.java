@@ -74,10 +74,18 @@ public class DbColumnDefinition {
         return javaFqcn.substring(idx + 1);
     }
 
+    /** import が必要な場合はfqcn を、不要な場合はnull を返す */
     public String importName() {
-        // fqcn と同じだがプリミティブ型の場合はnull を返す
         var javaFqcn = toJavaType().fqcn();
-        return javaFqcn.contains(".") ? javaFqcn : null;
+        if (!javaFqcn.contains(".")) {
+            // プリミティブ型と配列型
+            return null;
+        }
+        if (javaFqcn.matches("^java\\.lang\\.[^.]+$")) {
+            // java.lang はJava が暗黙にimport するため不要
+            return null;
+        }
+        return javaFqcn;
     }
 
     // UPDATE 対象外判定

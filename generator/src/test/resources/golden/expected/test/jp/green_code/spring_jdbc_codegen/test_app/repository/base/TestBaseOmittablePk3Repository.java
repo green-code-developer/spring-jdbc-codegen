@@ -1,7 +1,5 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
-import java.lang.Long;
-import java.lang.String;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import jp.green_code.spring_jdbc_codegen.test_app.entity.OmittablePk3Entity;

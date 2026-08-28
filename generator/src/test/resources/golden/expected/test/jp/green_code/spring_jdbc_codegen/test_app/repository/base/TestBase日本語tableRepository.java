@@ -1,7 +1,5 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
-import java.lang.Long;
-import java.lang.String;
 import java.time.LocalDateTime;
 import jp.green_code.spring_jdbc_codegen.test_app.entity.日本語tableEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;

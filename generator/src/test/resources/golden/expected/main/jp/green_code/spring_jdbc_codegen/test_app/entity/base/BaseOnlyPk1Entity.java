@@ -1,6 +1,5 @@
 package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 
-import java.lang.Long;
 
 /**
  * Table: only_pk1

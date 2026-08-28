@@ -1,6 +1,5 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
-import java.lang.Long;
 import java.time.OffsetDateTime;
 import jp.green_code.spring_jdbc_codegen.test_app.entity.NowPk1Entity;
 import static org.junit.jupiter.api.Assertions.assertEquals;

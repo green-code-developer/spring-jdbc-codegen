@@ -39,19 +39,28 @@ getter / setter はプロパティ名の先頭を大文字にして `get` / `set
 | TestRepository | `{testRepositoryClassNamePrefix}` + Repository 名 + `{testRepositoryClassNameSuffix}` |
 | TestBase Repository | `{testRepositoryClassNamePrefix}` + Base Repository 名 + `{testRepositoryClassNameSuffix}` |
 | RowMapper | `{mapperClassNamePrefix}` + 変換名 + `{mapperClassNameSuffix}` |
+| Helper | `{repositoryHelperClassName}` |
+| Base Helper | `{basePackageName の先頭大文字}` + Helper 名 |
+| カラム定義 | `{columnDefinitionClassName}` |
+| Base カラム定義 | `{basePackageName の先頭大文字}` + カラム定義名 |
 
 `Columns` クラスの定数名はカラム名を**そのまま大文字化**したもの。キャメルケース変換は
 行わない（`account_id` → `ACCOUNT_ID`）。
 
 ## NAMING-004 import の規則
 
-Entity は、フィールドの型のうちパッケージを持つものをすべて import する。
-`java.lang` パッケージも省略しない。
+生成物によって import する型の範囲が異なる。それぞれが型を使う場所が違うため。
 
-Repository は PK の型のうち、`java.lang` パッケージのものを除いて import する。
-PK に `LocalDate` を使った場合などに必要になる。
+| 生成物 | import する型 | 型を使う場所 |
+| --- | --- | --- |
+| Entity | 全カラムの型 | フィールドと getter / setter |
+| Repository | PK の型のみ | `findByPk` などのメソッド引数 |
+| TestRepository | 全カラムの型 | `generateTestData4{名前}` と `assert4{名前}` |
 
-いずれもプリミティブ型と配列型（`byte[]`）は import しない。
+次の型は生成物によらず import しない。
+
+- プリミティブ型と配列型（`byte[]`）
+- `java.lang` パッケージの型。Java が暗黙に import するため不要
 
 ## NAMING-005 SQL 中の識別子
 

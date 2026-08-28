@@ -1,12 +1,5 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
-import java.lang.Boolean;
-import java.lang.Double;
-import java.lang.Float;
-import java.lang.Integer;
-import java.lang.Long;
-import java.lang.Short;
-import java.lang.String;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
