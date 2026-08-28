@@ -28,8 +28,8 @@ public abstract class BaseMapperNoPkRepository {
     public static final MapperNoPkMapper ROW_MAPPER = new MapperNoPkMapper();
 
     public static class Columns {
-        public static final ColumnDefinition RENAME_TARGET = new ColumnDefinition("rename_target", "renamedNoPkName", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false, true);
-        public static final ColumnDefinition OTHER_COL = new ColumnDefinition("other_col", "otherCol", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false, false);
+        public static final ColumnDefinition RENAME_TARGET = new ColumnDefinition("rename_target", "renamedNoPkName", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, true);
+        public static final ColumnDefinition OTHER_COL = new ColumnDefinition("other_col", "otherCol", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 

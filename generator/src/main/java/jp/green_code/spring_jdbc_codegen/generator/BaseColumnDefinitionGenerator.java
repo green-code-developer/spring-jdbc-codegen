@@ -56,11 +56,10 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    /** now() で上書きを行う */");
         sb.add("    private final boolean isSetNow;");
         sb.add("    /** Update 対象外 */");
-        sb.add("    private final boolean shouldSkipInUpdate;");
         sb.add("    /** カラム名とJava プロパティ名の明示的マッピング */");
         sb.add("    private final boolean hasNameMapping;");
         sb.add("");
-        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, %sInteger primaryKeySeq, boolean nullable, boolean hasDefault, %sString dbParamTemplate, %sString dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName(), nullable, nullable, nullable));
+        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, %sInteger primaryKeySeq, boolean nullable, boolean hasDefault, %sString dbParamTemplate, %sString dbSelectTemplate, boolean isSetNow, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName(), nullable, nullable, nullable));
         sb.add("        this.columnName = columnName;");
         sb.add("        this.javaPropertyName = javaPropertyName;");
         sb.add("        this.javaFqcn = javaFqcn;");
@@ -73,7 +72,6 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        this.dbParamTemplate = dbParamTemplate;");
         sb.add("        this.dbSelectTemplate = dbSelectTemplate;");
         sb.add("        this.isSetNow = isSetNow;");
-        sb.add("        this.shouldSkipInUpdate = shouldSkipInUpdate;");
         sb.add("        this.hasNameMapping = hasNameMapping;");
         sb.add("    }");
         sb.add("");
@@ -145,10 +143,6 @@ public class BaseColumnDefinitionGenerator {
         sb.add("");
         sb.add("    public boolean isSetNow() {");
         sb.add("        return isSetNow;");
-        sb.add("    }");
-        sb.add("");
-        sb.add("    public boolean isShouldSkipInUpdate() {");
-        sb.add("        return shouldSkipInUpdate;");
         sb.add("    }");
         sb.add("");
         sb.add("    @Override");

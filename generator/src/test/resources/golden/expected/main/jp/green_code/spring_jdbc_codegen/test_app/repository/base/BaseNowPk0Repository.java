@@ -23,7 +23,7 @@ public abstract class BaseNowPk0Repository {
     protected final RepositoryHelper helper;
 
     public static class Columns {
-        public static final ColumnDefinition COL_NOW = new ColumnDefinition("col_now", "colNow", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, false, false, false);
+        public static final ColumnDefinition COL_NOW = new ColumnDefinition("col_now", "colNow", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 

@@ -54,13 +54,10 @@ public class BaseRepositoryGenerator {
         sb.addAll(entityToParam());
         if (!table.pkColumns().isEmpty()) {
             // pk がない場合は、update とfindByPk とdeleteByPk は作れない
-            if (table.hasUpdateColumns()) {
-                // 全部Update 対象外の時はupdate を作れない
-                sb.add("");
-                sb.addAll(update());
-                sb.add("");
-                sb.addAll(updateByPk());
-            }
+            sb.add("");
+            sb.addAll(update());
+            sb.add("");
+            sb.addAll(updateByPk());
             sb.add("");
             sb.addAll(findByPk());
             sb.add("");
@@ -116,7 +113,7 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("public static class Columns {");
         for (var col : table.columns) {
-            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.shouldSkipInUpdate(), col.hasNameMapping()));
+            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.hasNameMapping()));
         }
         sb.add("");
         sb.add("    public static final Map<String, %s> MAP = new LinkedHashMap<>();".formatted(param.columnDefinitionClassName));
@@ -286,7 +283,7 @@ public class BaseRepositoryGenerator {
         var pkArgs = toPkArgs();
         sb.add("public %s updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
         sb.add("    var __sql = new ArrayList<String>();");
-        sb.add("    var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("    var setClause = Columns.MAP.values().stream().map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
         sb.add("    __sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
         sb.add("    __sql.add(\"set %s\".formatted(setClause));");
         var pkConditions = new ArrayList<String>();
@@ -300,7 +297,7 @@ public class BaseRepositoryGenerator {
         sb.add("    __sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
 
         if (table.needReturningInUpdate()) {
-            var returningColumns = table.columns.stream().filter(c -> !c.shouldSkipInUpdate() && c.isSetNowColumn()).toList();
+            var returningColumns = table.columns.stream().filter(DbColumnDefinition::isSetNowColumn).toList();
             // カラム名のクォートと型変換は ColumnDefinition に任せる（実行時に評価する）
             var returningNames = returningColumns.stream().map(c -> "\"%s\"".formatted(c.columnName)).collect(joining(", "));
             sb.add("    var __returning = List.of(%s).stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));".formatted(returningNames));
@@ -322,7 +319,7 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("protected void copyReturningValuesInUpdate(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
         for (var col : table.columns) {
-            if (!col.shouldSkipInUpdate() && col.isSetNowColumn()) {
+            if (col.isSetNowColumn()) {
                 sb.add("    entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
             }
         }

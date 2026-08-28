@@ -104,6 +104,10 @@ Base クラスは `abstract` とする。ただし `BaseColumnDefinition` にだ
 削除対象は `{entityPackage}.{base}`、`{repositoryPackage}.{base}`、テスト側の
 `{repositoryPackage}.{base}` の 3 ディレクトリ。テスト側は `testJavaDir` が指定されている場合のみ。
 
+**テーブルを削除した場合、実体クラスは残る。** Base クラスは生成されなくなるが、
+実体クラスは削除の対象外のため、継承元を失ってコンパイルできなくなる。
+利用者が手動で削除する必要がある。
+
 ## CORE-006 対象テーブルの決定
 
 JDBC メタデータから `jdbcSchema` に属する `TABLE` 種別のオブジェクトをすべて読み取る。

@@ -62,10 +62,6 @@ public class DbTableDefinition {
         return param.testTargetTable.contains(tableName);
     }
 
-    public boolean hasUpdateColumns() {
-        return !columns.stream().allMatch(DbColumnDefinition::shouldSkipInUpdate);
-    }
-
     // テストデータ作成にpickBySeed を使っているカラムがあるか判定（enum がこれに該当する）
     public boolean hasPickBySeed() {
         return columns.stream().anyMatch(c ->
@@ -80,7 +76,7 @@ public class DbTableDefinition {
     // Update 時にreturning が必要かどうか
     public boolean needReturningInUpdate() {
         // UPDATE 対象外のカラムは set 句に含まれず値が変わらないため returning しない
-        return columns.stream().anyMatch(c -> c.isSetNowColumn() && !c.shouldSkipInUpdate());
+        return columns.stream().anyMatch(DbColumnDefinition::isSetNowColumn);
     }
 
     public boolean needCustomMapper() {

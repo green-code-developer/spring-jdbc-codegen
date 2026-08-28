@@ -24,42 +24,42 @@ public abstract class BaseAllTypesRepository {
     protected final RepositoryHelper helper;
 
     public static class Columns {
-        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false, false);
-        public static final ColumnDefinition COL_SMALLINT = new ColumnDefinition("col_smallint", "colSmallint", "java.lang.Short", "int2", 5, 5, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_SMALLSERIAL = new ColumnDefinition("col_smallserial", "colSmallserial", "java.lang.Short", "smallserial", 5, 5, null, false, true, null, null, false, false, false);
-        public static final ColumnDefinition COL_INTEGER = new ColumnDefinition("col_integer", "colInteger", "java.lang.Integer", "int4", 4, 10, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_SERIAL = new ColumnDefinition("col_serial", "colSerial", "java.lang.Integer", "serial", 4, 10, null, false, true, null, null, false, false, false);
-        public static final ColumnDefinition COL_BIGINT = new ColumnDefinition("col_bigint", "colBigint", "java.lang.Long", "int8", -5, 19, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_BIGSERIAL = new ColumnDefinition("col_bigserial", "colBigserial", "java.lang.Long", "bigserial", -5, 19, null, false, true, null, null, false, false, false);
-        public static final ColumnDefinition COL_REAL = new ColumnDefinition("col_real", "colReal", "java.lang.Float", "float4", 7, 8, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_DOUBLE_PRECISION = new ColumnDefinition("col_double_precision", "colDoublePrecision", "java.lang.Double", "float8", 8, 17, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_NUMERIC = new ColumnDefinition("col_numeric", "colNumeric", "java.math.BigDecimal", "numeric", 2, 10, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_BOOLEAN = new ColumnDefinition("col_boolean", "colBoolean", "java.lang.Boolean", "bool", -7, 1, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_CHAR = new ColumnDefinition("col_char", "colChar", "java.lang.String", "bpchar", 1, 10, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_VARCHAR = new ColumnDefinition("col_varchar", "colVarchar", "java.lang.String", "varchar", 12, 50, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_TEXT = new ColumnDefinition("col_text", "colText", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_DATE = new ColumnDefinition("col_date", "colDate", "java.time.LocalDate", "date", 91, 13, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_TIME = new ColumnDefinition("col_time", "colTime", "java.time.LocalTime", "time", 92, 15, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_TIME_TZ = new ColumnDefinition("col_time_tz", "colTimeTz", "java.time.OffsetTime", "timetz", 92, 21, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_TIMESTAMP = new ColumnDefinition("col_timestamp", "colTimestamp", "java.time.LocalDateTime", "timestamp", 93, 29, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_TIMESTAMP_TZ = new ColumnDefinition("col_timestamp_tz", "colTimestampTz", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_INTERVAL = new ColumnDefinition("col_interval", "colInterval", "java.lang.Long", "interval", 1111, 49, null, true, false, "make_interval(secs => :{javaPropertyName})", "extract(epoch FROM {columnName}) AS {columnName}", false, false, false);
-        public static final ColumnDefinition COL_BYTEA = new ColumnDefinition("col_bytea", "colBytea", "byte[]", "bytea", -2, 2147483647, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_UUID = new ColumnDefinition("col_uuid", "colUuid", "java.util.UUID", "uuid", 1111, 2147483647, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_JSON = new ColumnDefinition("col_json", "colJson", "java.lang.String", "json", 1111, 2147483647, null, true, false, ":{javaPropertyName}::jsonb", null, false, false, false);
-        public static final ColumnDefinition COL_JSONB = new ColumnDefinition("col_jsonb", "colJsonb", "java.lang.String", "jsonb", 1111, 2147483647, null, true, false, ":{javaPropertyName}::jsonb", null, false, false, false);
-        public static final ColumnDefinition COL_XML = new ColumnDefinition("col_xml", "colXml", "java.lang.String", "xml", 2009, 2147483647, null, true, false, ":{javaPropertyName}::xml", null, false, false, false);
-        public static final ColumnDefinition COL_INET = new ColumnDefinition("col_inet", "colInet", "java.lang.String", "inet", 1111, 2147483647, null, true, false, ":{javaPropertyName}::inet", null, false, false, false);
-        public static final ColumnDefinition COL_CIDR = new ColumnDefinition("col_cidr", "colCidr", "java.lang.String", "cidr", 1111, 2147483647, null, true, false, ":{javaPropertyName}::cidr", null, false, false, false);
-        public static final ColumnDefinition COL_MACADDR = new ColumnDefinition("col_macaddr", "colMacaddr", "java.lang.String", "macaddr", 1111, 2147483647, null, true, false, ":{javaPropertyName}::macaddr", null, false, false, false);
-        public static final ColumnDefinition COL_BOX = new ColumnDefinition("col_box", "colBox", "java.lang.String", "box", 1111, 2147483647, null, true, false, ":{javaPropertyName}::box", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_POINT = new ColumnDefinition("col_point", "colPoint", "java.lang.String", "point", 1111, 2147483647, null, true, false, ":{javaPropertyName}::point", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_LINE = new ColumnDefinition("col_line", "colLine", "java.lang.String", "line", 1111, 2147483647, null, true, false, ":{javaPropertyName}::line", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_LSEG = new ColumnDefinition("col_lseg", "colLseg", "java.lang.String", "lseg", 1111, 2147483647, null, true, false, ":{javaPropertyName}::lseg", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_PATH = new ColumnDefinition("col_path", "colPath", "java.lang.String", "path", 1111, 2147483647, null, true, false, ":{javaPropertyName}::path", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_POLYGON = new ColumnDefinition("col_polygon", "colPolygon", "java.lang.String", "polygon", 1111, 2147483647, null, true, false, ":{javaPropertyName}::polygon", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_CIRCLE = new ColumnDefinition("col_circle", "colCircle", "java.lang.String", "circle", 1111, 2147483647, null, true, false, ":{javaPropertyName}::circle", "{columnName}::text", false, false, false);
-        public static final ColumnDefinition COL_STATUS_ENUM = new ColumnDefinition("col_status_enum", "colStatusEnum", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, true, false, ":{javaPropertyName}::status_enum", null, false, false, false);
+        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false);
+        public static final ColumnDefinition COL_SMALLINT = new ColumnDefinition("col_smallint", "colSmallint", "java.lang.Short", "int2", 5, 5, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_SMALLSERIAL = new ColumnDefinition("col_smallserial", "colSmallserial", "java.lang.Short", "smallserial", 5, 5, null, false, true, null, null, false, false);
+        public static final ColumnDefinition COL_INTEGER = new ColumnDefinition("col_integer", "colInteger", "java.lang.Integer", "int4", 4, 10, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_SERIAL = new ColumnDefinition("col_serial", "colSerial", "java.lang.Integer", "serial", 4, 10, null, false, true, null, null, false, false);
+        public static final ColumnDefinition COL_BIGINT = new ColumnDefinition("col_bigint", "colBigint", "java.lang.Long", "int8", -5, 19, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_BIGSERIAL = new ColumnDefinition("col_bigserial", "colBigserial", "java.lang.Long", "bigserial", -5, 19, null, false, true, null, null, false, false);
+        public static final ColumnDefinition COL_REAL = new ColumnDefinition("col_real", "colReal", "java.lang.Float", "float4", 7, 8, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_DOUBLE_PRECISION = new ColumnDefinition("col_double_precision", "colDoublePrecision", "java.lang.Double", "float8", 8, 17, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_NUMERIC = new ColumnDefinition("col_numeric", "colNumeric", "java.math.BigDecimal", "numeric", 2, 10, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_BOOLEAN = new ColumnDefinition("col_boolean", "colBoolean", "java.lang.Boolean", "bool", -7, 1, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_CHAR = new ColumnDefinition("col_char", "colChar", "java.lang.String", "bpchar", 1, 10, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_VARCHAR = new ColumnDefinition("col_varchar", "colVarchar", "java.lang.String", "varchar", 12, 50, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_TEXT = new ColumnDefinition("col_text", "colText", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_DATE = new ColumnDefinition("col_date", "colDate", "java.time.LocalDate", "date", 91, 13, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_TIME = new ColumnDefinition("col_time", "colTime", "java.time.LocalTime", "time", 92, 15, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_TIME_TZ = new ColumnDefinition("col_time_tz", "colTimeTz", "java.time.OffsetTime", "timetz", 92, 21, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_TIMESTAMP = new ColumnDefinition("col_timestamp", "colTimestamp", "java.time.LocalDateTime", "timestamp", 93, 29, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_TIMESTAMP_TZ = new ColumnDefinition("col_timestamp_tz", "colTimestampTz", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_INTERVAL = new ColumnDefinition("col_interval", "colInterval", "java.lang.Long", "interval", 1111, 49, null, true, false, "make_interval(secs => :{javaPropertyName})", "extract(epoch FROM {columnName}) AS {columnName}", false, false);
+        public static final ColumnDefinition COL_BYTEA = new ColumnDefinition("col_bytea", "colBytea", "byte[]", "bytea", -2, 2147483647, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_UUID = new ColumnDefinition("col_uuid", "colUuid", "java.util.UUID", "uuid", 1111, 2147483647, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_JSON = new ColumnDefinition("col_json", "colJson", "java.lang.String", "json", 1111, 2147483647, null, true, false, ":{javaPropertyName}::jsonb", null, false, false);
+        public static final ColumnDefinition COL_JSONB = new ColumnDefinition("col_jsonb", "colJsonb", "java.lang.String", "jsonb", 1111, 2147483647, null, true, false, ":{javaPropertyName}::jsonb", null, false, false);
+        public static final ColumnDefinition COL_XML = new ColumnDefinition("col_xml", "colXml", "java.lang.String", "xml", 2009, 2147483647, null, true, false, ":{javaPropertyName}::xml", null, false, false);
+        public static final ColumnDefinition COL_INET = new ColumnDefinition("col_inet", "colInet", "java.lang.String", "inet", 1111, 2147483647, null, true, false, ":{javaPropertyName}::inet", null, false, false);
+        public static final ColumnDefinition COL_CIDR = new ColumnDefinition("col_cidr", "colCidr", "java.lang.String", "cidr", 1111, 2147483647, null, true, false, ":{javaPropertyName}::cidr", null, false, false);
+        public static final ColumnDefinition COL_MACADDR = new ColumnDefinition("col_macaddr", "colMacaddr", "java.lang.String", "macaddr", 1111, 2147483647, null, true, false, ":{javaPropertyName}::macaddr", null, false, false);
+        public static final ColumnDefinition COL_BOX = new ColumnDefinition("col_box", "colBox", "java.lang.String", "box", 1111, 2147483647, null, true, false, ":{javaPropertyName}::box", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_POINT = new ColumnDefinition("col_point", "colPoint", "java.lang.String", "point", 1111, 2147483647, null, true, false, ":{javaPropertyName}::point", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_LINE = new ColumnDefinition("col_line", "colLine", "java.lang.String", "line", 1111, 2147483647, null, true, false, ":{javaPropertyName}::line", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_LSEG = new ColumnDefinition("col_lseg", "colLseg", "java.lang.String", "lseg", 1111, 2147483647, null, true, false, ":{javaPropertyName}::lseg", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_PATH = new ColumnDefinition("col_path", "colPath", "java.lang.String", "path", 1111, 2147483647, null, true, false, ":{javaPropertyName}::path", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_POLYGON = new ColumnDefinition("col_polygon", "colPolygon", "java.lang.String", "polygon", 1111, 2147483647, null, true, false, ":{javaPropertyName}::polygon", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_CIRCLE = new ColumnDefinition("col_circle", "colCircle", "java.lang.String", "circle", 1111, 2147483647, null, true, false, ":{javaPropertyName}::circle", "{columnName}::text", false, false);
+        public static final ColumnDefinition COL_STATUS_ENUM = new ColumnDefinition("col_status_enum", "colStatusEnum", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, true, false, ":{javaPropertyName}::status_enum", null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 
@@ -353,7 +353,7 @@ public abstract class BaseAllTypesRepository {
 
     public AllTypesEntity updateByPk(AllTypesEntity entity, Long pk) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
         __sql.add("update \"all_types\"");
         __sql.add("set %s".formatted(setClause));
         var __param = entityToParam(entity);

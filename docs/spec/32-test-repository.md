@@ -43,24 +43,17 @@ DB の自動採番を働かせるため。それ以外の PK は生成した値�
 次の場合は 1 の insert までで終わり、2 以降を行わない。
 
 - PK を持たないテーブル（[TESTREPO-001](#testrepo-001-生成条件)）
-- 全カラムが UPDATE 対象外のテーブル。`update` が生成されないため
-  （[REPO-002](31-repository.md)）
 
 ## TESTREPO-011 検証の対象
 
-**全カラムを検証する。** ただし update 後の比較対象がカラムによって異なる。
-
-| カラム | insert 後の比較 | update 後の比較 |
-| --- | --- | --- |
-| 通常 | 投入した値 と 取得した値 | 投入した値 と 取得した値 |
-| UPDATE 対象外 | 投入した値 と 取得した値 | **insert 後の値 と 取得した値** |
-
-UPDATE 対象外カラム（`excludeUpdateColumnsByTable`）は、update しても値が変わらない
-ことを確認する。
+**全カラムを検証する。** insert 後・update 後とも、投入した値と取得した値を比較する。
 
 `setNowColumnsByTable` 対象のカラムも同じ規則で検証する。insert / update の実行時に
 DB がセットした値が entity へ書き戻される（[REPO-012](31-repository.md)）ため、
 投入した値との比較が成立する。
+
+DB のトリガーで値を書き換えるカラムは、この検証と食い違う可能性がある。
+必要に応じて実体クラスで `assert4{プロパティ名}` を override する。
 
 ## TESTREPO-020 テストデータの生成
 

@@ -24,7 +24,7 @@ public abstract class BaseOnlyPk1Repository {
     protected final RepositoryHelper helper;
 
     public static class Columns {
-        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false, false);
+        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 
@@ -113,7 +113,7 @@ public abstract class BaseOnlyPk1Repository {
 
     public OnlyPk1Entity updateByPk(OnlyPk1Entity entity, Long pk) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
         __sql.add("update \"only_pk1\"");
         __sql.add("set %s".formatted(setClause));
         var __param = entityToParam(entity);

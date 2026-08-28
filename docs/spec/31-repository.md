@@ -28,8 +28,6 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 | `ROW_MAPPER` と Mapper クラス | 命名マッピングを持つカラムがある |
 
 PK を持たないテーブルには、上の表のうち `insert` と RowMapper しか生成されない。
-UPDATE 対象カラムが 1 つもない場合（全カラムが `excludeUpdateColumnsByTable` 対象）は
-`update` を生成しない。
 
 表に挙げたメソッドのほかに、テーブルの構造によらず次を毎回生成する。
 利用者が override して挙動を変えることを想定している。
@@ -97,8 +95,10 @@ public {テーブル}Entity updateByPk({テーブル}Entity entity, {PK の型} 
 
 `updateByPk` は entity とは別に PK 値を受け取る。**PK 自体を更新する**用途に使う。
 
-set 句には `shouldSkipInUpdate` でないカラムをすべて含める。`setNowColumnsByTable`
-対象のカラムは値が `now()` になる。
+set 句には全カラムを含める。`setNowColumnsByTable` 対象のカラムは値が `now()` になる。
+
+更新させたくないカラムは、DB のトリガーで元の値へ戻す。生成コードは
+どのカラムを更新してよいかを判断しない。
 
 where 句のプレースホルダは `__pk1` から始まる連番を使う。entity 側のプレースホルダ名
 （Java プロパティ名）と衝突させないため。
@@ -108,13 +108,8 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 
 ## REPO-021 update の結果判定
 
-**`setNowColumnsByTable` 対象かつ UPDATE 対象外でない**カラムがある場合、
-`returning` 句で更新後の値を取得して entity へ書き戻す。該当レコードがなければ
-Spring JDBC が例外を送出する。
-
-UPDATE 対象外のカラムは set 句に含まれず値が変わらないため、setNow 対象であっても
-`returning` の対象にしない。setNow 対象のカラムがすべて UPDATE 対象外であれば
-`returning` 句自体を出力しない。
+`setNowColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
+取得して entity へ書き戻す。該当レコードがなければ Spring JDBC が例外を送出する。
 
 対象がない場合は更新件数を確認し、1 件でなければ `EmptyResultDataAccessException` を
 送出する。
@@ -168,7 +163,6 @@ Base クラスの内部に `public static class Columns` を生成する。
 | `nullable` | null 許可か |
 | `hasDefault` | 既定値を持つか |
 | `isSetNow` | `now()` を設定する対象か |
-| `shouldSkipInUpdate` | UPDATE 対象外か |
 | `hasNameMapping` | 命名マッピングを明示指定したか |
 | `toParamColumn()` | バインド変換を適用したプレースホルダ |
 | `toSelectColumn()` | SELECT 変換を適用したカラム指定 |

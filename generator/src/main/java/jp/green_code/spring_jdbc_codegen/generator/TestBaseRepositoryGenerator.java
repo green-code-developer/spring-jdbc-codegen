@@ -70,8 +70,6 @@ public class TestBaseRepositoryGenerator {
         sb.add("");
         if (table.pkColumns().isEmpty()) {
             sb.add("    // PK がないのでselect, update, delete のテストは行わない");
-        } else if (!table.hasUpdateColumns()) {
-            sb.add("    // Update 対象カラムがないのでselect, update, delete のテストは行わない");
         } else {
             sb.add("    // select 1回目");
             var pks = table.pkColumns().stream().map(c -> "data.%s()".formatted(c.toGetter())).collect(joining(", "));
@@ -101,12 +99,7 @@ public class TestBaseRepositoryGenerator {
             sb.add("    var stored2 = res2.orElseThrow();");
             for (var col : table.columns) {
                 sb.add("");
-                if (col.shouldSkipInUpdate()) {
-                    sb.add("    // %s はupdate 対象外のため変更前と変わらないことを確認".formatted(col.columnName));
-                    sb.add("    assert4%s(stored.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
-                } else {
-                    sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
-                }
+                sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
             }
             sb.add("");
             sb.add("    // delete");

@@ -28,17 +28,14 @@ public abstract class BaseCoverageTestRepository {
     public static final CoverageTestMapper ROW_MAPPER = new CoverageTestMapper();
 
     public static class Columns {
-        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false, false);
-        public static final ColumnDefinition COL_NULLABLE_DEFAULT = new ColumnDefinition("col_nullable_default", "colNullableDefault", "java.lang.String", "text", 12, 2147483647, null, true, true, null, null, false, false, false);
-        public static final ColumnDefinition COL_NOTNULL_NODEFAULT = new ColumnDefinition("col_notnull_nodefault", "colNotnullNodefault", "java.lang.String", "text", 12, 2147483647, null, false, false, null, null, false, false, false);
-        public static final ColumnDefinition COL_NOW_WITH_DEFAULT = new ColumnDefinition("col_now_with_default", "colNowWithDefault", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, true, false, false);
-        public static final ColumnDefinition CREATED_AT = new ColumnDefinition("created_at", "createdAt", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, true, true, false);
-        public static final ColumnDefinition CREATED_BY = new ColumnDefinition("created_by", "createdBy", "java.lang.String", "text", 12, 2147483647, null, false, false, null, null, false, true, false);
-        public static final ColumnDefinition UPDATED_AT = new ColumnDefinition("updated_at", "updatedAt", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, true, false, null, null, true, false, false);
-        public static final ColumnDefinition COL_NO_UPDATE_NULLABLE = new ColumnDefinition("col_no_update_nullable", "colNoUpdateNullable", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, true, false);
-        public static final ColumnDefinition COL_ENUM_DEFAULT = new ColumnDefinition("col_enum_default", "colEnumDefault", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, false, true, ":{javaPropertyName}::status_enum", null, false, false, false);
-        public static final ColumnDefinition COL_ENUM_NULLABLE_DEFAULT = new ColumnDefinition("col_enum_nullable_default", "colEnumNullableDefault", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, true, true, ":{javaPropertyName}::status_enum", null, false, false, false);
-        public static final ColumnDefinition MAPPED_NULLABLE = new ColumnDefinition("mapped_nullable", "mappedNullableJavaName", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false, true);
+        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false);
+        public static final ColumnDefinition COL_NULLABLE_DEFAULT = new ColumnDefinition("col_nullable_default", "colNullableDefault", "java.lang.String", "text", 12, 2147483647, null, true, true, null, null, false, false);
+        public static final ColumnDefinition COL_NOTNULL_NODEFAULT = new ColumnDefinition("col_notnull_nodefault", "colNotnullNodefault", "java.lang.String", "text", 12, 2147483647, null, false, false, null, null, false, false);
+        public static final ColumnDefinition COL_NOW_WITH_DEFAULT = new ColumnDefinition("col_now_with_default", "colNowWithDefault", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, true, false);
+        public static final ColumnDefinition UPDATED_AT = new ColumnDefinition("updated_at", "updatedAt", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, true, false, null, null, true, false);
+        public static final ColumnDefinition COL_ENUM_DEFAULT = new ColumnDefinition("col_enum_default", "colEnumDefault", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, false, true, ":{javaPropertyName}::status_enum", null, false, false);
+        public static final ColumnDefinition COL_ENUM_NULLABLE_DEFAULT = new ColumnDefinition("col_enum_nullable_default", "colEnumNullableDefault", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, true, true, ":{javaPropertyName}::status_enum", null, false, false);
+        public static final ColumnDefinition MAPPED_NULLABLE = new ColumnDefinition("mapped_nullable", "mappedNullableJavaName", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, true);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 
@@ -47,10 +44,7 @@ public abstract class BaseCoverageTestRepository {
             MAP.put("col_nullable_default", COL_NULLABLE_DEFAULT);
             MAP.put("col_notnull_nodefault", COL_NOTNULL_NODEFAULT);
             MAP.put("col_now_with_default", COL_NOW_WITH_DEFAULT);
-            MAP.put("created_at", CREATED_AT);
-            MAP.put("created_by", CREATED_BY);
             MAP.put("updated_at", UPDATED_AT);
-            MAP.put("col_no_update_nullable", COL_NO_UPDATE_NULLABLE);
             MAP.put("col_enum_default", COL_ENUM_DEFAULT);
             MAP.put("col_enum_nullable_default", COL_ENUM_NULLABLE_DEFAULT);
             MAP.put("mapped_nullable", MAPPED_NULLABLE);
@@ -73,10 +67,7 @@ public abstract class BaseCoverageTestRepository {
         res.add("\"col_nullable_default\"");
         res.add("\"col_notnull_nodefault\"");
         res.add("\"col_now_with_default\"");
-        res.add("\"created_at\"");
-        res.add("\"created_by\"");
         res.add("\"updated_at\"");
-        res.add("\"col_no_update_nullable\"");
         if (entity.getColEnumDefault() != null) {
             res.add("\"col_enum_default\"");
         }
@@ -92,10 +83,7 @@ public abstract class BaseCoverageTestRepository {
             res.add("col_nullable_default");
             res.add("col_notnull_nodefault");
             res.add("col_now_with_default");
-            res.add("created_at");
-            res.add("created_by");
             res.add("updated_at");
-            res.add("col_no_update_nullable");
             res.add("col_enum_default");
             res.add("col_enum_nullable_default");
             res.add("mapped_nullable");
@@ -104,7 +92,6 @@ public abstract class BaseCoverageTestRepository {
                 res.add("pk");
             }
             res.add("col_now_with_default");
-            res.add("created_at");
             res.add("updated_at");
             if (entity.getColEnumDefault() == null) {
                 res.add("col_enum_default");
@@ -122,9 +109,6 @@ public abstract class BaseCoverageTestRepository {
         res.add("col_notnull_nodefault");
         res.add("now()");
         res.add("now()");
-        res.add("created_by");
-        res.add("now()");
-        res.add("col_no_update_nullable");
         if (entity.getColEnumDefault() != null) {
             res.add("col_enum_default");
         }
@@ -138,7 +122,6 @@ public abstract class BaseCoverageTestRepository {
             entity.setPk(returning.getPk());
         }
         entity.setColNowWithDefault(returning.getColNowWithDefault());
-        entity.setCreatedAt(returning.getCreatedAt());
         entity.setUpdatedAt(returning.getUpdatedAt());
         if (entity.getColEnumDefault() == null) {
             entity.setColEnumDefault(returning.getColEnumDefault());
@@ -176,10 +159,7 @@ public abstract class BaseCoverageTestRepository {
         param.put("colNullableDefault", entity.getColNullableDefault());
         param.put("colNotnullNodefault", entity.getColNotnullNodefault());
         param.put("colNowWithDefault", entity.getColNowWithDefault());
-        param.put("createdAt", entity.getCreatedAt());
-        param.put("createdBy", entity.getCreatedBy());
         param.put("updatedAt", entity.getUpdatedAt());
-        param.put("colNoUpdateNullable", entity.getColNoUpdateNullable());
         param.put("colEnumDefault", String.valueOf(entity.getColEnumDefault()));
         param.put("colEnumNullableDefault", String.valueOf(entity.getColEnumNullableDefault()));
         param.put("mappedNullableJavaName", entity.getMappedNullableJavaName());
@@ -197,7 +177,7 @@ public abstract class BaseCoverageTestRepository {
 
     public CoverageTestEntity updateByPk(CoverageTestEntity entity, Long pk) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
         __sql.add("update \"coverage_test\"");
         __sql.add("set %s".formatted(setClause));
         var __param = entityToParam(entity);

@@ -115,25 +115,8 @@ create table omittable_pk3 (
     primary key(pk1, pk2, pk3)
 );
 
--- Update 対象カラムなし PKなし
-create table no_update_pk0 (
-    col_no_update_text_not_null_default_x text not null default 'X'
-);
 
--- Update 対象カラムなし PK1個
-create table no_update_pk1 (
-    pk bigserial primary key,
-    col_no_update_text_not_null_default_x text not null default 'X'
-);
 
--- Update 対象カラムなし PK3個
-create table no_update_pk3 (
-    pk1 bigserial,
-    pk2 timestamp with time zone not null default now(),
-    pk3 uuid default gen_random_uuid(),
-    col_no_update_text_not_null_default_x text not null default 'X',
-    primary key(pk1, pk2, pk3)
-);
 
 -- Now のみ PKなし
 create table now_pk0 (

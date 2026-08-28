@@ -20,17 +20,8 @@ public abstract class BaseCoverageTestEntity {
     /** col_now_with_default */
     protected OffsetDateTime colNowWithDefault;
 
-    /** created_at */
-    protected OffsetDateTime createdAt;
-
-    /** created_by */
-    protected String createdBy;
-
     /** updated_at */
     protected OffsetDateTime updatedAt;
-
-    /** col_no_update_nullable */
-    protected String colNoUpdateNullable;
 
     /** col_enum_default */
     protected StatusEnum colEnumDefault;
@@ -73,36 +64,12 @@ public abstract class BaseCoverageTestEntity {
         this.colNowWithDefault = colNowWithDefault;
     }
 
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public String getColNoUpdateNullable() {
-        return colNoUpdateNullable;
-    }
-
-    public void setColNoUpdateNullable(String colNoUpdateNullable) {
-        this.colNoUpdateNullable = colNoUpdateNullable;
     }
 
     public StatusEnum getColEnumDefault() {

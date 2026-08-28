@@ -24,9 +24,9 @@ public abstract class BaseOnlyPk3NowRepository {
     protected final RepositoryHelper helper;
 
     public static class Columns {
-        public static final ColumnDefinition PK1 = new ColumnDefinition("pk1", "pk1", "java.time.OffsetDateTime", "timestamptz", 93, 35, 1, false, true, null, null, false, false, false);
-        public static final ColumnDefinition PK2_NOW = new ColumnDefinition("pk2_now", "pk2Now", "java.time.OffsetDateTime", "timestamptz", 93, 35, 2, false, false, null, null, true, false, false);
-        public static final ColumnDefinition PK3 = new ColumnDefinition("pk3", "pk3", "java.time.OffsetDateTime", "timestamptz", 93, 35, 3, false, true, null, null, false, false, false);
+        public static final ColumnDefinition PK1 = new ColumnDefinition("pk1", "pk1", "java.time.OffsetDateTime", "timestamptz", 93, 35, 1, false, true, null, null, false, false);
+        public static final ColumnDefinition PK2_NOW = new ColumnDefinition("pk2_now", "pk2Now", "java.time.OffsetDateTime", "timestamptz", 93, 35, 2, false, false, null, null, true, false);
+        public static final ColumnDefinition PK3 = new ColumnDefinition("pk3", "pk3", "java.time.OffsetDateTime", "timestamptz", 93, 35, 3, false, true, null, null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 
@@ -140,7 +140,7 @@ public abstract class BaseOnlyPk3NowRepository {
 
     public OnlyPk3NowEntity updateByPk(OnlyPk3NowEntity entity, OffsetDateTime pk1, OffsetDateTime pk2Now, OffsetDateTime pk3) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
         __sql.add("update \"only_pk3_now\"");
         __sql.add("set %s".formatted(setClause));
         var __param = entityToParam(entity);

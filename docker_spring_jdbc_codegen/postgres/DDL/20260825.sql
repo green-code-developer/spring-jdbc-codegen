@@ -16,12 +16,3 @@ create table quoted_column_now (
     "Updated" timestamptz not null default '2000-01-01',
     col_text  text
 );
-
--- setNow カラムが全てUPDATE 対象外のテーブル
---   returning の対象が0件になり "returning " という不正なSQL が生成されていた
---   created_at はparam.yml の "*" でsetNow とUPDATE 対象外の両方に登録されている
-create table now_all_excluded (
-    pk         bigserial primary key,
-    created_at timestamptz not null default '2000-01-01',
-    col_text   text
-);

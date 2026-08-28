@@ -40,7 +40,7 @@
 
 ## PARAM-004 テーブル・カラム指定の共通形式
 
-`excludeUpdateColumnsByTable` と `setNowColumnsByTable` は同じ形式をとる。
+`setNowColumnsByTable` は次の形式をとる。
 
 ```yml
 キー:
@@ -52,13 +52,6 @@
 
 テーブル名に `"*"` を指定すると全テーブルが対象になる。`"*"` の指定と
 個別テーブルの指定は**どちらか一方に含まれれば該当**する（和集合）。
-
-## PARAM-005 excludeUpdateColumnsByTable
-
-指定したカラムを UPDATE 文の set 句から除外する。作成者・作成日時カラムを想定。
-
-テーブルの**全カラムが除外対象**になった場合、そのテーブルには `update()` と
-`updateByPk()` を生成しない（[REPO-020](31-repository.md)）。
 
 ## PARAM-006 setNowColumnsByTable
 
@@ -133,7 +126,6 @@ param.yml の設定が実在するテーブル・カラムを指しているか�
 | --- | --- |
 | `excludedTableNames` | 列挙されたテーブルが実在するか |
 | `testTargetTable` | 列挙されたテーブルが実在するか |
-| `excludeUpdateColumnsByTable` | テーブルとカラムが実在するか |
 | `setNowColumnsByTable` | テーブルとカラムが実在するか |
 | `columnName2javaPropertyMap` | テーブルとカラムが実在するか |
 | `enumJavaTypeMappings` | その DB 型を使っているカラムが存在するか |

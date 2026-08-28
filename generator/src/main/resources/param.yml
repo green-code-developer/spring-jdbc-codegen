@@ -30,19 +30,6 @@ testJavaDir: ../../../../test-app/src/test/java
 enumJavaTypeMappings:
   status_enum: jp.green_code.spring_jdbc_codegen.test_app.StatusEnum
 
-# UPDATE 対象外カラム（省略可）
-#   テーブル名とカラム名を下の形式で指定します
-#   table_name:
-#     - column_name
-#   テーブルに* を指定すると全テーブルのカラムが対象となります
-excludeUpdateColumnsByTable:
-  "*":
-    - created_at
-    - created_by
-    - col_no_update_text_not_null_default_x
-  "coverage_test":
-    - col_no_update_nullable
-
 # now() 更新カラム（省略可）
 #   insert やupdate の時に、sql のnow() をセットします
 #   java から値を指定することはできなくなります。
@@ -53,7 +40,6 @@ excludeUpdateColumnsByTable:
 setNowColumnsByTable:
   "*":
     - updated_at
-    - created_at
   "only_pk3_now":
     - pk2_now
   "coverage_test":
@@ -96,9 +82,6 @@ testTargetTable:
   - omittable_pk0
   - omittable_pk1
   - omittable_pk3
-  - no_update_pk0
-  - no_update_pk1
-  - no_update_pk3
   - now_pk0
   - now_pk1
   - now_pk3
@@ -109,7 +92,6 @@ testTargetTable:
   - 日本語Table
   - coverage_test
   - quoted_column_now
-  - now_all_excluded
 
 #
 # 以下、高度な設定

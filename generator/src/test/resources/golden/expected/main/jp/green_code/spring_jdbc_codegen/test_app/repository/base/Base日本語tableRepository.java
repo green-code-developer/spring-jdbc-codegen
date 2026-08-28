@@ -29,16 +29,16 @@ public abstract class Base日本語tableRepository {
     public static final 日本語tableMapper ROW_MAPPER = new 日本語tableMapper();
 
     public static class Columns {
-        public static final ColumnDefinition ORDER = new ColumnDefinition("order", "order", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false, false);
-        public static final ColumnDefinition PARAM = new ColumnDefinition("param", "param", "java.lang.Long", "bigserial", -5, 19, 2, false, true, null, null, false, false, false);
-        public static final ColumnDefinition SQL = new ColumnDefinition("sql", "sql", "java.lang.Long", "bigserial", -5, 19, 3, false, true, null, null, false, false, false);
-        public static final ColumnDefinition HELPER = new ColumnDefinition("helper", "helper", "java.lang.Long", "bigserial", -5, 19, 4, false, true, null, null, false, false, false);
-        public static final ColumnDefinition JOINING = new ColumnDefinition("joining", "joining", "java.lang.Long", "bigserial", -5, 19, 5, false, true, null, null, false, false, false);
-        public static final ColumnDefinition LIST = new ColumnDefinition("List", "list", "java.lang.Long", "bigserial", -5, 19, 6, false, true, null, null, false, false, false);
-        public static final ColumnDefinition RENAME = new ColumnDefinition("rename", "renamedJavaName", "java.lang.String", "text", 12, 2147483647, 7, false, false, null, null, false, false, true);
-        public static final ColumnDefinition WHERE = new ColumnDefinition("where", "where", "java.time.LocalDateTime", "timestamp", 93, 29, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition SELECT = new ColumnDefinition("select", "select", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false, false);
-        public static final ColumnDefinition ABC = new ColumnDefinition("Abc", "abc", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false, false);
+        public static final ColumnDefinition ORDER = new ColumnDefinition("order", "order", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false);
+        public static final ColumnDefinition PARAM = new ColumnDefinition("param", "param", "java.lang.Long", "bigserial", -5, 19, 2, false, true, null, null, false, false);
+        public static final ColumnDefinition SQL = new ColumnDefinition("sql", "sql", "java.lang.Long", "bigserial", -5, 19, 3, false, true, null, null, false, false);
+        public static final ColumnDefinition HELPER = new ColumnDefinition("helper", "helper", "java.lang.Long", "bigserial", -5, 19, 4, false, true, null, null, false, false);
+        public static final ColumnDefinition JOINING = new ColumnDefinition("joining", "joining", "java.lang.Long", "bigserial", -5, 19, 5, false, true, null, null, false, false);
+        public static final ColumnDefinition LIST = new ColumnDefinition("List", "list", "java.lang.Long", "bigserial", -5, 19, 6, false, true, null, null, false, false);
+        public static final ColumnDefinition RENAME = new ColumnDefinition("rename", "renamedJavaName", "java.lang.String", "text", 12, 2147483647, 7, false, false, null, null, false, true);
+        public static final ColumnDefinition WHERE = new ColumnDefinition("where", "where", "java.time.LocalDateTime", "timestamp", 93, 29, null, true, false, null, null, false, false);
+        public static final ColumnDefinition SELECT = new ColumnDefinition("select", "select", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false);
+        public static final ColumnDefinition ABC = new ColumnDefinition("Abc", "abc", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 
@@ -222,7 +222,7 @@ public abstract class Base日本語tableRepository {
 
     public 日本語tableEntity updateByPk(日本語tableEntity entity, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().filter(c-> !c.isShouldSkipInUpdate()).map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
         __sql.add("update \"日本語Table\"");
         __sql.add("set %s".formatted(setClause));
         var __param = entityToParam(entity);

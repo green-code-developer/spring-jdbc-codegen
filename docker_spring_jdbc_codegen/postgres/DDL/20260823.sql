@@ -9,14 +9,8 @@ create table coverage_test (
     -- setNow × default 有（setNow 判定が省略可判定より優先されること）
     --   判定順を入れ替えても差が出るようdefault はnow() 以外にする
     col_now_with_default      timestamptz not null default '2000-01-01',
-    -- update 対象外 × setNow（param.yml の"*" に登録済み）
-    created_at                timestamptz not null default '2000-01-01',
-    -- update 対象外 × default 無（param.yml の"*" に登録済み）
-    created_by                text        not null,
-    -- setNow × nullable（param.yml の"*" に登録済み）
+    -- setNow × nullable
     updated_at                timestamptz,
-    -- update 対象外 × nullable（param.yml のテーブル名指定に登録）
-    col_no_update_nullable    text,
     -- enum × nonnull × default 有（insert 省略可）
     col_enum_default          status_enum not null default 'NEW',
     -- enum × nullable × default 有

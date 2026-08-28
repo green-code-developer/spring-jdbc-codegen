@@ -33,11 +33,10 @@ public class BaseColumnDefinition {
     /** now() で上書きを行う */
     private final boolean isSetNow;
     /** Update 対象外 */
-    private final boolean shouldSkipInUpdate;
     /** カラム名とJava プロパティ名の明示的マッピング */
     private final boolean hasNameMapping;
 
-    public BaseColumnDefinition(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, @Nullable Integer primaryKeySeq, boolean nullable, boolean hasDefault, @Nullable String dbParamTemplate, @Nullable String dbSelectTemplate, boolean isSetNow, boolean shouldSkipInUpdate, boolean hasNameMapping) {
+    public BaseColumnDefinition(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, @Nullable Integer primaryKeySeq, boolean nullable, boolean hasDefault, @Nullable String dbParamTemplate, @Nullable String dbSelectTemplate, boolean isSetNow, boolean hasNameMapping) {
         this.columnName = columnName;
         this.javaPropertyName = javaPropertyName;
         this.javaFqcn = javaFqcn;
@@ -50,7 +49,6 @@ public class BaseColumnDefinition {
         this.dbParamTemplate = dbParamTemplate;
         this.dbSelectTemplate = dbSelectTemplate;
         this.isSetNow = isSetNow;
-        this.shouldSkipInUpdate = shouldSkipInUpdate;
         this.hasNameMapping = hasNameMapping;
     }
 
@@ -122,10 +120,6 @@ public class BaseColumnDefinition {
 
     public boolean isSetNow() {
         return isSetNow;
-    }
-
-    public boolean isShouldSkipInUpdate() {
-        return shouldSkipInUpdate;
     }
 
     @Override

@@ -88,11 +88,6 @@ public class DbColumnDefinition {
         return javaFqcn;
     }
 
-    // UPDATE 対象外判定
-    public boolean shouldSkipInUpdate() {
-        return mapContainsColumn(param.excludeUpdateColumnsByTable, tableName, columnName);
-    }
-
     // set now() 対象判定
     public boolean isSetNowColumn() {
         return mapContainsColumn(param.setNowColumnsByTable, tableName, columnName);

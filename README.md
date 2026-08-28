@@ -24,7 +24,7 @@
   - [4.10 MAPPER (RowMapper)](#410-mapper-rowmapper)
 - [5. 便利な使い方](#5-便利な使い方)
   - [5.1 Enum 型を追加する](#51-enum-型を追加する)
-  - [5.2 作成者カラム、作成日時カラムをUpdate から除外する](#52-作成者カラム作成日時カラムをupdate-から除外する)
+  - [5.2 作成者カラム、作成日時カラムをUpdate させたくない](#52-作成者カラム作成日時カラムをupdate-させたくない)
   - [5.3 Insert, Update 時にデータベースの時刻 now() を指定したい](#53-insert-update-時にデータベースの時刻-now-を指定したい)
   - [5.4 カラム名とJava プロパティ名の明示的なマッピング](#54-カラム名とjava-プロパティ名の明示的なマッピング)
   - [5.5 Base クラス](#55-base-クラス)
@@ -209,7 +209,6 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 - hasDefault: DB カラムに初期値が定義されているか判定
 - primaryKeySeq: プライマリーキーの順序。プライマリーキーでない場合はnull
 - isSetNow: now()を設定するか判定
-- shouldSkipInUpdate: param.yml のexcludeUpdateColumnsByTable でUpdate 対象外カラムと指定された場合true
 - hasNameMapping: Java プロパティ名の明示的なマッピングを行ったカラムはtrue
 
 ### 4.7 Columns.MAP<String, ColumnDefinition>
@@ -269,22 +268,37 @@ CREATE TYPE todo_status AS ENUM ('NEW', 'DOING', 'DONE', 'DELETED');
 public enum TodoStatusEnum { NEW, DOING, DONE, DELETED; }
 ```
 
-### 5.2 作成者カラム、作成日時カラムをUpdate から除外する
+### 5.2 作成者カラム、作成日時カラムをUpdate させたくない
 
-作成者カラム、作成日時カラムのように、初回Insert 時以外は更新を行わないカラムについては、param.yml excludeUpdateColumnsByTable に登録します。
-登録されたカラムはUpdate 時に更新されなくなります。
+作成者カラム、作成日時カラムのように、初回Insert 時以外は更新を行わないカラムは、**データベースのトリガーで元の値へ戻してください。**
 
-設定例
-- 作成者カラム : created_by
-- 作成日時カラム : created_at
-```yml
-# param.yml
-excludeUpdateColumnsByTable:
-   "*":
-      - created_at
-      - created_by
+v2 までは param.yml の `excludeUpdateColumnsByTable` で Update 文の set 句から除外していましたが、v3 で廃止しました。生成された `update()` を通さずに `helper.exec()` で SQL を手書きすれば更新できてしまい、保証にならないためです。トリガーであれば経路を問わず必ず適用されます。
+
+```sql
+create or replace function refresh_meta_columns()
+returns trigger as $$
+begin
+    -- 常に updated_at を現在時刻にする
+    new.updated_at = now();
+    if (tg_op = 'INSERT') then
+        new.created_at = now();
+    elsif (tg_op = 'UPDATE') then
+        -- 更新時は変更前の値を維持して上書きを防ぐ
+        new.created_at = old.created_at;
+        new.created_by = old.created_by;
+    end if;
+    return new;
+end;
+$$ language plpgsql;
+
+create trigger refresh_meta_columns_trigger
+    before insert or update on account
+    for each row execute function refresh_meta_columns();
 ```
-"*" は全てのテーブルを意味します。個別のテーブルを指定する場合は、テーブル名を記載します。
+
+トリガーが書き換えた値は、`update()` 実行後の entity には反映されません。最新の値が必要な場合は `findByPk()` で取得し直してください。
+
+生成されるテストコードは全カラムについて「投入した値と取得した値が一致すること」を検証するため、トリガーで書き換わるカラムがあると失敗します。実体クラスで `assert4{プロパティ名}` を override してください。
 
 ### 5.3 Insert, Update 時にデータベースの時刻 now() を指定したい
 

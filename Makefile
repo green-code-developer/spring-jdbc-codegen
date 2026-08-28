@@ -15,6 +15,8 @@ verify:
 # golden を現在の生成結果で更新する。差分は必ずレビューすること
 #   DDL を変更した場合は先に make docker でDB を作り直すこと
 golden-update:
+	# 実体クラスは生成時に削除されないため、出力先を先に消す
+	rm -rf generator/build/golden-actual
 	cd generator && ../gradlew generateGolden
 	rm -rf generator/src/test/resources/golden/expected
 	cp -R generator/build/golden-actual generator/src/test/resources/golden/expected

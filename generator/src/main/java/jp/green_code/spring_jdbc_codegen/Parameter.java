@@ -27,8 +27,6 @@ public class Parameter {
     public String repositoryPackage;
     /** 除外テーブル名 spring_session, spring_session_attribute */
     public List<String> excludedTableNames = List.of();
-    /** UPDATE 対象外カラム */
-    public Map<String, List<String>> excludeUpdateColumnsByTable = Map.of();
     /** set now() カラム */
     public Map<String, List<String>> setNowColumnsByTable = Map.of();
     /** テスト対象テーブル */
