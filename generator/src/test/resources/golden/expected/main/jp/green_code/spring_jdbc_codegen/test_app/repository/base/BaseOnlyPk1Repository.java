@@ -74,28 +74,27 @@ public abstract class BaseOnlyPk1Repository {
         }
     }
 
-    protected OnlyPk1Entity execWithReturning(List<String> sql, Map<String, Object> param, OnlyPk1Entity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, OnlyPk1Entity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, OnlyPk1Entity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, OnlyPk1Entity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public OnlyPk1Entity insert(OnlyPk1Entity entity) {
+    public int insert(OnlyPk1Entity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public OnlyPk1Entity insertNotNull(OnlyPk1Entity entity) {
+    public int insertNotNull(OnlyPk1Entity entity) {
         return doInsert(entity, true);
     }
 
-    protected OnlyPk1Entity doInsert(OnlyPk1Entity entity, boolean excludeNull) {
+    protected int doInsert(OnlyPk1Entity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"only_pk1\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -117,21 +116,21 @@ public abstract class BaseOnlyPk1Repository {
         return param;
     }
 
-    public OnlyPk1Entity update(OnlyPk1Entity entity) {
+    public int update(OnlyPk1Entity entity) {
         return doUpdateByPk(entity, false, entity.getPk());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public OnlyPk1Entity updateNotNull(OnlyPk1Entity entity) {
+    public int updateNotNull(OnlyPk1Entity entity) {
         return doUpdateByPk(entity, true, entity.getPk());
     }
 
 
-    public OnlyPk1Entity updateByPk(OnlyPk1Entity entity, Long pk) {
+    public int updateByPk(OnlyPk1Entity entity, Long pk) {
         return doUpdateByPk(entity, false, pk);
     }
 
-    protected OnlyPk1Entity doUpdateByPk(OnlyPk1Entity entity, boolean excludeNull, Long pk) {
+    protected int doUpdateByPk(OnlyPk1Entity entity, boolean excludeNull, Long pk) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

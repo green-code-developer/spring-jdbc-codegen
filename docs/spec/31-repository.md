@@ -44,10 +44,12 @@ PK を持たないテーブルには、上の表のうち `insert` と RowMapper
 ## REPO-010 insert
 
 ```java
-public {テーブル}Entity insert({テーブル}Entity entity)
+public int insert({テーブル}Entity entity)
 ```
 
-引数の entity を返す。DB 側で決まった値は entity に書き戻される。
+**戻り値は処理された件数。** DB 側で決まった値は**引数の entity に書き戻す**
+（[REPO-012](#repo-012-insert-後の書き戻し)）。生成されるメソッドはいずれも
+件数を返し、entity への反映は引数を通じて行う。
 
 SQL は次の形で組み立てる。
 
@@ -83,7 +85,7 @@ insert 対象カラムが 1 つもなかった場合は**全カラム**を `retu
 ## REPO-013 insertNotNull
 
 ```java
-public {テーブル}Entity insertNotNull({テーブル}Entity entity)
+public int insertNotNull({テーブル}Entity entity)
 ```
 
 **値が null のカラムをすべて INSERT 対象から外す。** DB の既定値を使いたい場合に用いる。
@@ -107,13 +109,13 @@ public {テーブル}Entity insertNotNull({テーブル}Entity entity)
 ## REPO-020 update
 
 ```java
-public {テーブル}Entity update({テーブル}Entity entity)
+public int update({テーブル}Entity entity)
 ```
 
 entity の PK を条件に 1 レコードを更新する。内部で `updateByPk` を呼ぶ。
 
 ```java
-public {テーブル}Entity updateByPk({テーブル}Entity entity, {PK の型} pk1, ...)
+public int updateByPk({テーブル}Entity entity, {PK の型} pk1, ...)
 ```
 
 `updateByPk` は entity とは別に PK 値を受け取る。**PK 自体を更新する**用途に使う。
@@ -131,8 +133,9 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 
 ## REPO-021 update の結果判定
 
-**更新件数は確認しない。** 該当レコードがなくても例外は送出せず、更新件数も返さない。
-件数が必要な場合は `helper.exec()` で SQL を手書きする。
+**該当レコードがなくても例外は送出しない。** 戻り値が 0 になるので、呼び出し側で
+判断する。楽観ロックのように「0 件が正常な結果」となる場合があるため、
+例外ではなく件数で伝える。
 
 `returningColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
 取得して entity へ書き戻す。取得は `helper.optional()` で行い、該当レコードが
@@ -141,7 +144,7 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 ## REPO-022 updateNotNull
 
 ```java
-public {テーブル}Entity updateNotNull({テーブル}Entity entity)
+public int updateNotNull({テーブル}Entity entity)
 ```
 
 **値が null のカラムを set 句から外す。** 部分更新に用いる。

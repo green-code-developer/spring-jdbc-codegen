@@ -166,28 +166,27 @@ public abstract class BaseNormalPk3Repository {
         }
     }
 
-    protected NormalPk3Entity execWithReturning(List<String> sql, Map<String, Object> param, NormalPk3Entity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, NormalPk3Entity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, NormalPk3Entity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, NormalPk3Entity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public NormalPk3Entity insert(NormalPk3Entity entity) {
+    public int insert(NormalPk3Entity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public NormalPk3Entity insertNotNull(NormalPk3Entity entity) {
+    public int insertNotNull(NormalPk3Entity entity) {
         return doInsert(entity, true);
     }
 
-    protected NormalPk3Entity doInsert(NormalPk3Entity entity, boolean excludeNull) {
+    protected int doInsert(NormalPk3Entity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"normal_pk3\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -215,21 +214,21 @@ public abstract class BaseNormalPk3Repository {
         return param;
     }
 
-    public NormalPk3Entity update(NormalPk3Entity entity) {
+    public int update(NormalPk3Entity entity) {
         return doUpdateByPk(entity, false, entity.getPk1(), entity.getPk2(), entity.getPk3());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public NormalPk3Entity updateNotNull(NormalPk3Entity entity) {
+    public int updateNotNull(NormalPk3Entity entity) {
         return doUpdateByPk(entity, true, entity.getPk1(), entity.getPk2(), entity.getPk3());
     }
 
 
-    public NormalPk3Entity updateByPk(NormalPk3Entity entity, Long pk1, OffsetDateTime pk2, UUID pk3) {
+    public int updateByPk(NormalPk3Entity entity, Long pk1, OffsetDateTime pk2, UUID pk3) {
         return doUpdateByPk(entity, false, pk1, pk2, pk3);
     }
 
-    protected NormalPk3Entity doUpdateByPk(NormalPk3Entity entity, boolean excludeNull, Long pk1, OffsetDateTime pk2, UUID pk3) {
+    protected int doUpdateByPk(NormalPk3Entity entity, boolean excludeNull, Long pk1, OffsetDateTime pk2, UUID pk3) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

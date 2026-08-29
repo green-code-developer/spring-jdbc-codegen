@@ -118,28 +118,27 @@ public abstract class BaseNormalPk0Repository {
         }
     }
 
-    protected NormalPk0Entity execWithReturning(List<String> sql, Map<String, Object> param, NormalPk0Entity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, NormalPk0Entity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, NormalPk0Entity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, NormalPk0Entity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public NormalPk0Entity insert(NormalPk0Entity entity) {
+    public int insert(NormalPk0Entity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public NormalPk0Entity insertNotNull(NormalPk0Entity entity) {
+    public int insertNotNull(NormalPk0Entity entity) {
         return doInsert(entity, true);
     }
 
-    protected NormalPk0Entity doInsert(NormalPk0Entity entity, boolean excludeNull) {
+    protected int doInsert(NormalPk0Entity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"normal_pk0\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);

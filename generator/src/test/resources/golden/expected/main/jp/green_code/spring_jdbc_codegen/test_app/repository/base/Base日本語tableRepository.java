@@ -214,28 +214,27 @@ public abstract class Base日本語tableRepository {
         }
     }
 
-    protected 日本語tableEntity execWithReturning(List<String> sql, Map<String, Object> param, 日本語tableEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, 日本語tableEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, ROW_MAPPER)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, ROW_MAPPER);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public 日本語tableEntity insert(日本語tableEntity entity) {
+    public int insert(日本語tableEntity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public 日本語tableEntity insertNotNull(日本語tableEntity entity) {
+    public int insertNotNull(日本語tableEntity entity) {
         return doInsert(entity, true);
     }
 
-    protected 日本語tableEntity doInsert(日本語tableEntity entity, boolean excludeNull) {
+    protected int doInsert(日本語tableEntity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"日本語Table\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -266,21 +265,21 @@ public abstract class Base日本語tableRepository {
         return param;
     }
 
-    public 日本語tableEntity update(日本語tableEntity entity) {
+    public int update(日本語tableEntity entity) {
         return doUpdateByPk(entity, false, entity.getOrder(), entity.getParam(), entity.getSql(), entity.getHelper(), entity.getJoining(), entity.getList(), entity.getRenamedJavaName());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public 日本語tableEntity updateNotNull(日本語tableEntity entity) {
+    public int updateNotNull(日本語tableEntity entity) {
         return doUpdateByPk(entity, true, entity.getOrder(), entity.getParam(), entity.getSql(), entity.getHelper(), entity.getJoining(), entity.getList(), entity.getRenamedJavaName());
     }
 
 
-    public 日本語tableEntity updateByPk(日本語tableEntity entity, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
+    public int updateByPk(日本語tableEntity entity, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
         return doUpdateByPk(entity, false, order, param, sql, helper, joining, list, renamedJavaName);
     }
 
-    protected 日本語tableEntity doUpdateByPk(日本語tableEntity entity, boolean excludeNull, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
+    protected int doUpdateByPk(日本語tableEntity entity, boolean excludeNull, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

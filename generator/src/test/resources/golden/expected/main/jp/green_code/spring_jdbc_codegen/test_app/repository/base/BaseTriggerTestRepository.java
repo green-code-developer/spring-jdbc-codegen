@@ -102,28 +102,27 @@ public abstract class BaseTriggerTestRepository {
         }
     }
 
-    protected TriggerTestEntity execWithReturning(List<String> sql, Map<String, Object> param, TriggerTestEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, TriggerTestEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, TriggerTestEntity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, TriggerTestEntity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public TriggerTestEntity insert(TriggerTestEntity entity) {
+    public int insert(TriggerTestEntity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public TriggerTestEntity insertNotNull(TriggerTestEntity entity) {
+    public int insertNotNull(TriggerTestEntity entity) {
         return doInsert(entity, true);
     }
 
-    protected TriggerTestEntity doInsert(TriggerTestEntity entity, boolean excludeNull) {
+    protected int doInsert(TriggerTestEntity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"trigger_test\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -147,21 +146,21 @@ public abstract class BaseTriggerTestRepository {
         return param;
     }
 
-    public TriggerTestEntity update(TriggerTestEntity entity) {
+    public int update(TriggerTestEntity entity) {
         return doUpdateByPk(entity, false, entity.getPk());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public TriggerTestEntity updateNotNull(TriggerTestEntity entity) {
+    public int updateNotNull(TriggerTestEntity entity) {
         return doUpdateByPk(entity, true, entity.getPk());
     }
 
 
-    public TriggerTestEntity updateByPk(TriggerTestEntity entity, Long pk) {
+    public int updateByPk(TriggerTestEntity entity, Long pk) {
         return doUpdateByPk(entity, false, pk);
     }
 
-    protected TriggerTestEntity doUpdateByPk(TriggerTestEntity entity, boolean excludeNull, Long pk) {
+    protected int doUpdateByPk(TriggerTestEntity entity, boolean excludeNull, Long pk) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

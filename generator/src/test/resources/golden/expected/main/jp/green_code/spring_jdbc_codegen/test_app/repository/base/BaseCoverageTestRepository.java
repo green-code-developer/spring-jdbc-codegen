@@ -180,28 +180,27 @@ public abstract class BaseCoverageTestRepository {
         }
     }
 
-    protected CoverageTestEntity execWithReturning(List<String> sql, Map<String, Object> param, CoverageTestEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, CoverageTestEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, ROW_MAPPER)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, ROW_MAPPER);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public CoverageTestEntity insert(CoverageTestEntity entity) {
+    public int insert(CoverageTestEntity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public CoverageTestEntity insertNotNull(CoverageTestEntity entity) {
+    public int insertNotNull(CoverageTestEntity entity) {
         return doInsert(entity, true);
     }
 
-    protected CoverageTestEntity doInsert(CoverageTestEntity entity, boolean excludeNull) {
+    protected int doInsert(CoverageTestEntity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"coverage_test\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -230,21 +229,21 @@ public abstract class BaseCoverageTestRepository {
         return param;
     }
 
-    public CoverageTestEntity update(CoverageTestEntity entity) {
+    public int update(CoverageTestEntity entity) {
         return doUpdateByPk(entity, false, entity.getPk());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public CoverageTestEntity updateNotNull(CoverageTestEntity entity) {
+    public int updateNotNull(CoverageTestEntity entity) {
         return doUpdateByPk(entity, true, entity.getPk());
     }
 
 
-    public CoverageTestEntity updateByPk(CoverageTestEntity entity, Long pk) {
+    public int updateByPk(CoverageTestEntity entity, Long pk) {
         return doUpdateByPk(entity, false, pk);
     }
 
-    protected CoverageTestEntity doUpdateByPk(CoverageTestEntity entity, boolean excludeNull, Long pk) {
+    protected int doUpdateByPk(CoverageTestEntity entity, boolean excludeNull, Long pk) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

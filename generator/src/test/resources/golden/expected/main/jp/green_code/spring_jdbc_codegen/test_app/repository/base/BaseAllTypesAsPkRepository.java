@@ -457,28 +457,27 @@ public abstract class BaseAllTypesAsPkRepository {
         }
     }
 
-    protected AllTypesAsPkEntity execWithReturning(List<String> sql, Map<String, Object> param, AllTypesAsPkEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, AllTypesAsPkEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, AllTypesAsPkEntity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, AllTypesAsPkEntity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public AllTypesAsPkEntity insert(AllTypesAsPkEntity entity) {
+    public int insert(AllTypesAsPkEntity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public AllTypesAsPkEntity insertNotNull(AllTypesAsPkEntity entity) {
+    public int insertNotNull(AllTypesAsPkEntity entity) {
         return doInsert(entity, true);
     }
 
-    protected AllTypesAsPkEntity doInsert(AllTypesAsPkEntity entity, boolean excludeNull) {
+    protected int doInsert(AllTypesAsPkEntity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"all_types_as_pk\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -525,21 +524,21 @@ public abstract class BaseAllTypesAsPkRepository {
         return param;
     }
 
-    public AllTypesAsPkEntity update(AllTypesAsPkEntity entity) {
+    public int update(AllTypesAsPkEntity entity) {
         return doUpdateByPk(entity, false, entity.getColSmallint(), entity.getColSmallserial(), entity.getColInteger(), entity.getColSerial(), entity.getColBigint(), entity.getColBigserial(), entity.getColReal(), entity.getColDoublePrecision(), entity.getColNumeric(), entity.getColBoolean(), entity.getColChar(), entity.getColVarchar(), entity.getColText(), entity.getColDate(), entity.getColTime(), entity.getColTimeTz(), entity.getColTimestamp(), entity.getColTimestampTz(), entity.getColInterval(), entity.getColBytea(), entity.getColUuid(), entity.getColJsonb(), entity.getColInet(), entity.getColCidr(), entity.getColMacaddr(), entity.getColStatusEnum());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public AllTypesAsPkEntity updateNotNull(AllTypesAsPkEntity entity) {
+    public int updateNotNull(AllTypesAsPkEntity entity) {
         return doUpdateByPk(entity, true, entity.getColSmallint(), entity.getColSmallserial(), entity.getColInteger(), entity.getColSerial(), entity.getColBigint(), entity.getColBigserial(), entity.getColReal(), entity.getColDoublePrecision(), entity.getColNumeric(), entity.getColBoolean(), entity.getColChar(), entity.getColVarchar(), entity.getColText(), entity.getColDate(), entity.getColTime(), entity.getColTimeTz(), entity.getColTimestamp(), entity.getColTimestampTz(), entity.getColInterval(), entity.getColBytea(), entity.getColUuid(), entity.getColJsonb(), entity.getColInet(), entity.getColCidr(), entity.getColMacaddr(), entity.getColStatusEnum());
     }
 
 
-    public AllTypesAsPkEntity updateByPk(AllTypesAsPkEntity entity, Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {
+    public int updateByPk(AllTypesAsPkEntity entity, Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {
         return doUpdateByPk(entity, false, colSmallint, colSmallserial, colInteger, colSerial, colBigint, colBigserial, colReal, colDoublePrecision, colNumeric, colBoolean, colChar, colVarchar, colText, colDate, colTime, colTimeTz, colTimestamp, colTimestampTz, colInterval, colBytea, colUuid, colJsonb, colInet, colCidr, colMacaddr, colStatusEnum);
     }
 
-    protected AllTypesAsPkEntity doUpdateByPk(AllTypesAsPkEntity entity, boolean excludeNull, Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {
+    protected int doUpdateByPk(AllTypesAsPkEntity entity, boolean excludeNull, Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

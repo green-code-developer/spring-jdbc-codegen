@@ -103,28 +103,27 @@ public abstract class BaseOnlyPk3NowRepository {
         }
     }
 
-    protected OnlyPk3NowEntity execWithReturning(List<String> sql, Map<String, Object> param, OnlyPk3NowEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, OnlyPk3NowEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, OnlyPk3NowEntity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, OnlyPk3NowEntity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public OnlyPk3NowEntity insert(OnlyPk3NowEntity entity) {
+    public int insert(OnlyPk3NowEntity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public OnlyPk3NowEntity insertNotNull(OnlyPk3NowEntity entity) {
+    public int insertNotNull(OnlyPk3NowEntity entity) {
         return doInsert(entity, true);
     }
 
-    protected OnlyPk3NowEntity doInsert(OnlyPk3NowEntity entity, boolean excludeNull) {
+    protected int doInsert(OnlyPk3NowEntity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"only_pk3_now\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -148,21 +147,21 @@ public abstract class BaseOnlyPk3NowRepository {
         return param;
     }
 
-    public OnlyPk3NowEntity update(OnlyPk3NowEntity entity) {
+    public int update(OnlyPk3NowEntity entity) {
         return doUpdateByPk(entity, false, entity.getPk1(), entity.getPk2Now(), entity.getPk3());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public OnlyPk3NowEntity updateNotNull(OnlyPk3NowEntity entity) {
+    public int updateNotNull(OnlyPk3NowEntity entity) {
         return doUpdateByPk(entity, true, entity.getPk1(), entity.getPk2Now(), entity.getPk3());
     }
 
 
-    public OnlyPk3NowEntity updateByPk(OnlyPk3NowEntity entity, OffsetDateTime pk1, OffsetDateTime pk2Now, OffsetDateTime pk3) {
+    public int updateByPk(OnlyPk3NowEntity entity, OffsetDateTime pk1, OffsetDateTime pk2Now, OffsetDateTime pk3) {
         return doUpdateByPk(entity, false, pk1, pk2Now, pk3);
     }
 
-    protected OnlyPk3NowEntity doUpdateByPk(OnlyPk3NowEntity entity, boolean excludeNull, OffsetDateTime pk1, OffsetDateTime pk2Now, OffsetDateTime pk3) {
+    protected int doUpdateByPk(OnlyPk3NowEntity entity, boolean excludeNull, OffsetDateTime pk1, OffsetDateTime pk2Now, OffsetDateTime pk3) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()

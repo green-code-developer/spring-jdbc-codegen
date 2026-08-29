@@ -93,28 +93,27 @@ public abstract class BaseMapperNoPkRepository {
         }
     }
 
-    protected MapperNoPkEntity execWithReturning(List<String> sql, Map<String, Object> param, MapperNoPkEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, MapperNoPkEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, ROW_MAPPER)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, ROW_MAPPER);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public MapperNoPkEntity insert(MapperNoPkEntity entity) {
+    public int insert(MapperNoPkEntity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public MapperNoPkEntity insertNotNull(MapperNoPkEntity entity) {
+    public int insertNotNull(MapperNoPkEntity entity) {
         return doInsert(entity, true);
     }
 
-    protected MapperNoPkEntity doInsert(MapperNoPkEntity entity, boolean excludeNull) {
+    protected int doInsert(MapperNoPkEntity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"mapper_no_pk\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);

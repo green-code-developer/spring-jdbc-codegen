@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
@@ -18,10 +19,11 @@ public class TestOmittablePk3Repository {
     void test() {
         var data = new OmittablePk3Entity();
         // 全てnull をinsert
-        var res = repository.insert(data);
-        assertNotNull(res.getPk1());
-        assertNotNull(res.getPk2());
-        assertNotNull(res.getPk3());
-        assertNotNull(res.getColTextNotNullDefaultX());
+        // 戻り値は件数。DB が決めた値は引数のentity に書き戻される
+        assertEquals(1, repository.insert(data));
+        assertNotNull(data.getPk1());
+        assertNotNull(data.getPk2());
+        assertNotNull(data.getPk3());
+        assertNotNull(data.getColTextNotNullDefaultX());
     }
 }

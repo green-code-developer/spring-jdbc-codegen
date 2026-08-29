@@ -1,5 +1,7 @@
 # spring jdbc codegen
 
+バージョンごとの変更点は [CHANGELOG.md](CHANGELOG.md) を参照してください。**v3.0 では param.yml の設定を3つ廃止しています。**
+
 ## 目次
 
 - [1. 機能概要](#1-機能概要)
@@ -12,11 +14,11 @@
   - [3.4 動作確認済みの構成](#34-動作確認済みの構成)
   - [3.5 Lombok を使わない](#35-lombok-を使わない)
 - [4. {テーブル名}Repository クラスの使い方](#4-テーブル名repository-クラスの使い方)
-  - [4.1 T insert(T entity)](#41-t-insertt-entity)
-  - [4.2 T insertNotNull(T entity)](#42-t-insertnotnullt-entity)
-  - [4.3 T update(T entity)](#43-t-updatet-entity)
-  - [4.4 T updateNotNull(T entity)](#44-t-updatenotnullt-entity)
-  - [4.5 T updateByPk(T entity, pk)](#45-t-updatebypkt-entity-pk)
+  - [4.1 int insert(T entity)](#41-int-insertt-entity)
+  - [4.2 int insertNotNull(T entity)](#42-int-insertnotnullt-entity)
+  - [4.3 int update(T entity)](#43-int-updatet-entity)
+  - [4.4 int updateNotNull(T entity)](#44-int-updatenotnullt-entity)
+  - [4.5 int updateByPk(T entity, pk)](#45-int-updatebypkt-entity-pk)
   - [4.6 `Optional<Entity> findByPk(pk)`](#46-optionalentity-findbypkpk)
   - [4.7 int deleteByPk(pk)](#47-int-deletebypkpk)
   - [4.8 class Columns](#48-class-columns)
@@ -159,9 +161,11 @@ Lombok がなくてもそれほど困らない一方、IDE のバージョンア
 
 ## 4. {テーブル名}Repository クラスの使い方
 
-### 4.1 T insert(T entity)
+### 4.1 int insert(T entity)
 
 1レコードのinsert を行います。
+
+**戻り値は処理された件数です。** DB が決めた値は引数のentity へ書き戻されます。生成されるメソッドはいずれも件数を返し、entity への反映は引数を通じて行います。
 
 not null 制約ありかつ初期値を持つカラムに対して、entity 中のフィールドの値がnull であった場合は、 insert 対象から外されます。外されたカラムは、DB カラムに定義された初期値がセットされます。insert が終わるとその初期値が引数 entity へセットされます。プライマリーキーの自動採番などはinsert 後のentity から取得できます。
 
@@ -180,7 +184,7 @@ insert into "account" ("name") values (:name);
 -- パラメータの :name は "green-code-user" 
 ```
 
-### 4.2 T insertNotNull(T entity)
+### 4.2 int insertNotNull(T entity)
 
 値がnull のカラムを**すべて**Insert 対象から外します。DB の既定値を使いたい場合に利用します。
 
@@ -201,15 +205,15 @@ accountRepository.insertNotNull(account);
 var status = account.getStatus(); // "NEW" が入り、entity へ書き戻されます
 ```
 
-### 4.3 T update(T entity)
+### 4.3 int update(T entity)
 
 entity のプライマリーキーをキーとして、該当するレコードを1件更新します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-**更新件数は確認しません。** 該当するレコードが存在しなくても例外は発生せず、件数も返りません。件数が必要な場合は `helper.exec()` でSQL を手書きしてください（「8.4 条件を指定して更新する、削除する」を参照）。
+**該当するレコードが存在しなくても例外は発生しません。** 戻り値が0 になるので、呼び出し側で判断してください。楽観ロックのように「0件が正常な結果」となる場合があるため、例外ではなく件数で伝えます。
 
 **全カラムがUpdate の対象です。** entity にセットしなかったカラムはnull で上書きされます。findByPk() で取得したentity を変更して渡すか、後述のupdateNotNull() を利用してください。
 
-### 4.4 T updateNotNull(T entity)
+### 4.4 int updateNotNull(T entity)
 
 値がnull のカラムをset 句から外します。**部分更新**に利用します。
 
@@ -227,7 +231,7 @@ accountRepository.updateNotNull(account);
 
 逆に、**null 許可のカラムへnull を設定したい場合はupdate() を利用してください。** updateNotNull() では「null にしたい」と「指定しなかった」を区別できません。
 
-### 4.5 T updateByPk(T entity, pk)
+### 4.5 int updateByPk(T entity, pk)
 
 pk をキーとして、該当するレコードを1件更新します。update() との違いは、entity 内のプライマリーキーをキーとしない点です。PK をUpdate する場合に使用します。その他の性質はupdate() と同じです。
 

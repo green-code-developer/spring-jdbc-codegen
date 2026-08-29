@@ -143,16 +143,16 @@ public class BaseRepositoryGenerator {
         sb.add("");
         sb.addAll(execWithReturning());
         sb.add("");
-        sb.add("public %s insert(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("public int insert(%s entity) {".formatted(table.toEntityClassName()));
         sb.add("    return doInsert(entity, false);");
         sb.add("}");
         sb.add("");
         sb.add("/** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */");
-        sb.add("public %s insertNotNull(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("public int insertNotNull(%s entity) {".formatted(table.toEntityClassName()));
         sb.add("    return doInsert(entity, true);");
         sb.add("}");
         sb.add("");
-        sb.add("protected %s doInsert(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("protected int doInsert(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName()));
         // ローカル変数は __ を付ける。カラム名がsql / param のときにPK 引数と衝突するため
         sb.add("    var __sql = new ArrayList<String>();");
         sb.add("    __sql.add(\"insert into \\\"%s\\\"\");".formatted(table.tableName));
@@ -240,18 +240,17 @@ public class BaseRepositoryGenerator {
     /** returning 句の組み立てと実行。insert とupdate で共通 */
     List<String> execWithReturning() {
         var sb = new ArrayList<String>();
-        sb.add("protected %s execWithReturning(List<String> sql, Map<String, Object> param, %s entity, Set<String> returningColumns) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("protected int execWithReturning(List<String> sql, Map<String, Object> param, %s entity, Set<String> returningColumns) {".formatted(table.toEntityClassName()));
         sb.add("    if (returningColumns.isEmpty()) {");
-        sb.add("        this.helper.exec(sql, param);");
-        sb.add("        return entity;");
+        sb.add("        return this.helper.exec(sql, param);");
         sb.add("    }");
         // カラム名のクォートと型変換は ColumnDefinition に任せる（実行時に評価する）
         sb.add("    var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));");
         sb.add("    sql.add(\"returning %s\".formatted(returningClause));");
-        // 該当レコードがない場合は書き戻しを行わない。更新件数は確認しない
-        sb.add("    this.helper.optional(sql, param, %s)".formatted(table.toMapperOrEntityClass()));
-        sb.add("            .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));");
-        sb.add("    return entity;");
+        // 該当レコードがない場合は書き戻しを行わず 0 を返す
+        sb.add("    var ret = this.helper.optional(sql, param, %s);".formatted(table.toMapperOrEntityClass()));
+        sb.add("    ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));");
+        sb.add("    return ret.isPresent() ? 1 : 0;");
         sb.add("}");
         return sb;
     }
@@ -270,13 +269,13 @@ public class BaseRepositoryGenerator {
 
     List<String> update() {
         var sb = new ArrayList<String>();
-        sb.add("public %s update(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("public int update(%s entity) {".formatted(table.toEntityClassName()));
         var pkArgs = table.pkColumns().stream().map(c -> "entity.%s()".formatted(c.toGetter())).collect(joining(", "));
         sb.add("    return doUpdateByPk(entity, false, %s);".formatted(pkArgs));
         sb.add("}");
         sb.add("");
         sb.add("/** 値がnull のカラムをset 句から外して部分更新する */");
-        sb.add("public %s updateNotNull(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("public int updateNotNull(%s entity) {".formatted(table.toEntityClassName()));
         sb.add("    return doUpdateByPk(entity, true, %s);".formatted(pkArgs));
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
@@ -289,12 +288,12 @@ public class BaseRepositoryGenerator {
         }
         sb.add("");
         var pkArgs = toPkArgs();
-        sb.add("public %s updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
+        sb.add("public int updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), pkArgs));
         sb.add("    return doUpdateByPk(entity, false, %s);".formatted(
                 table.pkColumns().stream().map(DbColumnDefinition::toJavaPropertyName).collect(joining(", "))));
         sb.add("}");
         sb.add("");
-        sb.add("protected %s doUpdateByPk(%s entity, boolean excludeNull, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
+        sb.add("protected int doUpdateByPk(%s entity, boolean excludeNull, %s) {".formatted(table.toEntityClassName(), pkArgs));
         sb.add("    var __sql = new ArrayList<String>();");
         sb.add("    var __param = entityToParam(entity);");
         sb.add("    var setClause = Columns.MAP.values().stream()");

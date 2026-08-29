@@ -89,28 +89,27 @@ public abstract class BaseOmittablePk1Repository {
         }
     }
 
-    protected OmittablePk1Entity execWithReturning(List<String> sql, Map<String, Object> param, OmittablePk1Entity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, OmittablePk1Entity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-            return entity;
+            return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        this.helper.optional(sql, param, OmittablePk1Entity.class)
-                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
-        return entity;
+        var ret = this.helper.optional(sql, param, OmittablePk1Entity.class);
+        ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
+        return ret.isPresent() ? 1 : 0;
     }
 
-    public OmittablePk1Entity insert(OmittablePk1Entity entity) {
+    public int insert(OmittablePk1Entity entity) {
         return doInsert(entity, false);
     }
 
     /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public OmittablePk1Entity insertNotNull(OmittablePk1Entity entity) {
+    public int insertNotNull(OmittablePk1Entity entity) {
         return doInsert(entity, true);
     }
 
-    protected OmittablePk1Entity doInsert(OmittablePk1Entity entity, boolean excludeNull) {
+    protected int doInsert(OmittablePk1Entity entity, boolean excludeNull) {
         var __sql = new ArrayList<String>();
         __sql.add("insert into \"omittable_pk1\"");
         var __insertColumns = toInsertColumns(entity, excludeNull);
@@ -133,21 +132,21 @@ public abstract class BaseOmittablePk1Repository {
         return param;
     }
 
-    public OmittablePk1Entity update(OmittablePk1Entity entity) {
+    public int update(OmittablePk1Entity entity) {
         return doUpdateByPk(entity, false, entity.getPk());
     }
 
     /** 値がnull のカラムをset 句から外して部分更新する */
-    public OmittablePk1Entity updateNotNull(OmittablePk1Entity entity) {
+    public int updateNotNull(OmittablePk1Entity entity) {
         return doUpdateByPk(entity, true, entity.getPk());
     }
 
 
-    public OmittablePk1Entity updateByPk(OmittablePk1Entity entity, Long pk) {
+    public int updateByPk(OmittablePk1Entity entity, Long pk) {
         return doUpdateByPk(entity, false, pk);
     }
 
-    protected OmittablePk1Entity doUpdateByPk(OmittablePk1Entity entity, boolean excludeNull, Long pk) {
+    protected int doUpdateByPk(OmittablePk1Entity entity, boolean excludeNull, Long pk) {
         var __sql = new ArrayList<String>();
         var __param = entityToParam(entity);
         var setClause = Columns.MAP.values().stream()
