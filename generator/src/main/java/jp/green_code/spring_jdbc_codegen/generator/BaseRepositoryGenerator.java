@@ -89,9 +89,6 @@ public class BaseRepositoryGenerator {
         table.pkColumns().stream().map(DbColumnDefinition::importName).filter(c -> !isBlank(c)).forEach(imports::add);
         imports.add("%s.%s".formatted(param.repositoryPackage, param.repositoryHelperClassName));
         imports.add("%s.%s".formatted(param.repositoryPackage, param.columnDefinitionClassName));
-        if (!table.needReturningInUpdate()) {
-            imports.add(Fqcn.EMPTY_RESULT_DATA_ACCESS_EXCEPTION);
-        }
         if (table.needCustomMapper()) {
             imports.add(Fqcn.NULL_MARKED);
             imports.add(Fqcn.NULLABLE);
@@ -113,7 +110,7 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("public static class Columns {");
         for (var col : table.columns) {
-            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isSetNowColumn(), col.hasNameMapping()));
+            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isReturningColumn(), col.hasNameMapping()));
         }
         sb.add("");
         sb.add("    public static final Map<String, %s> MAP = new LinkedHashMap<>();".formatted(param.columnDefinitionClassName));
@@ -141,59 +138,52 @@ public class BaseRepositoryGenerator {
         sb.add("");
         sb.addAll(toInsertValues());
         sb.add("");
-        if (table.needReturningInInsert()) {
-            // intelliJ が警告を出すので不要な場合は作成しない
-            sb.addAll(copyReturningValuesInInsert());
-            sb.add("");
-        }
+        // execWithReturning から呼ぶため、returning が不要なテーブルでも生成する
+        sb.addAll(copyReturningValues());
+        sb.add("");
+        sb.addAll(execWithReturning());
+        sb.add("");
         sb.add("public %s insert(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
-        sb.add("    var sql = new ArrayList<String>();");
-        sb.add("    sql.add(\"insert into \\\"%s\\\"\");".formatted(table.tableName));
-        sb.add("    var insertColumns = toInsertColumns(entity);");
-        sb.add("    if (insertColumns.isEmpty()) {");
-        sb.add("        sql.add(\"DEFAULT VALUES\");");
+        sb.add("    return doInsert(entity, false);");
+        sb.add("}");
+        sb.add("");
+        sb.add("/** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */");
+        sb.add("public %s insertNotNull(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("    return doInsert(entity, true);");
+        sb.add("}");
+        sb.add("");
+        sb.add("protected %s doInsert(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        // ローカル変数は __ を付ける。カラム名がsql / param のときにPK 引数と衝突するため
+        sb.add("    var __sql = new ArrayList<String>();");
+        sb.add("    __sql.add(\"insert into \\\"%s\\\"\");".formatted(table.tableName));
+        sb.add("    var __insertColumns = toInsertColumns(entity, excludeNull);");
+        sb.add("    if (__insertColumns.isEmpty()) {");
+        sb.add("        __sql.add(\"DEFAULT VALUES\");");
         sb.add("    } else {");
-        sb.add("        sql.add(\"(%s)\".formatted(join(\", \", insertColumns)));");
-        sb.add("        var insertValues = toInsertValues(entity);");
-        sb.add("        var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(\", \"));");
-        sb.add("        sql.add(\"values (%s)\".formatted(insertValuesClause));");
+        sb.add("        __sql.add(\"(%s)\".formatted(join(\", \", __insertColumns)));");
+        sb.add("        var __insertValues = toInsertValues(entity, excludeNull);");
+        sb.add("        var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(\", \"));");
+        sb.add("        __sql.add(\"values (%s)\".formatted(__valuesClause));");
         sb.add("    }");
-        sb.add("    var param = entityToParam(entity);");
-        sb.add("    var returningColumns = toInsertReturning(entity, insertColumns);");
-        sb.add("    if (returningColumns.isEmpty()) {");
-        sb.add("        this.helper.exec(sql, param);");
-        sb.add("    } else {");
-        sb.add("        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));");
-        sb.add("        sql.add(\"returning %s\".formatted(returningClause));");
-        var varRet = "";
-        if (table.needReturningInInsert()) {
-            // intelliJ が警告を出すので不要な場合は作成しない
-            varRet = "var ret = ";
-        }
-        sb.add("        %sthis.helper.single(sql, param, %s);".formatted(varRet, table.toMapperOrEntityClass()));
-        if (table.needReturningInInsert()) {
-            sb.add("        copyReturningValuesInInsert(entity, ret);");
-        }
-        sb.add("    }");
-        sb.add("    return entity;");
+        sb.add("    var __param = entityToParam(entity);");
+        sb.add("    return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));");
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
 
     List<String> toInsertColumns() {
         var sb = new ArrayList<String>();
-        sb.add("protected List<String> toInsertColumns(%s entity) {".formatted(table.toEntityClassName()));
+        sb.add("protected List<String> toInsertColumns(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName()));
         sb.add("    var res = new ArrayList<String>();");
         for (var col : table.columns) {
-            var justColumn = "    res.add(\"\\\"%s\\\"\");".formatted(col.columnName);
-            if (col.isSetNowColumn()) {
-                sb.add(justColumn);
-            } else if (col.isInsertOmittable()) {
+            if (col.isInsertOmittable()) {
                 sb.add("    if (entity.%s() != null) {".formatted(col.toGetter()));
                 sb.add("        res.add(\"\\\"%s\\\"\");".formatted(col.columnName));
                 sb.add("    }");
             } else {
-                sb.add(justColumn);
+                sb.add("    if (!excludeNull || entity.%s() != null) {".formatted(col.toGetter()));
+                sb.add("        res.add(\"\\\"%s\\\"\");".formatted(col.columnName));
+                sb.add("    }");
             }
         }
         sb.add("    return res;");
@@ -203,23 +193,22 @@ public class BaseRepositoryGenerator {
 
     List<String> toInsertReturning() {
         var sb = new ArrayList<String>();
-        sb.add("protected Set<String> toInsertReturning(%s entity, List<String> insertColumns) {".formatted(table.toEntityClassName()));
+        sb.add("protected Set<String> toInsertReturning(List<String> insertColumns) {");
         sb.add("    var res = new HashSet<String>();");
         sb.add("    if (insertColumns.isEmpty()) {");
         // insert 対象のカラムがない場合はすべてのカラムをreturning 対象とする
         for (var col : table.columns) {
             sb.add("        res.add(\"%s\");".formatted(col.columnName));
         }
-        if (table.columns.stream().anyMatch(col -> col.isSetNowColumn() || col.isInsertOmittable())) {
-            sb.add("    } else {");
-            for (var col : table.columns) {
-                if (col.isSetNowColumn()) {
-                    sb.add("        res.add(\"%s\");".formatted(col.columnName));
-                } else if (col.isInsertOmittable()) {
-                    sb.add("        if (entity.%s() == null) {".formatted(col.toGetter()));
-                    sb.add("            res.add(\"%s\");".formatted(col.columnName));
-                    sb.add("        }");
-                }
+        sb.add("    } else {");
+        // insert 対象から外れたカラムはDB 側で値が決まるため取得する
+        for (var col : table.columns) {
+            if (col.isReturningColumn()) {
+                sb.add("        res.add(\"%s\");".formatted(col.columnName));
+            } else {
+                sb.add("        if (!insertColumns.contains(\"\\\"%s\\\"\")) {".formatted(col.columnName));
+                sb.add("            res.add(\"%s\");".formatted(col.columnName));
+                sb.add("        }");
             }
         }
         sb.add("    }");
@@ -230,17 +219,17 @@ public class BaseRepositoryGenerator {
 
     List<String> toInsertValues() {
         var sb = new ArrayList<String>();
-        sb.add("protected List<String> toInsertValues(%s entity) {".formatted(table.toEntityClassName()));
+        sb.add("protected List<String> toInsertValues(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName()));
         sb.add("    var res = new ArrayList<String>();");
         for (var col : table.columns) {
-            if (col.isSetNowColumn()) {
-                sb.add("    res.add(\"now()\");");
-            } else if (col.isInsertOmittable()) {
+            if (col.isInsertOmittable()) {
                 sb.add("    if (entity.%s() != null) {".formatted(col.toGetter()));
                 sb.add("        res.add(\"%s\");".formatted(col.columnName));
                 sb.add("    }");
             } else {
-                sb.add("    res.add(\"%s\");".formatted(col.columnName));
+                sb.add("    if (!excludeNull || entity.%s() != null) {".formatted(col.toGetter()));
+                sb.add("        res.add(\"%s\");".formatted(col.columnName));
+                sb.add("    }");
             }
         }
         sb.add("    return res;");
@@ -248,17 +237,32 @@ public class BaseRepositoryGenerator {
         return sb;
     }
 
-    List<String> copyReturningValuesInInsert() {
+    /** returning 句の組み立てと実行。insert とupdate で共通 */
+    List<String> execWithReturning() {
         var sb = new ArrayList<String>();
-        sb.add("protected void copyReturningValuesInInsert(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("protected %s execWithReturning(List<String> sql, Map<String, Object> param, %s entity, Set<String> returningColumns) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("    if (returningColumns.isEmpty()) {");
+        sb.add("        this.helper.exec(sql, param);");
+        sb.add("        return entity;");
+        sb.add("    }");
+        // カラム名のクォートと型変換は ColumnDefinition に任せる（実行時に評価する）
+        sb.add("    var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));");
+        sb.add("    sql.add(\"returning %s\".formatted(returningClause));");
+        // 該当レコードがない場合は書き戻しを行わない。更新件数は確認しない
+        sb.add("    this.helper.optional(sql, param, %s)".formatted(table.toMapperOrEntityClass()));
+        sb.add("            .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));");
+        sb.add("    return entity;");
+        sb.add("}");
+        return sb;
+    }
+
+    List<String> copyReturningValues() {
+        var sb = new ArrayList<String>();
+        sb.add("protected void copyReturningValues(%s entity, %s returning, Set<String> returningColumns) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
         for (var col : table.columns) {
-            if (col.isSetNowColumn()) {
-                sb.add("    entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
-            } else if (col.isInsertOmittable()) {
-                sb.add("    if (entity.%s() == null) {".formatted(col.toGetter()));
-                sb.add("        entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
-                sb.add("    }");
-            }
+            sb.add("    if (returningColumns.contains(\"%s\")) {".formatted(col.columnName));
+            sb.add("        entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
+            sb.add("    }");
         }
         sb.add("}");
         return sb;
@@ -268,7 +272,12 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("public %s update(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
         var pkArgs = table.pkColumns().stream().map(c -> "entity.%s()".formatted(c.toGetter())).collect(joining(", "));
-        sb.add("    return updateByPk(entity, %s);".formatted(pkArgs));
+        sb.add("    return doUpdateByPk(entity, false, %s);".formatted(pkArgs));
+        sb.add("}");
+        sb.add("");
+        sb.add("/** 値がnull のカラムをset 句から外して部分更新する */");
+        sb.add("public %s updateNotNull(%s entity) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
+        sb.add("    return doUpdateByPk(entity, true, %s);".formatted(pkArgs));
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
@@ -277,17 +286,26 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         if (table.needReturningInUpdate()) {
             // intelliJ が警告を出すので不要な場合は作成しない
-            sb.addAll(copyReturningValuesInUpdate());
         }
         sb.add("");
         var pkArgs = toPkArgs();
         sb.add("public %s updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
+        sb.add("    return doUpdateByPk(entity, false, %s);".formatted(
+                table.pkColumns().stream().map(DbColumnDefinition::toJavaPropertyName).collect(joining(", "))));
+        sb.add("}");
+        sb.add("");
+        sb.add("protected %s doUpdateByPk(%s entity, boolean excludeNull, %s) {".formatted(table.toEntityClassName(), table.toEntityClassName(), pkArgs));
         sb.add("    var __sql = new ArrayList<String>();");
-        sb.add("    var setClause = Columns.MAP.values().stream().map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("    var __param = entityToParam(entity);");
+        sb.add("    var setClause = Columns.MAP.values().stream()");
+        sb.add("            .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)");
+        sb.add("            .map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("    if (setClause.isEmpty()) {");
+        sb.add("        throw new IllegalArgumentException(\"更新対象のカラムがありません\");");
+        sb.add("    }");
         sb.add("    __sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
         sb.add("    __sql.add(\"set %s\".formatted(setClause));");
         var pkConditions = new ArrayList<String>();
-        sb.add("    var __param = entityToParam(entity);");
         var i = 0;
         for (var col : table.pkColumns()) {
             i++;
@@ -297,34 +315,14 @@ public class BaseRepositoryGenerator {
         sb.add("    __sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
 
         if (table.needReturningInUpdate()) {
-            var returningColumns = table.columns.stream().filter(DbColumnDefinition::isSetNowColumn).toList();
-            // カラム名のクォートと型変換は ColumnDefinition に任せる（実行時に評価する）
+            var returningColumns = table.columns.stream().filter(DbColumnDefinition::isReturningColumn).toList();
             var returningNames = returningColumns.stream().map(c -> "\"%s\"".formatted(c.columnName)).collect(joining(", "));
-            sb.add("    var __returning = List.of(%s).stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), \"Unknown column \" + c).toSelectColumn()).collect(joining(\", \"));".formatted(returningNames));
-            sb.add("    __sql.add(\"returning %s\".formatted(__returning));");
-            sb.add("    var ret = this.helper.single(__sql, __param, %s);".formatted(table.toMapperOrEntityClass()));
-            sb.add("    copyReturningValuesInUpdate(entity, ret);");
+            sb.add("    return execWithReturning(__sql, __param, entity, Set.of(%s));".formatted(returningNames));
         } else {
-            sb.add("    var res = this.helper.exec(__sql, __param);");
-            sb.add("    if (res != 1) {");
-            sb.add("        throw new EmptyResultDataAccessException(1);");
-            sb.add("    }");
+            sb.add("    return execWithReturning(__sql, __param, entity, Set.of());");
         }
-        sb.add("    return entity;");
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
-    }
-
-    List<String> copyReturningValuesInUpdate() {
-        var sb = new ArrayList<String>();
-        sb.add("protected void copyReturningValuesInUpdate(%s entity, %s returning) {".formatted(table.toEntityClassName(), table.toEntityClassName()));
-        for (var col : table.columns) {
-            if (col.isSetNowColumn()) {
-                sb.add("    entity.%s(returning.%s());".formatted(col.toSetter(), col.toGetter()));
-            }
-        }
-        sb.add("}");
-        return sb;
     }
 
     List<String> entityToParam() {

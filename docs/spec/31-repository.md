@@ -21,8 +21,8 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 
 | メソッド | 生成条件 |
 | --- | --- |
-| `insert` | 常に生成する |
-| `update` / `updateByPk` | PK があり、かつ UPDATE 対象カラムが 1 つ以上ある |
+| `insert` / `insertNotNull` | 常に生成する |
+| `update` / `updateByPk` / `updateNotNull` | PK がある |
 | `findByPk` | PK がある |
 | `deleteByPk` | PK がある |
 | `ROW_MAPPER` と Mapper クラス | 命名マッピングを持つカラムがある |
@@ -61,7 +61,6 @@ insert into "テーブル名" ("col1", "col2") values (:col1, :col2) returning .
 
 カラムごとに次の順で判定する。
 
-1. `setNowColumnsByTable` 対象 → 常に含める。値は `now()`
 2. **not null 制約があり、かつ既定値を持つ**カラム → entity の値が null のときだけ除外する
 3. それ以外 → 常に含める
 
@@ -74,12 +73,36 @@ insert into "テーブル名" ("col1", "col2") values (:col1, :col2) returning .
 
 次のカラムを `returning` 句で取得し、entity へ書き戻す。
 
-- `setNowColumnsByTable` 対象のカラム
+- `returningColumnsByTable` 対象のカラム（[PARAM-006](10-param.md)）
 - [REPO-011](#repo-011-insert-対象カラムの決定) の 2 で除外されたカラム
 
 insert 対象カラムが 1 つもなかった場合は**全カラム**を `returning` の対象とする。
 
 `returning` の対象が 1 つもない場合は `returning` 句を出力せず、書き戻しも行わない。
+
+## REPO-013 insertNotNull
+
+```java
+public {テーブル}Entity insertNotNull({テーブル}Entity entity)
+```
+
+**値が null のカラムをすべて INSERT 対象から外す。** DB の既定値を使いたい場合に用いる。
+
+[REPO-011](#repo-011-insert-対象カラムの決定) との違いは除外の条件だけで、それ以外の
+振る舞いは `insert` と同じ。
+
+| | 除外するカラム |
+| --- | --- |
+| `insert` | not null かつ既定値を持つカラムのうち、値が null のもの |
+| `insertNotNull` | 値が null のカラムすべて |
+
+`insert` は「null を入れられないカラムだけ既定値に任せる」という判断をするため、
+**nullable かつ既定値を持つカラム**では既定値が使われず null が入る。
+そのカラムに既定値を使いたい場合に `insertNotNull` を用いる。
+
+対象カラムが 1 つもない場合は `DEFAULT VALUES` を発行する。書き戻しの規則も
+`insert` と同じで、除外したカラムを `returning` で取得して entity へ反映する
+（[REPO-012](#repo-012-insert-後の書き戻し)）。
 
 ## REPO-020 update
 
@@ -95,7 +118,7 @@ public {テーブル}Entity updateByPk({テーブル}Entity entity, {PK の型} 
 
 `updateByPk` は entity とは別に PK 値を受け取る。**PK 自体を更新する**用途に使う。
 
-set 句には全カラムを含める。`setNowColumnsByTable` 対象のカラムは値が `now()` になる。
+set 句には全カラムを含める。
 
 更新させたくないカラムは、DB のトリガーで元の値へ戻す。生成コードは
 どのカラムを更新してよいかを判断しない。
@@ -108,11 +131,44 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 
 ## REPO-021 update の結果判定
 
-`setNowColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
-取得して entity へ書き戻す。該当レコードがなければ Spring JDBC が例外を送出する。
+**更新件数は確認しない。** 該当レコードがなくても例外は送出せず、更新件数も返さない。
+件数が必要な場合は `helper.exec()` で SQL を手書きする。
 
-対象がない場合は更新件数を確認し、1 件でなければ `EmptyResultDataAccessException` を
-送出する。
+`returningColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
+取得して entity へ書き戻す。取得は `helper.optional()` で行い、該当レコードが
+なければ書き戻しをせず entity をそのまま返す。
+
+## REPO-022 updateNotNull
+
+```java
+public {テーブル}Entity updateNotNull({テーブル}Entity entity)
+```
+
+**値が null のカラムを set 句から外す。** 部分更新に用いる。
+
+| | set 句に含めるカラム |
+| --- | --- |
+| `update` | 全カラム。null なら null で更新する |
+| `updateNotNull` | 値が null でないカラムのみ |
+
+`update` は entity の状態をそのまま DB へ反映するため、変更したいカラムだけを
+セットした entity を渡すと、他のカラムが null で上書きされる。部分更新には
+`updateNotNull` を用いる。
+
+逆に **nullable なカラムへ null を設定したい場合は `update` を使う。**
+`updateNotNull` では「null にしたい」と「指定しなかった」を区別できない。
+
+`returningColumnsByTable` 対象のカラムも、値が null なら set 句から外す。
+DB 側で値が決まるカラムであっても、Java から値を送らないことに変わりはない。
+
+set 句が空になる場合は `IllegalArgumentException` を送出する。更新対象のない
+UPDATE 文は SQL として成立しないため。ただし PK も set 句に含まれ、呼び出し時点で
+PK は非 null であるため、実際にこの状態になることはない。保険として残している。
+
+PK を変更する用途の `updateNotNullByPk` は生成しない。部分更新と PK 変更を
+同時に行う場面が想定しにくいため。必要な場合は `helper.exec()` で手書きする。
+
+結果の判定と書き戻しは [REPO-021](#repo-021-update-の結果判定) と同じ。
 
 ## REPO-030 findByPk
 

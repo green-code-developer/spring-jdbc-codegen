@@ -40,7 +40,7 @@
 
 ## PARAM-004 テーブル・カラム指定の共通形式
 
-`setNowColumnsByTable` は次の形式をとる。
+`returningColumnsByTable` は次の形式をとる。
 
 ```yml
 キー:
@@ -53,12 +53,25 @@
 テーブル名に `"*"` を指定すると全テーブルが対象になる。`"*"` の指定と
 個別テーブルの指定は**どちらか一方に含まれれば該当**する（和集合）。
 
-## PARAM-006 setNowColumnsByTable
+## PARAM-006 returningColumnsByTable
 
-指定したカラムの値を INSERT / UPDATE 時に SQL の `now()` に置き換える。
+トリガーなど **DB 側で値が決まるカラム**を指定する。INSERT / UPDATE の
+`returning` 句に含め、DB が確定させた値を entity へ書き戻す
+（[REPO-012](31-repository.md)、[REPO-021](31-repository.md)）。
 
-- Java 側から値を指定できなくなる
-- DB がセットした時刻を、実行後に引数の entity へ書き戻す（[REPO-012](31-repository.md)）
+```yml
+returningColumnsByTable:
+  "*":
+    - updated_at
+```
+
+**INSERT / UPDATE の対象カラムには影響しない。** Java の値はそのまま送られ、
+トリガーが上書きすればその結果を取得する。トリガーがなければ Java の値が
+そのまま入り、同じ値を取得する。
+
+v2 までの `setNowColumnsByTable` を置き換える。あちらは SQL に `now()` を
+書き込んでいたが、値の決定は DB 側（トリガー）に任せ、このツールは
+**結果の取得だけを行う**。`now()` 以外の加工をするトリガーにも対応できる。
 
 ## PARAM-007 enumJavaTypeMappings
 
@@ -126,7 +139,7 @@ param.yml の設定が実在するテーブル・カラムを指しているか�
 | --- | --- |
 | `excludedTableNames` | 列挙されたテーブルが実在するか |
 | `testTargetTable` | 列挙されたテーブルが実在するか |
-| `setNowColumnsByTable` | テーブルとカラムが実在するか |
+| `returningColumnsByTable` | テーブルとカラムが実在するか |
 | `columnName2javaPropertyMap` | テーブルとカラムが実在するか |
 | `enumJavaTypeMappings` | その DB 型を使っているカラムが存在するか |
 
@@ -149,6 +162,6 @@ param.yml の設定が実在するテーブル・カラムを指しているか�
 ========================================
 param.yml に有効でない設定が 2 件あります
   警告: testTargetTable のテーブル "account_master" は存在しません
-  警告: setNowColumnsByTable のカラム "updated_at" はどのテーブルにも存在しません
+  警告: returningColumnsByTable のカラム "updated_at" はどのテーブルにも存在しません
 ========================================
 ```

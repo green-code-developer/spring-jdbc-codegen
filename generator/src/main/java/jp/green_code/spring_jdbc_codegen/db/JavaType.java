@@ -23,7 +23,7 @@ public record JavaType(
 
     // param.yml enumJavaTypeMappings から読み込む場合
     public JavaType(String fqcn, String dbParamTemplate) {
-        this(fqcn, "String.valueOf({value})", dbParamTemplate, null, "return pickBySeed(%s.class, seed);".formatted(fqcn), null);
+        this(fqcn, "{value} == null ? null : {value}.name()", dbParamTemplate, null, "return pickBySeed(%s.class, seed);".formatted(fqcn), null);
     }
 
     public boolean isPrimitive() {

@@ -30,14 +30,14 @@ testJavaDir: ../../../../test-app/src/test/java
 enumJavaTypeMappings:
   status_enum: jp.green_code.spring_jdbc_codegen.test_app.StatusEnum
 
-# now() 更新カラム（省略可）
-#   insert やupdate の時に、sql のnow() をセットします
-#   java から値を指定することはできなくなります。
+# returning 取得カラム（省略可）
+#   トリガーなどDB 側で値が決まるカラムを指定します
+#   insert やupdate の後、returning で取得してentity へ書き戻します
 #   テーブル名とカラム名を下の形式で指定します
 #   table_name:
 #     - column_name
 #   テーブルに* を指定すると全テーブルのカラムが対象となります
-setNowColumnsByTable:
+returningColumnsByTable:
   "*":
     - updated_at
   "only_pk3_now":
@@ -82,9 +82,6 @@ testTargetTable:
   - omittable_pk0
   - omittable_pk1
   - omittable_pk3
-  - now_pk0
-  - now_pk1
-  - now_pk3
   - only_pk1
   - only_pk3
   - only_pk3_now

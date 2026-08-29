@@ -5,11 +5,9 @@ import jp.green_code.spring_jdbc_codegen.test_app.repository.OnlyPk1Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.time.OffsetDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -37,10 +35,9 @@ public class TestOnlyPk1Repository {
         assertTrue(repository.findByPk(largeLong).isPresent());
         assertTrue(repository.findByPk(entity.getPk()).isEmpty());
 
-        // 存在しないpk の場合は例外発生するはず
-        //   内部でhelper.exec() を使っているケース
-        assertThrows(EmptyResultDataAccessException.class, () -> {
-            repository.update(entity);
-        });
+        // 存在しないpk をupdate しても例外は発生しない
+        //   returning がないテーブルは helper.exec() で実行し、更新件数を確認しないため
+        repository.update(entity);
+        assertTrue(repository.findByPk(entity.getPk()).isEmpty());
     }
 }

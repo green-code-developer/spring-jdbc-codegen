@@ -118,25 +118,8 @@ create table omittable_pk3 (
 
 
 
--- Now のみ PKなし
-create table now_pk0 (
-    col_now timestamp with time zone not null default now()
-);
 
--- Now のみ PK1個
-create table now_pk1 (
-    pk bigserial primary key,
-    col_now timestamp with time zone not null default now()
-);
 
--- Now のみ PK3個
-create table now_pk3 (
-    pk1 bigserial,
-    pk2 timestamp with time zone not null default now(),
-    pk3 uuid default gen_random_uuid(),
-    col_now timestamp with time zone not null default now(),
-    primary key(pk1, pk2, pk3)
-);
 
 -- PK のみ PK1個
 create table only_pk1 (
@@ -154,7 +137,7 @@ create table only_pk3 (
 -- PK のみ PK3個 全てnow
 create table only_pk3_now (
     pk1 timestamp with time zone not null default now(),
-    -- pk2_now は param.yml でsetNow を指定している
+    -- pk2_now は既定値を持たないPK。insert 時に値を渡す必要がある
     pk2_now timestamp with time zone not null,
     pk3 timestamp with time zone not null default now(),
     primary key(pk1, pk2_now, pk3)

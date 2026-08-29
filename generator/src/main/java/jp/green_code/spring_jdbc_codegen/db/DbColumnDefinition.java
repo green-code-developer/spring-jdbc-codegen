@@ -88,9 +88,9 @@ public class DbColumnDefinition {
         return javaFqcn;
     }
 
-    // set now() 対象判定
-    public boolean isSetNowColumn() {
-        return mapContainsColumn(param.setNowColumnsByTable, tableName, columnName);
+    // returning 対象判定
+    public boolean isReturningColumn() {
+        return mapContainsColumn(param.returningColumnsByTable, tableName, columnName);
     }
 
     // map にカラムが含まれるか汎用判定

@@ -14,7 +14,6 @@ import jp.green_code.spring_jdbc_codegen.test_app.repository.ColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.RepositoryHelper;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
@@ -64,7 +63,7 @@ public abstract class Base日本語tableRepository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(日本語tableEntity entity) {
+    protected List<String> toInsertColumns(日本語tableEntity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getOrder() != null) {
             res.add("\"order\"");
@@ -84,14 +83,22 @@ public abstract class Base日本語tableRepository {
         if (entity.getList() != null) {
             res.add("\"List\"");
         }
-        res.add("\"rename\"");
-        res.add("\"where\"");
-        res.add("\"select\"");
-        res.add("\"Abc\"");
+        if (!excludeNull || entity.getRenamedJavaName() != null) {
+            res.add("\"rename\"");
+        }
+        if (!excludeNull || entity.getWhere() != null) {
+            res.add("\"where\"");
+        }
+        if (!excludeNull || entity.getSelect() != null) {
+            res.add("\"select\"");
+        }
+        if (!excludeNull || entity.getAbc() != null) {
+            res.add("\"Abc\"");
+        }
         return res;
     }
 
-    protected Set<String> toInsertReturning(日本語tableEntity entity, List<String> insertColumns) {
+    protected Set<String> toInsertReturning(List<String> insertColumns) {
         var res = new HashSet<String>();
         if (insertColumns.isEmpty()) {
             res.add("order");
@@ -105,29 +112,41 @@ public abstract class Base日本語tableRepository {
             res.add("select");
             res.add("Abc");
         } else {
-            if (entity.getOrder() == null) {
+            if (!insertColumns.contains("\"order\"")) {
                 res.add("order");
             }
-            if (entity.getParam() == null) {
+            if (!insertColumns.contains("\"param\"")) {
                 res.add("param");
             }
-            if (entity.getSql() == null) {
+            if (!insertColumns.contains("\"sql\"")) {
                 res.add("sql");
             }
-            if (entity.getHelper() == null) {
+            if (!insertColumns.contains("\"helper\"")) {
                 res.add("helper");
             }
-            if (entity.getJoining() == null) {
+            if (!insertColumns.contains("\"joining\"")) {
                 res.add("joining");
             }
-            if (entity.getList() == null) {
+            if (!insertColumns.contains("\"List\"")) {
                 res.add("List");
+            }
+            if (!insertColumns.contains("\"rename\"")) {
+                res.add("rename");
+            }
+            if (!insertColumns.contains("\"where\"")) {
+                res.add("where");
+            }
+            if (!insertColumns.contains("\"select\"")) {
+                res.add("select");
+            }
+            if (!insertColumns.contains("\"Abc\"")) {
+                res.add("Abc");
             }
         }
         return res;
     }
 
-    protected List<String> toInsertValues(日本語tableEntity entity) {
+    protected List<String> toInsertValues(日本語tableEntity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getOrder() != null) {
             res.add("order");
@@ -147,57 +166,89 @@ public abstract class Base日本語tableRepository {
         if (entity.getList() != null) {
             res.add("List");
         }
-        res.add("rename");
-        res.add("where");
-        res.add("select");
-        res.add("Abc");
+        if (!excludeNull || entity.getRenamedJavaName() != null) {
+            res.add("rename");
+        }
+        if (!excludeNull || entity.getWhere() != null) {
+            res.add("where");
+        }
+        if (!excludeNull || entity.getSelect() != null) {
+            res.add("select");
+        }
+        if (!excludeNull || entity.getAbc() != null) {
+            res.add("Abc");
+        }
         return res;
     }
 
-    protected void copyReturningValuesInInsert(日本語tableEntity entity, 日本語tableEntity returning) {
-        if (entity.getOrder() == null) {
+    protected void copyReturningValues(日本語tableEntity entity, 日本語tableEntity returning, Set<String> returningColumns) {
+        if (returningColumns.contains("order")) {
             entity.setOrder(returning.getOrder());
         }
-        if (entity.getParam() == null) {
+        if (returningColumns.contains("param")) {
             entity.setParam(returning.getParam());
         }
-        if (entity.getSql() == null) {
+        if (returningColumns.contains("sql")) {
             entity.setSql(returning.getSql());
         }
-        if (entity.getHelper() == null) {
+        if (returningColumns.contains("helper")) {
             entity.setHelper(returning.getHelper());
         }
-        if (entity.getJoining() == null) {
+        if (returningColumns.contains("joining")) {
             entity.setJoining(returning.getJoining());
         }
-        if (entity.getList() == null) {
+        if (returningColumns.contains("List")) {
             entity.setList(returning.getList());
+        }
+        if (returningColumns.contains("rename")) {
+            entity.setRenamedJavaName(returning.getRenamedJavaName());
+        }
+        if (returningColumns.contains("where")) {
+            entity.setWhere(returning.getWhere());
+        }
+        if (returningColumns.contains("select")) {
+            entity.setSelect(returning.getSelect());
+        }
+        if (returningColumns.contains("Abc")) {
+            entity.setAbc(returning.getAbc());
         }
     }
 
-    public 日本語tableEntity insert(日本語tableEntity entity) {
-        var sql = new ArrayList<String>();
-        sql.add("insert into \"日本語Table\"");
-        var insertColumns = toInsertColumns(entity);
-        if (insertColumns.isEmpty()) {
-            sql.add("DEFAULT VALUES");
-        } else {
-            sql.add("(%s)".formatted(join(", ", insertColumns)));
-            var insertValues = toInsertValues(entity);
-            var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            sql.add("values (%s)".formatted(insertValuesClause));
-        }
-        var param = entityToParam(entity);
-        var returningColumns = toInsertReturning(entity, insertColumns);
+    protected 日本語tableEntity execWithReturning(List<String> sql, Map<String, Object> param, 日本語tableEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
             this.helper.exec(sql, param);
-        } else {
-            var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
-            sql.add("returning %s".formatted(returningClause));
-            var ret = this.helper.single(sql, param, ROW_MAPPER);
-            copyReturningValuesInInsert(entity, ret);
+            return entity;
         }
+        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        sql.add("returning %s".formatted(returningClause));
+        this.helper.optional(sql, param, ROW_MAPPER)
+                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
         return entity;
+    }
+
+    public 日本語tableEntity insert(日本語tableEntity entity) {
+        return doInsert(entity, false);
+    }
+
+    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
+    public 日本語tableEntity insertNotNull(日本語tableEntity entity) {
+        return doInsert(entity, true);
+    }
+
+    protected 日本語tableEntity doInsert(日本語tableEntity entity, boolean excludeNull) {
+        var __sql = new ArrayList<String>();
+        __sql.add("insert into \"日本語Table\"");
+        var __insertColumns = toInsertColumns(entity, excludeNull);
+        if (__insertColumns.isEmpty()) {
+            __sql.add("DEFAULT VALUES");
+        } else {
+            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
+            var __insertValues = toInsertValues(entity, excludeNull);
+            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
+            __sql.add("values (%s)".formatted(__valuesClause));
+        }
+        var __param = entityToParam(entity);
+        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
     }
 
     public static Map<String, Object> entityToParam(日本語tableEntity entity) {
@@ -216,16 +267,30 @@ public abstract class Base日本語tableRepository {
     }
 
     public 日本語tableEntity update(日本語tableEntity entity) {
-        return updateByPk(entity, entity.getOrder(), entity.getParam(), entity.getSql(), entity.getHelper(), entity.getJoining(), entity.getList(), entity.getRenamedJavaName());
+        return doUpdateByPk(entity, false, entity.getOrder(), entity.getParam(), entity.getSql(), entity.getHelper(), entity.getJoining(), entity.getList(), entity.getRenamedJavaName());
+    }
+
+    /** 値がnull のカラムをset 句から外して部分更新する */
+    public 日本語tableEntity updateNotNull(日本語tableEntity entity) {
+        return doUpdateByPk(entity, true, entity.getOrder(), entity.getParam(), entity.getSql(), entity.getHelper(), entity.getJoining(), entity.getList(), entity.getRenamedJavaName());
     }
 
 
     public 日本語tableEntity updateByPk(日本語tableEntity entity, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
+        return doUpdateByPk(entity, false, order, param, sql, helper, joining, list, renamedJavaName);
+    }
+
+    protected 日本語tableEntity doUpdateByPk(日本語tableEntity entity, boolean excludeNull, Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var __param = entityToParam(entity);
+        var setClause = Columns.MAP.values().stream()
+                .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)
+                .map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        if (setClause.isEmpty()) {
+            throw new IllegalArgumentException("更新対象のカラムがありません");
+        }
         __sql.add("update \"日本語Table\"");
         __sql.add("set %s".formatted(setClause));
-        var __param = entityToParam(entity);
         __param.put("__pk1", order);
         __param.put("__pk2", param);
         __param.put("__pk3", sql);
@@ -234,11 +299,7 @@ public abstract class Base日本語tableRepository {
         __param.put("__pk6", list);
         __param.put("__pk7", renamedJavaName);
         __sql.add("where \"order\" = :__pk1 AND \"param\" = :__pk2 AND \"sql\" = :__pk3 AND \"helper\" = :__pk4 AND \"joining\" = :__pk5 AND \"List\" = :__pk6 AND \"rename\" = :__pk7");
-        var res = this.helper.exec(__sql, __param);
-        if (res != 1) {
-            throw new EmptyResultDataAccessException(1);
-        }
-        return entity;
+        return execWithReturning(__sql, __param, entity, Set.of());
     }
 
     public Optional<日本語tableEntity> findByPk(Long order, Long param, Long sql, Long helper, Long joining, Long list, String renamedJavaName) {

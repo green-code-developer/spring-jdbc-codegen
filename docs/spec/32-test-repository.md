@@ -48,9 +48,10 @@ DB の自動採番を働かせるため。それ以外の PK は生成した値�
 
 **全カラムを検証する。** insert 後・update 後とも、投入した値と取得した値を比較する。
 
-`setNowColumnsByTable` 対象のカラムも同じ規則で検証する。insert / update の実行時に
-DB がセットした値が entity へ書き戻される（[REPO-012](31-repository.md)）ため、
-投入した値との比較が成立する。
+`returningColumnsByTable` 対象のカラムも同じ規則で検証する。DB が確定させた値が
+entity へ書き戻される（[REPO-012](31-repository.md)）ため、投入した値との比較が
+成立する。ただしトリガーが値を書き換える場合は一致しないため、実体クラスで
+`assert4{プロパティ名}` を override する。
 
 DB のトリガーで値を書き換えるカラムは、この検証と食い違う可能性がある。
 必要に応じて実体クラスで `assert4{プロパティ名}` を override する。

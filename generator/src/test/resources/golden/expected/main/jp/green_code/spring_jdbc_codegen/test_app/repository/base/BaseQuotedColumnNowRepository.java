@@ -44,71 +44,99 @@ public abstract class BaseQuotedColumnNowRepository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(QuotedColumnNowEntity entity) {
+    protected List<String> toInsertColumns(QuotedColumnNowEntity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getPk() != null) {
             res.add("\"pk\"");
         }
-        res.add("\"Updated\"");
-        res.add("\"col_text\"");
+        if (entity.getUpdated() != null) {
+            res.add("\"Updated\"");
+        }
+        if (!excludeNull || entity.getColText() != null) {
+            res.add("\"col_text\"");
+        }
         return res;
     }
 
-    protected Set<String> toInsertReturning(QuotedColumnNowEntity entity, List<String> insertColumns) {
+    protected Set<String> toInsertReturning(List<String> insertColumns) {
         var res = new HashSet<String>();
         if (insertColumns.isEmpty()) {
             res.add("pk");
             res.add("Updated");
             res.add("col_text");
         } else {
-            if (entity.getPk() == null) {
+            if (!insertColumns.contains("\"pk\"")) {
                 res.add("pk");
             }
             res.add("Updated");
+            if (!insertColumns.contains("\"col_text\"")) {
+                res.add("col_text");
+            }
         }
         return res;
     }
 
-    protected List<String> toInsertValues(QuotedColumnNowEntity entity) {
+    protected List<String> toInsertValues(QuotedColumnNowEntity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getPk() != null) {
             res.add("pk");
         }
-        res.add("now()");
-        res.add("col_text");
+        if (entity.getUpdated() != null) {
+            res.add("Updated");
+        }
+        if (!excludeNull || entity.getColText() != null) {
+            res.add("col_text");
+        }
         return res;
     }
 
-    protected void copyReturningValuesInInsert(QuotedColumnNowEntity entity, QuotedColumnNowEntity returning) {
-        if (entity.getPk() == null) {
+    protected void copyReturningValues(QuotedColumnNowEntity entity, QuotedColumnNowEntity returning, Set<String> returningColumns) {
+        if (returningColumns.contains("pk")) {
             entity.setPk(returning.getPk());
         }
-        entity.setUpdated(returning.getUpdated());
+        if (returningColumns.contains("Updated")) {
+            entity.setUpdated(returning.getUpdated());
+        }
+        if (returningColumns.contains("col_text")) {
+            entity.setColText(returning.getColText());
+        }
+    }
+
+    protected QuotedColumnNowEntity execWithReturning(List<String> sql, Map<String, Object> param, QuotedColumnNowEntity entity, Set<String> returningColumns) {
+        if (returningColumns.isEmpty()) {
+            this.helper.exec(sql, param);
+            return entity;
+        }
+        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        sql.add("returning %s".formatted(returningClause));
+        this.helper.optional(sql, param, QuotedColumnNowEntity.class)
+                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
+        return entity;
     }
 
     public QuotedColumnNowEntity insert(QuotedColumnNowEntity entity) {
-        var sql = new ArrayList<String>();
-        sql.add("insert into \"quoted_column_now\"");
-        var insertColumns = toInsertColumns(entity);
-        if (insertColumns.isEmpty()) {
-            sql.add("DEFAULT VALUES");
+        return doInsert(entity, false);
+    }
+
+    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
+    public QuotedColumnNowEntity insertNotNull(QuotedColumnNowEntity entity) {
+        return doInsert(entity, true);
+    }
+
+    protected QuotedColumnNowEntity doInsert(QuotedColumnNowEntity entity, boolean excludeNull) {
+        var __sql = new ArrayList<String>();
+        __sql.add("insert into \"quoted_column_now\"");
+        var __insertColumns = toInsertColumns(entity, excludeNull);
+        if (__insertColumns.isEmpty()) {
+            __sql.add("DEFAULT VALUES");
         } else {
-            sql.add("(%s)".formatted(join(", ", insertColumns)));
-            var insertValues = toInsertValues(entity);
-            var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            sql.add("values (%s)".formatted(insertValuesClause));
+            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
+            var __insertValues = toInsertValues(entity, excludeNull);
+            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
+            __sql.add("values (%s)".formatted(__valuesClause));
         }
-        var param = entityToParam(entity);
-        var returningColumns = toInsertReturning(entity, insertColumns);
-        if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-        } else {
-            var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
-            sql.add("returning %s".formatted(returningClause));
-            var ret = this.helper.single(sql, param, QuotedColumnNowEntity.class);
-            copyReturningValuesInInsert(entity, ret);
-        }
-        return entity;
+        var __param = entityToParam(entity);
+        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
     }
 
     public static Map<String, Object> entityToParam(QuotedColumnNowEntity entity) {
@@ -120,26 +148,33 @@ public abstract class BaseQuotedColumnNowRepository {
     }
 
     public QuotedColumnNowEntity update(QuotedColumnNowEntity entity) {
-        return updateByPk(entity, entity.getPk());
+        return doUpdateByPk(entity, false, entity.getPk());
     }
 
-    protected void copyReturningValuesInUpdate(QuotedColumnNowEntity entity, QuotedColumnNowEntity returning) {
-        entity.setUpdated(returning.getUpdated());
+    /** 値がnull のカラムをset 句から外して部分更新する */
+    public QuotedColumnNowEntity updateNotNull(QuotedColumnNowEntity entity) {
+        return doUpdateByPk(entity, true, entity.getPk());
     }
+
 
     public QuotedColumnNowEntity updateByPk(QuotedColumnNowEntity entity, Long pk) {
+        return doUpdateByPk(entity, false, pk);
+    }
+
+    protected QuotedColumnNowEntity doUpdateByPk(QuotedColumnNowEntity entity, boolean excludeNull, Long pk) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var __param = entityToParam(entity);
+        var setClause = Columns.MAP.values().stream()
+                .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)
+                .map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        if (setClause.isEmpty()) {
+            throw new IllegalArgumentException("更新対象のカラムがありません");
+        }
         __sql.add("update \"quoted_column_now\"");
         __sql.add("set %s".formatted(setClause));
-        var __param = entityToParam(entity);
         __param.put("__pk1", pk);
         __sql.add("where \"pk\" = :__pk1");
-        var __returning = List.of("Updated").stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
-        __sql.add("returning %s".formatted(__returning));
-        var ret = this.helper.single(__sql, __param, QuotedColumnNowEntity.class);
-        copyReturningValuesInUpdate(entity, ret);
-        return entity;
+        return execWithReturning(__sql, __param, entity, Set.of("Updated"));
     }
 
     public Optional<QuotedColumnNowEntity> findByPk(Long pk) {

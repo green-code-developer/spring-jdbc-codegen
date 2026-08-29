@@ -53,13 +53,13 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    /** カラム名と型キャスト用のテンプレート（内部用） */");
         addNullableIfNeed(sb);
         sb.add("    private final String dbSelectTemplate;");
-        sb.add("    /** now() で上書きを行う */");
-        sb.add("    private final boolean isSetNow;");
+        sb.add("    /** DB 側で値が決まり、returning で取得するカラムか */");
+        sb.add("    private final boolean isReturning;");
         sb.add("    /** Update 対象外 */");
         sb.add("    /** カラム名とJava プロパティ名の明示的マッピング */");
         sb.add("    private final boolean hasNameMapping;");
         sb.add("");
-        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, %sInteger primaryKeySeq, boolean nullable, boolean hasDefault, %sString dbParamTemplate, %sString dbSelectTemplate, boolean isSetNow, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName(), nullable, nullable, nullable));
+        sb.add("    public %s(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, %sInteger primaryKeySeq, boolean nullable, boolean hasDefault, %sString dbParamTemplate, %sString dbSelectTemplate, boolean isReturning, boolean hasNameMapping) {".formatted(param.toBaseColumnDefinitionClassName(), nullable, nullable, nullable));
         sb.add("        this.columnName = columnName;");
         sb.add("        this.javaPropertyName = javaPropertyName;");
         sb.add("        this.javaFqcn = javaFqcn;");
@@ -71,7 +71,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        this.hasDefault = hasDefault;");
         sb.add("        this.dbParamTemplate = dbParamTemplate;");
         sb.add("        this.dbSelectTemplate = dbSelectTemplate;");
-        sb.add("        this.isSetNow = isSetNow;");
+        sb.add("        this.isReturning = isReturning;");
         sb.add("        this.hasNameMapping = hasNameMapping;");
         sb.add("    }");
         sb.add("");
@@ -141,8 +141,8 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        return template.replace(\"{columnName}\", \"\\\"\" + columnName + \"\\\"\");");
         sb.add("    }");
         sb.add("");
-        sb.add("    public boolean isSetNow() {");
-        sb.add("        return isSetNow;");
+        sb.add("    public boolean isReturning() {");
+        sb.add("        return isReturning;");
         sb.add("    }");
         sb.add("");
         sb.add("    @Override");
@@ -151,8 +151,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    }");
         sb.add("");
         sb.add("    public String toUpdateSetClause() {");
-        sb.add("        var value = isSetNow() ? \"now()\" : toParamColumn();");
-        sb.add("        return \"\\\"%s\\\" = %s\".formatted(getColumnName(), value);");
+        sb.add("        return \"\\\"%s\\\" = %s\".formatted(getColumnName(), toParamColumn());");
         sb.add("    }");
         sb.add("}");
         return join("\n", sb);

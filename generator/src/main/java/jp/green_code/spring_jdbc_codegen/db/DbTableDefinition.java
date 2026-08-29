@@ -70,13 +70,13 @@ public class DbTableDefinition {
 
     // Insert 時にreturning が必要かどうか
     public boolean needReturningInInsert() {
-        return columns.stream().anyMatch(c -> c.isSetNowColumn() || c.isInsertOmittable());
+        return columns.stream().anyMatch(c -> c.isReturningColumn() || c.isInsertOmittable());
     }
 
     // Update 時にreturning が必要かどうか
     public boolean needReturningInUpdate() {
         // UPDATE 対象外のカラムは set 句に含まれず値が変わらないため returning しない
-        return columns.stream().anyMatch(DbColumnDefinition::isSetNowColumn);
+        return columns.stream().anyMatch(DbColumnDefinition::isReturningColumn);
     }
 
     public boolean needCustomMapper() {

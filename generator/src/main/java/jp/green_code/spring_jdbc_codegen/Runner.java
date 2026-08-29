@@ -84,7 +84,7 @@ public class Runner {
                 warnings.add("testTargetTable のテーブル \"%s\" は存在しません".formatted(t));
             }
         }
-        warnings.addAll(validateColumnSetting("setNowColumnsByTable", param.setNowColumnsByTable, tables));
+        warnings.addAll(validateColumnSetting("returningColumnsByTable", param.returningColumnsByTable, tables));
         var mappingKeys = new LinkedHashMap<String, Collection<String>>();
         param.columnName2javaPropertyMap.forEach((k, v) -> mappingKeys.put(k, v.keySet()));
         warnings.addAll(validateColumnSetting("columnName2javaPropertyMap", mappingKeys, tables));

@@ -8,7 +8,7 @@ create table mapper_no_pk (
     other_col     text
 );
 
--- クォートが必要なカラム名 × setNow
+-- クォートが必要なカラム名 × returning
 --   update のreturning 句だけカラム名がクォートされず、
 --   大文字を含む識別子が小文字に畳まれて実行時エラーになる
 create table quoted_column_now (

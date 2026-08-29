@@ -13,7 +13,6 @@ import jp.green_code.spring_jdbc_codegen.test_app.repository.ColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.RepositoryHelper;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
@@ -47,51 +46,88 @@ public abstract class BaseMapperNoPkRepository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(MapperNoPkEntity entity) {
+    protected List<String> toInsertColumns(MapperNoPkEntity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
-        res.add("\"rename_target\"");
-        res.add("\"other_col\"");
+        if (!excludeNull || entity.getRenamedNoPkName() != null) {
+            res.add("\"rename_target\"");
+        }
+        if (!excludeNull || entity.getOtherCol() != null) {
+            res.add("\"other_col\"");
+        }
         return res;
     }
 
-    protected Set<String> toInsertReturning(MapperNoPkEntity entity, List<String> insertColumns) {
+    protected Set<String> toInsertReturning(List<String> insertColumns) {
         var res = new HashSet<String>();
         if (insertColumns.isEmpty()) {
             res.add("rename_target");
+            res.add("other_col");
+        } else {
+            if (!insertColumns.contains("\"rename_target\"")) {
+                res.add("rename_target");
+            }
+            if (!insertColumns.contains("\"other_col\"")) {
+                res.add("other_col");
+            }
+        }
+        return res;
+    }
+
+    protected List<String> toInsertValues(MapperNoPkEntity entity, boolean excludeNull) {
+        var res = new ArrayList<String>();
+        if (!excludeNull || entity.getRenamedNoPkName() != null) {
+            res.add("rename_target");
+        }
+        if (!excludeNull || entity.getOtherCol() != null) {
             res.add("other_col");
         }
         return res;
     }
 
-    protected List<String> toInsertValues(MapperNoPkEntity entity) {
-        var res = new ArrayList<String>();
-        res.add("rename_target");
-        res.add("other_col");
-        return res;
+    protected void copyReturningValues(MapperNoPkEntity entity, MapperNoPkEntity returning, Set<String> returningColumns) {
+        if (returningColumns.contains("rename_target")) {
+            entity.setRenamedNoPkName(returning.getRenamedNoPkName());
+        }
+        if (returningColumns.contains("other_col")) {
+            entity.setOtherCol(returning.getOtherCol());
+        }
+    }
+
+    protected MapperNoPkEntity execWithReturning(List<String> sql, Map<String, Object> param, MapperNoPkEntity entity, Set<String> returningColumns) {
+        if (returningColumns.isEmpty()) {
+            this.helper.exec(sql, param);
+            return entity;
+        }
+        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        sql.add("returning %s".formatted(returningClause));
+        this.helper.optional(sql, param, ROW_MAPPER)
+                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
+        return entity;
     }
 
     public MapperNoPkEntity insert(MapperNoPkEntity entity) {
-        var sql = new ArrayList<String>();
-        sql.add("insert into \"mapper_no_pk\"");
-        var insertColumns = toInsertColumns(entity);
-        if (insertColumns.isEmpty()) {
-            sql.add("DEFAULT VALUES");
+        return doInsert(entity, false);
+    }
+
+    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
+    public MapperNoPkEntity insertNotNull(MapperNoPkEntity entity) {
+        return doInsert(entity, true);
+    }
+
+    protected MapperNoPkEntity doInsert(MapperNoPkEntity entity, boolean excludeNull) {
+        var __sql = new ArrayList<String>();
+        __sql.add("insert into \"mapper_no_pk\"");
+        var __insertColumns = toInsertColumns(entity, excludeNull);
+        if (__insertColumns.isEmpty()) {
+            __sql.add("DEFAULT VALUES");
         } else {
-            sql.add("(%s)".formatted(join(", ", insertColumns)));
-            var insertValues = toInsertValues(entity);
-            var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            sql.add("values (%s)".formatted(insertValuesClause));
+            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
+            var __insertValues = toInsertValues(entity, excludeNull);
+            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
+            __sql.add("values (%s)".formatted(__valuesClause));
         }
-        var param = entityToParam(entity);
-        var returningColumns = toInsertReturning(entity, insertColumns);
-        if (returningColumns.isEmpty()) {
-            this.helper.exec(sql, param);
-        } else {
-            var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
-            sql.add("returning %s".formatted(returningClause));
-            this.helper.single(sql, param, ROW_MAPPER);
-        }
-        return entity;
+        var __param = entityToParam(entity);
+        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
     }
 
     public static Map<String, Object> entityToParam(MapperNoPkEntity entity) {

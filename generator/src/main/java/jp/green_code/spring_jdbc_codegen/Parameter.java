@@ -27,8 +27,8 @@ public class Parameter {
     public String repositoryPackage;
     /** 除外テーブル名 spring_session, spring_session_attribute */
     public List<String> excludedTableNames = List.of();
-    /** set now() カラム */
-    public Map<String, List<String>> setNowColumnsByTable = Map.of();
+    /** DB 側で値が決まるカラム。returning で取得して entity へ書き戻す */
+    public Map<String, List<String>> returningColumnsByTable = Map.of();
     /** テスト対象テーブル */
     public List<String> testTargetTable = List.of();
     /** Enum 型 */

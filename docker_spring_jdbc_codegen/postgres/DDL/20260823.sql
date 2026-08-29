@@ -14,7 +14,7 @@ create table coverage_test (
     -- enum × nonnull × default 有（insert 省略可）
     col_enum_default          status_enum not null default 'NEW',
     -- enum × nullable × default 有
-    col_enum_nullable_default status_enum default 'DOING',
+    col_enum_nullable_default status_enum default 'DONE',
     -- 明示マッピング × nullable
     mapped_nullable           text
 );

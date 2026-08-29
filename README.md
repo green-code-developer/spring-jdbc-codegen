@@ -13,19 +13,21 @@
   - [3.5 Lombok を使わない](#35-lombok-を使わない)
 - [4. {テーブル名}Repository クラスの使い方](#4-テーブル名repository-クラスの使い方)
   - [4.1 T insert(T entity)](#41-t-insertt-entity)
-  - [4.2 T update(T entity)](#42-t-updatet-entity)
-  - [4.3 T updateByPk(T entity, pk)](#43-t-updatebypkt-entity-pk)
-  - [4.4 `Optional<Entity> findByPk(pk)`](#44-optionalentity-findbypkpk)
-  - [4.5 int deleteByPk(pk)](#45-int-deletebypkpk)
-  - [4.6 class Columns](#46-class-columns)
-  - [4.7 Columns.MAP<String, ColumnDefinition>](#47-columnsmapstring-columndefinition)
-  - [4.8 Columns.selectAster()](#48-columnsselectaster)
-  - [4.9 @Component RepositoryHelper](#49-component-repositoryhelper)
-  - [4.10 MAPPER (RowMapper)](#410-mapper-rowmapper)
+  - [4.2 T insertNotNull(T entity)](#42-t-insertnotnullt-entity)
+  - [4.3 T update(T entity)](#43-t-updatet-entity)
+  - [4.4 T updateNotNull(T entity)](#44-t-updatenotnullt-entity)
+  - [4.5 T updateByPk(T entity, pk)](#45-t-updatebypkt-entity-pk)
+  - [4.6 `Optional<Entity> findByPk(pk)`](#46-optionalentity-findbypkpk)
+  - [4.7 int deleteByPk(pk)](#47-int-deletebypkpk)
+  - [4.8 class Columns](#48-class-columns)
+  - [4.9 Columns.MAP<String, ColumnDefinition>](#49-columnsmapstring-columndefinition)
+  - [4.10 Columns.selectAster()](#410-columnsselectaster)
+  - [4.11 @Component RepositoryHelper](#411-component-repositoryhelper)
+  - [4.12 MAPPER (RowMapper)](#412-mapper-rowmapper)
 - [5. 便利な使い方](#5-便利な使い方)
   - [5.1 Enum 型を追加する](#51-enum-型を追加する)
   - [5.2 作成者カラム、作成日時カラムをUpdate させたくない](#52-作成者カラム作成日時カラムをupdate-させたくない)
-  - [5.3 Insert, Update 時にデータベースの時刻 now() を指定したい](#53-insert-update-時にデータベースの時刻-now-を指定したい)
+  - [5.3 トリガーが決めた値をentity へ反映したい](#53-トリガーが決めた値をentity-へ反映したい)
   - [5.4 カラム名とJava プロパティ名の明示的なマッピング](#54-カラム名とjava-プロパティ名の明示的なマッピング)
   - [5.5 Base クラス](#55-base-クラス)
   - [5.6 @NullMarked 対応](#56-nullmarked-対応)
@@ -178,23 +180,66 @@ insert into "account" ("name") values (:name);
 -- パラメータの :name は "green-code-user" 
 ```
 
-### 4.2 T update(T entity)
+### 4.2 T insertNotNull(T entity)
 
-entity のプライマリーキーをキーとして、該当するレコードを1件更新します。該当するレコードが存在しない場合は例外(EmptyResultDataAccessException)をスローします。プライマリーキーを持たないテーブルやUpdate 対象カラムが存在しないテーブルには、このメソッドは生成されません。
+値がnull のカラムを**すべて**Insert 対象から外します。DB の既定値を使いたい場合に利用します。
 
-### 4.3 T updateByPk(T entity, pk)
+insert() との違いは除外する条件だけです。
+
+| メソッド | 除外するカラム |
+| --- | --- |
+| `insert` | not null 制約ありかつ初期値を持つカラムのうち、値がnull のもの |
+| `insertNotNull` | 値がnull のカラムすべて |
+
+insert() は「null を入れられないカラムだけ初期値に任せる」という判断をするため、**null 許可かつ初期値を持つカラム**では初期値が使われずnull が入ります。そのカラムに初期値を使いたい場合にinsertNotNull() を利用してください。
+
+```java
+var account = new AccountEntity();
+account.setName("green-code-user");
+account.setStatus(null); // status は null 許可 かつ 初期値 'NEW' を持つ
+accountRepository.insertNotNull(account);
+var status = account.getStatus(); // "NEW" が入り、entity へ書き戻されます
+```
+
+### 4.3 T update(T entity)
+
+entity のプライマリーキーをキーとして、該当するレコードを1件更新します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
+
+**更新件数は確認しません。** 該当するレコードが存在しなくても例外は発生せず、件数も返りません。件数が必要な場合は `helper.exec()` でSQL を手書きしてください（「8.4 条件を指定して更新する、削除する」を参照）。
+
+**全カラムがUpdate の対象です。** entity にセットしなかったカラムはnull で上書きされます。findByPk() で取得したentity を変更して渡すか、後述のupdateNotNull() を利用してください。
+
+### 4.4 T updateNotNull(T entity)
+
+値がnull のカラムをset 句から外します。**部分更新**に利用します。
+
+| メソッド | set 句に含めるカラム |
+| --- | --- |
+| `update` | 全カラム。null ならnull で更新します |
+| `updateNotNull` | 値がnull でないカラムのみ |
+
+```java
+var account = new AccountEntity();
+account.setAccountId(1L);
+account.setName("green-code-user"); // name だけ更新する
+accountRepository.updateNotNull(account);
+```
+
+逆に、**null 許可のカラムへnull を設定したい場合はupdate() を利用してください。** updateNotNull() では「null にしたい」と「指定しなかった」を区別できません。
+
+### 4.5 T updateByPk(T entity, pk)
 
 pk をキーとして、該当するレコードを1件更新します。update() との違いは、entity 内のプライマリーキーをキーとしない点です。PK をUpdate する場合に使用します。その他の性質はupdate() と同じです。
 
-### 4.4 `Optional<Entity> findByPk(pk)`
+### 4.6 `Optional<Entity> findByPk(pk)`
 
 プライマリーキーの1レコードを取得します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### 4.5 int deleteByPk(pk)
+### 4.7 int deleteByPk(pk)
 
 プライマリーキーの1レコードを削除します。戻り値は削除された件数です。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
 
-### 4.6 class Columns
+### 4.8 class Columns
 
 カラム定義に関する情報を持ったインスタンスが格納されています。
 
@@ -211,18 +256,18 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 - isSetNow: now()を設定するか判定
 - hasNameMapping: Java プロパティ名の明示的なマッピングを行ったカラムはtrue
 
-### 4.7 Columns.MAP<String, ColumnDefinition>
+### 4.9 Columns.MAP<String, ColumnDefinition>
 
 そのテーブルが持つ全てのカラム（class Columns のインスタンス）が、カラム名とカラム定義の形式でマップとして保持されています。
 
-### 4.8 Columns.selectAster()
+### 4.10 Columns.selectAster()
 
 全てのカラム名をカンマで区切ったものを返すメソッドです。
 select * from table と書きたい時に、* の代わりにこのメソッドを使います。
 カラム名に加えて型変換が付与されています。
 例）col_xml::text
 
-### 4.9 @Component RepositoryHelper
+### 4.11 @Component RepositoryHelper
 
 NamedParameterJdbcTemplate をラップして短く記載できるようにしたものです。
 
@@ -236,7 +281,7 @@ NamedParameterJdbcTemplate をラップして短く記載できるようにし�
 
 - long helper.count(): 数値1カラムを取得するselect 文が対象。select count(*) ... を想定
 
-### 4.10 MAPPER (RowMapper)
+### 4.12 MAPPER (RowMapper)
 
 明示的な命名を行なったテーブルのみ作成されます。詳しくは「5.4 カラム名とJava プロパティ名の明示的なマッピング」を参照ください。
 
@@ -296,27 +341,51 @@ create trigger refresh_meta_columns_trigger
     for each row execute function refresh_meta_columns();
 ```
 
-トリガーが書き換えた値は、`update()` 実行後の entity には反映されません。最新の値が必要な場合は `findByPk()` で取得し直してください。
+トリガーが書き換えた値をentity へ反映したい場合は、`returningColumnsByTable` に登録してください（「5.3 トリガーが決めた値をentity へ反映したい」を参照）。登録しない場合、entity は Java でセットした値を保持したままになります。
 
 生成されるテストコードは全カラムについて「投入した値と取得した値が一致すること」を検証するため、トリガーで書き換わるカラムがあると失敗します。実体クラスで `assert4{プロパティ名}` を override してください。
 
-### 5.3 Insert, Update 時にデータベースの時刻 now() を指定したい
+### 5.3 トリガーが決めた値をentity へ反映したい
 
-param.yml のsetNowColumnsByTable に設定すると、そのカラムの値はSQL の now() に置き換わります。
-指定されたカラムはrepository.insert() またはrepository.update() でJava で値を指定することができなくなります。
-また、Insert やUpdate 完了時に、DB でセットされた時刻を引数のentity にセットします。
+`updated_at` のように **DB 側で値が決まるカラム**は、param.yml の `returningColumnsByTable` に登録します。Insert / Update の後、`returning` 句で取得した値がentity にセットされます。
 
 ```yml
 # param.yml
-setNowColumnsByTable:
+returningColumnsByTable:
    "*":
       - updated_at
-      - created_at
 ```
-発行されるSQL
+
+**値を決めるのはトリガーです。** このツールは結果を取得するだけで、SQL に `now()` を書き込むことはしません。関数は一度だけ作成し、テーブルごとにトリガーを 1 行ずつ追加します。
+
 ```sql
-update account set updated_at = now(), created_at = now() where ...
+-- 関数は一度だけ
+create or replace function set_updated_at() returns trigger as $$
+begin
+    new.updated_at = now();
+    return new;
+end;
+$$ language plpgsql;
+
+-- テーブルごとに1行
+create trigger account_set_updated_at
+    before insert or update on account
+    for each row execute function set_updated_at();
 ```
+
+Java から値をセットしてもトリガーが上書きしますが、**上書きされた結果がentity に入る**ため、`entity.getUpdatedAt()` で確認できます。
+
+#### v2 からの移行
+
+v2 までは `setNowColumnsByTable` に登録したカラムのSQL を `now()` に置き換えていましたが、v3 で廃止しました。
+
+- 実質 `updated_at` 専用の機能でした。公開日時のように「特定の操作のときだけ現在時刻にしたい」カラムには使えません
+- `helper.exec()` で手書きしたSQL には効きませんでした。トリガーなら経路を問わず適用されます
+- `now()` 以外の加工をするトリガーにも対応できます
+
+「壊れていたから」ではなく「**トリガーで代替でき、そちらの方が確実だから**」廃止しています。
+
+移行の際は、設定名を置き換えたうえでトリガーを作成してください。あわせて **`setNow` に頼って値を省略していた箇所**にご注意ください。not null かつ既定値のないカラムは、`now()` が書き込まれなくなるためNOT NULL 制約違反になります。Java 側で値をセットするか、トリガーで補ってください。
 
 ### 5.4 カラム名とJava プロパティ名の明示的なマッピング
 

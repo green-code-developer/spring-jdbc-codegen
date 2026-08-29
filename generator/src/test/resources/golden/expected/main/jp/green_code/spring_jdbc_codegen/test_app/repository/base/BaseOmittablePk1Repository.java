@@ -12,7 +12,6 @@ import java.util.Set;
 import jp.green_code.spring_jdbc_codegen.test_app.entity.OmittablePk1Entity;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.ColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.RepositoryHelper;
-import org.springframework.dao.EmptyResultDataAccessException;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 
@@ -43,7 +42,7 @@ public abstract class BaseOmittablePk1Repository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(OmittablePk1Entity entity) {
+    protected List<String> toInsertColumns(OmittablePk1Entity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getPk() != null) {
             res.add("\"pk\"");
@@ -54,23 +53,23 @@ public abstract class BaseOmittablePk1Repository {
         return res;
     }
 
-    protected Set<String> toInsertReturning(OmittablePk1Entity entity, List<String> insertColumns) {
+    protected Set<String> toInsertReturning(List<String> insertColumns) {
         var res = new HashSet<String>();
         if (insertColumns.isEmpty()) {
             res.add("pk");
             res.add("col_text_not_null_default_x");
         } else {
-            if (entity.getPk() == null) {
+            if (!insertColumns.contains("\"pk\"")) {
                 res.add("pk");
             }
-            if (entity.getColTextNotNullDefaultX() == null) {
+            if (!insertColumns.contains("\"col_text_not_null_default_x\"")) {
                 res.add("col_text_not_null_default_x");
             }
         }
         return res;
     }
 
-    protected List<String> toInsertValues(OmittablePk1Entity entity) {
+    protected List<String> toInsertValues(OmittablePk1Entity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getPk() != null) {
             res.add("pk");
@@ -81,38 +80,50 @@ public abstract class BaseOmittablePk1Repository {
         return res;
     }
 
-    protected void copyReturningValuesInInsert(OmittablePk1Entity entity, OmittablePk1Entity returning) {
-        if (entity.getPk() == null) {
+    protected void copyReturningValues(OmittablePk1Entity entity, OmittablePk1Entity returning, Set<String> returningColumns) {
+        if (returningColumns.contains("pk")) {
             entity.setPk(returning.getPk());
         }
-        if (entity.getColTextNotNullDefaultX() == null) {
+        if (returningColumns.contains("col_text_not_null_default_x")) {
             entity.setColTextNotNullDefaultX(returning.getColTextNotNullDefaultX());
         }
     }
 
-    public OmittablePk1Entity insert(OmittablePk1Entity entity) {
-        var sql = new ArrayList<String>();
-        sql.add("insert into \"omittable_pk1\"");
-        var insertColumns = toInsertColumns(entity);
-        if (insertColumns.isEmpty()) {
-            sql.add("DEFAULT VALUES");
-        } else {
-            sql.add("(%s)".formatted(join(", ", insertColumns)));
-            var insertValues = toInsertValues(entity);
-            var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            sql.add("values (%s)".formatted(insertValuesClause));
-        }
-        var param = entityToParam(entity);
-        var returningColumns = toInsertReturning(entity, insertColumns);
+    protected OmittablePk1Entity execWithReturning(List<String> sql, Map<String, Object> param, OmittablePk1Entity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
             this.helper.exec(sql, param);
-        } else {
-            var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
-            sql.add("returning %s".formatted(returningClause));
-            var ret = this.helper.single(sql, param, OmittablePk1Entity.class);
-            copyReturningValuesInInsert(entity, ret);
+            return entity;
         }
+        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        sql.add("returning %s".formatted(returningClause));
+        this.helper.optional(sql, param, OmittablePk1Entity.class)
+                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
         return entity;
+    }
+
+    public OmittablePk1Entity insert(OmittablePk1Entity entity) {
+        return doInsert(entity, false);
+    }
+
+    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
+    public OmittablePk1Entity insertNotNull(OmittablePk1Entity entity) {
+        return doInsert(entity, true);
+    }
+
+    protected OmittablePk1Entity doInsert(OmittablePk1Entity entity, boolean excludeNull) {
+        var __sql = new ArrayList<String>();
+        __sql.add("insert into \"omittable_pk1\"");
+        var __insertColumns = toInsertColumns(entity, excludeNull);
+        if (__insertColumns.isEmpty()) {
+            __sql.add("DEFAULT VALUES");
+        } else {
+            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
+            var __insertValues = toInsertValues(entity, excludeNull);
+            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
+            __sql.add("values (%s)".formatted(__valuesClause));
+        }
+        var __param = entityToParam(entity);
+        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
     }
 
     public static Map<String, Object> entityToParam(OmittablePk1Entity entity) {
@@ -123,23 +134,33 @@ public abstract class BaseOmittablePk1Repository {
     }
 
     public OmittablePk1Entity update(OmittablePk1Entity entity) {
-        return updateByPk(entity, entity.getPk());
+        return doUpdateByPk(entity, false, entity.getPk());
+    }
+
+    /** 値がnull のカラムをset 句から外して部分更新する */
+    public OmittablePk1Entity updateNotNull(OmittablePk1Entity entity) {
+        return doUpdateByPk(entity, true, entity.getPk());
     }
 
 
     public OmittablePk1Entity updateByPk(OmittablePk1Entity entity, Long pk) {
+        return doUpdateByPk(entity, false, pk);
+    }
+
+    protected OmittablePk1Entity doUpdateByPk(OmittablePk1Entity entity, boolean excludeNull, Long pk) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var __param = entityToParam(entity);
+        var setClause = Columns.MAP.values().stream()
+                .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)
+                .map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        if (setClause.isEmpty()) {
+            throw new IllegalArgumentException("更新対象のカラムがありません");
+        }
         __sql.add("update \"omittable_pk1\"");
         __sql.add("set %s".formatted(setClause));
-        var __param = entityToParam(entity);
         __param.put("__pk1", pk);
         __sql.add("where \"pk\" = :__pk1");
-        var res = this.helper.exec(__sql, __param);
-        if (res != 1) {
-            throw new EmptyResultDataAccessException(1);
-        }
-        return entity;
+        return execWithReturning(__sql, __param, entity, Set.of());
     }
 
     public Optional<OmittablePk1Entity> findByPk(Long pk) {

@@ -14,7 +14,6 @@ import java.util.UUID;
 import jp.green_code.spring_jdbc_codegen.test_app.entity.NormalPk3Entity;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.ColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.RepositoryHelper;
-import org.springframework.dao.EmptyResultDataAccessException;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 
@@ -55,7 +54,7 @@ public abstract class BaseNormalPk3Repository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(NormalPk3Entity entity) {
+    protected List<String> toInsertColumns(NormalPk3Entity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getPk1() != null) {
             res.add("\"pk1\"");
@@ -66,8 +65,12 @@ public abstract class BaseNormalPk3Repository {
         if (entity.getPk3() != null) {
             res.add("\"pk3\"");
         }
-        res.add("\"col_text\"");
-        res.add("\"col_text_not_null\"");
+        if (!excludeNull || entity.getColText() != null) {
+            res.add("\"col_text\"");
+        }
+        if (!excludeNull || entity.getColTextNotNull() != null) {
+            res.add("\"col_text_not_null\"");
+        }
         if (entity.getColTextNotNullDefaultX() != null) {
             res.add("\"col_text_not_null_default_x\"");
         }
@@ -77,7 +80,7 @@ public abstract class BaseNormalPk3Repository {
         return res;
     }
 
-    protected Set<String> toInsertReturning(NormalPk3Entity entity, List<String> insertColumns) {
+    protected Set<String> toInsertReturning(List<String> insertColumns) {
         var res = new HashSet<String>();
         if (insertColumns.isEmpty()) {
             res.add("pk1");
@@ -88,26 +91,32 @@ public abstract class BaseNormalPk3Repository {
             res.add("col_text_not_null_default_x");
             res.add("col_text_default_y");
         } else {
-            if (entity.getPk1() == null) {
+            if (!insertColumns.contains("\"pk1\"")) {
                 res.add("pk1");
             }
-            if (entity.getPk2() == null) {
+            if (!insertColumns.contains("\"pk2\"")) {
                 res.add("pk2");
             }
-            if (entity.getPk3() == null) {
+            if (!insertColumns.contains("\"pk3\"")) {
                 res.add("pk3");
             }
-            if (entity.getColTextNotNullDefaultX() == null) {
+            if (!insertColumns.contains("\"col_text\"")) {
+                res.add("col_text");
+            }
+            if (!insertColumns.contains("\"col_text_not_null\"")) {
+                res.add("col_text_not_null");
+            }
+            if (!insertColumns.contains("\"col_text_not_null_default_x\"")) {
                 res.add("col_text_not_null_default_x");
             }
-            if (entity.getColTextDefaultY() == null) {
+            if (!insertColumns.contains("\"col_text_default_y\"")) {
                 res.add("col_text_default_y");
             }
         }
         return res;
     }
 
-    protected List<String> toInsertValues(NormalPk3Entity entity) {
+    protected List<String> toInsertValues(NormalPk3Entity entity, boolean excludeNull) {
         var res = new ArrayList<String>();
         if (entity.getPk1() != null) {
             res.add("pk1");
@@ -118,8 +127,12 @@ public abstract class BaseNormalPk3Repository {
         if (entity.getPk3() != null) {
             res.add("pk3");
         }
-        res.add("col_text");
-        res.add("col_text_not_null");
+        if (!excludeNull || entity.getColText() != null) {
+            res.add("col_text");
+        }
+        if (!excludeNull || entity.getColTextNotNull() != null) {
+            res.add("col_text_not_null");
+        }
         if (entity.getColTextNotNullDefaultX() != null) {
             res.add("col_text_not_null_default_x");
         }
@@ -129,47 +142,65 @@ public abstract class BaseNormalPk3Repository {
         return res;
     }
 
-    protected void copyReturningValuesInInsert(NormalPk3Entity entity, NormalPk3Entity returning) {
-        if (entity.getPk1() == null) {
+    protected void copyReturningValues(NormalPk3Entity entity, NormalPk3Entity returning, Set<String> returningColumns) {
+        if (returningColumns.contains("pk1")) {
             entity.setPk1(returning.getPk1());
         }
-        if (entity.getPk2() == null) {
+        if (returningColumns.contains("pk2")) {
             entity.setPk2(returning.getPk2());
         }
-        if (entity.getPk3() == null) {
+        if (returningColumns.contains("pk3")) {
             entity.setPk3(returning.getPk3());
         }
-        if (entity.getColTextNotNullDefaultX() == null) {
+        if (returningColumns.contains("col_text")) {
+            entity.setColText(returning.getColText());
+        }
+        if (returningColumns.contains("col_text_not_null")) {
+            entity.setColTextNotNull(returning.getColTextNotNull());
+        }
+        if (returningColumns.contains("col_text_not_null_default_x")) {
             entity.setColTextNotNullDefaultX(returning.getColTextNotNullDefaultX());
         }
-        if (entity.getColTextDefaultY() == null) {
+        if (returningColumns.contains("col_text_default_y")) {
             entity.setColTextDefaultY(returning.getColTextDefaultY());
         }
     }
 
-    public NormalPk3Entity insert(NormalPk3Entity entity) {
-        var sql = new ArrayList<String>();
-        sql.add("insert into \"normal_pk3\"");
-        var insertColumns = toInsertColumns(entity);
-        if (insertColumns.isEmpty()) {
-            sql.add("DEFAULT VALUES");
-        } else {
-            sql.add("(%s)".formatted(join(", ", insertColumns)));
-            var insertValues = toInsertValues(entity);
-            var insertValuesClause = insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            sql.add("values (%s)".formatted(insertValuesClause));
-        }
-        var param = entityToParam(entity);
-        var returningColumns = toInsertReturning(entity, insertColumns);
+    protected NormalPk3Entity execWithReturning(List<String> sql, Map<String, Object> param, NormalPk3Entity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
             this.helper.exec(sql, param);
-        } else {
-            var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
-            sql.add("returning %s".formatted(returningClause));
-            var ret = this.helper.single(sql, param, NormalPk3Entity.class);
-            copyReturningValuesInInsert(entity, ret);
+            return entity;
         }
+        var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
+        sql.add("returning %s".formatted(returningClause));
+        this.helper.optional(sql, param, NormalPk3Entity.class)
+                .ifPresent(ret -> copyReturningValues(entity, ret, returningColumns));
         return entity;
+    }
+
+    public NormalPk3Entity insert(NormalPk3Entity entity) {
+        return doInsert(entity, false);
+    }
+
+    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
+    public NormalPk3Entity insertNotNull(NormalPk3Entity entity) {
+        return doInsert(entity, true);
+    }
+
+    protected NormalPk3Entity doInsert(NormalPk3Entity entity, boolean excludeNull) {
+        var __sql = new ArrayList<String>();
+        __sql.add("insert into \"normal_pk3\"");
+        var __insertColumns = toInsertColumns(entity, excludeNull);
+        if (__insertColumns.isEmpty()) {
+            __sql.add("DEFAULT VALUES");
+        } else {
+            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
+            var __insertValues = toInsertValues(entity, excludeNull);
+            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
+            __sql.add("values (%s)".formatted(__valuesClause));
+        }
+        var __param = entityToParam(entity);
+        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
     }
 
     public static Map<String, Object> entityToParam(NormalPk3Entity entity) {
@@ -185,25 +216,35 @@ public abstract class BaseNormalPk3Repository {
     }
 
     public NormalPk3Entity update(NormalPk3Entity entity) {
-        return updateByPk(entity, entity.getPk1(), entity.getPk2(), entity.getPk3());
+        return doUpdateByPk(entity, false, entity.getPk1(), entity.getPk2(), entity.getPk3());
+    }
+
+    /** 値がnull のカラムをset 句から外して部分更新する */
+    public NormalPk3Entity updateNotNull(NormalPk3Entity entity) {
+        return doUpdateByPk(entity, true, entity.getPk1(), entity.getPk2(), entity.getPk3());
     }
 
 
     public NormalPk3Entity updateByPk(NormalPk3Entity entity, Long pk1, OffsetDateTime pk2, UUID pk3) {
+        return doUpdateByPk(entity, false, pk1, pk2, pk3);
+    }
+
+    protected NormalPk3Entity doUpdateByPk(NormalPk3Entity entity, boolean excludeNull, Long pk1, OffsetDateTime pk2, UUID pk3) {
         var __sql = new ArrayList<String>();
-        var setClause = Columns.MAP.values().stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        var __param = entityToParam(entity);
+        var setClause = Columns.MAP.values().stream()
+                .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)
+                .map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
+        if (setClause.isEmpty()) {
+            throw new IllegalArgumentException("更新対象のカラムがありません");
+        }
         __sql.add("update \"normal_pk3\"");
         __sql.add("set %s".formatted(setClause));
-        var __param = entityToParam(entity);
         __param.put("__pk1", pk1);
         __param.put("__pk2", pk2);
         __param.put("__pk3", pk3);
         __sql.add("where \"pk1\" = :__pk1 AND \"pk2\" = :__pk2 AND \"pk3\" = :__pk3");
-        var res = this.helper.exec(__sql, __param);
-        if (res != 1) {
-            throw new EmptyResultDataAccessException(1);
-        }
-        return entity;
+        return execWithReturning(__sql, __param, entity, Set.of());
     }
 
     public Optional<NormalPk3Entity> findByPk(Long pk1, OffsetDateTime pk2, UUID pk3) {

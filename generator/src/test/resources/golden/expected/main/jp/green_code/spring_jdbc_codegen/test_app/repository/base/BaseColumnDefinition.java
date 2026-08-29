@@ -30,13 +30,13 @@ public class BaseColumnDefinition {
     /** カラム名と型キャスト用のテンプレート（内部用） */
     @Nullable
     private final String dbSelectTemplate;
-    /** now() で上書きを行う */
-    private final boolean isSetNow;
+    /** DB 側で値が決まり、returning で取得するカラムか */
+    private final boolean isReturning;
     /** Update 対象外 */
     /** カラム名とJava プロパティ名の明示的マッピング */
     private final boolean hasNameMapping;
 
-    public BaseColumnDefinition(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, @Nullable Integer primaryKeySeq, boolean nullable, boolean hasDefault, @Nullable String dbParamTemplate, @Nullable String dbSelectTemplate, boolean isSetNow, boolean hasNameMapping) {
+    public BaseColumnDefinition(String columnName, String javaPropertyName, String javaFqcn, String dbTypeName, Integer jdbcType, Integer columnSize, @Nullable Integer primaryKeySeq, boolean nullable, boolean hasDefault, @Nullable String dbParamTemplate, @Nullable String dbSelectTemplate, boolean isReturning, boolean hasNameMapping) {
         this.columnName = columnName;
         this.javaPropertyName = javaPropertyName;
         this.javaFqcn = javaFqcn;
@@ -48,7 +48,7 @@ public class BaseColumnDefinition {
         this.hasDefault = hasDefault;
         this.dbParamTemplate = dbParamTemplate;
         this.dbSelectTemplate = dbSelectTemplate;
-        this.isSetNow = isSetNow;
+        this.isReturning = isReturning;
         this.hasNameMapping = hasNameMapping;
     }
 
@@ -118,8 +118,8 @@ public class BaseColumnDefinition {
         return template.replace("{columnName}", "\"" + columnName + "\"");
     }
 
-    public boolean isSetNow() {
-        return isSetNow;
+    public boolean isReturning() {
+        return isReturning;
     }
 
     @Override
@@ -128,7 +128,6 @@ public class BaseColumnDefinition {
     }
 
     public String toUpdateSetClause() {
-        var value = isSetNow() ? "now()" : toParamColumn();
-        return "\"%s\" = %s".formatted(getColumnName(), value);
+        return "\"%s\" = %s".formatted(getColumnName(), toParamColumn());
     }
 }
