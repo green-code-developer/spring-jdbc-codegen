@@ -27,19 +27,20 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 | `deleteByPk` | PK がある |
 | `ROW_MAPPER` と Mapper クラス | 命名マッピングを持つカラムがある |
 
-PK を持たないテーブルには、上の表のうち `insert` と RowMapper しか生成されない。
+PK を持たないテーブルには、上の表のうち `insert` / `insertNotNull` と RowMapper しか生成されない。
 
 表に挙げたメソッドのほかに、テーブルの構造によらず次を毎回生成する。
 利用者が override して挙動を変えることを想定している。
 
 | メソッド | 用途 |
 | --- | --- |
-| `entityToParam()` | entity を SQL パラメータの Map へ変換する |
+| `entityToParam()` | entity を SQL パラメータの Map へ変換する。`public static` のため override できない |
 | `toInsertColumns()` | INSERT 対象カラムを決める（[REPO-011](#repo-011-insert-対象カラムの決定)） |
 | `toInsertValues()` | INSERT の値を決める |
 | `toInsertReturning()` | INSERT の returning 対象を決める |
-| `copyReturningValuesInInsert()` | INSERT 後に entity へ書き戻す |
-| `copyReturningValuesInUpdate()` | UPDATE 後に entity へ書き戻す。update を生成する場合のみ |
+| `copyReturningValues()` | `returning` で取得した値を entity へ書き戻す。insert / update 共通 |
+| `execWithReturning()` | `returning` 句の組み立てと実行。insert / update 共通 |
+| `doInsert()` / `doUpdateByPk()` | insert / update の本体。`excludeNull` で対象カラムを切り替える |
 
 ## REPO-010 insert
 
@@ -63,10 +64,10 @@ insert into "テーブル名" ("col1", "col2") values (:col1, :col2) returning .
 
 カラムごとに次の順で判定する。
 
-2. **not null 制約があり、かつ既定値を持つ**カラム → entity の値が null のときだけ除外する
-3. それ以外 → 常に含める
+1. **not null 制約があり、かつ既定値を持つ**カラム → entity の値が null のときだけ除外する
+2. それ以外 → 常に含める
 
-2 の条件を満たすカラムを省略した場合、DB の既定値が使われる。`bigserial` の
+1 の条件を満たすカラムを省略した場合、DB の既定値が使われる。`bigserial` の
 自動採番はこの規則で機能する。
 
 対象カラムが 1 つもない場合は `insert into "t" DEFAULT VALUES` を発行する。
@@ -139,7 +140,7 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 
 `returningColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
 取得して entity へ書き戻す。取得は `helper.optional()` で行い、該当レコードが
-なければ書き戻しをせず entity をそのまま返す。
+なければ書き戻しをせず 0 を返す。
 
 ## REPO-022 updateNotNull
 
@@ -221,7 +222,7 @@ Base クラスの内部に `public static class Columns` を生成する。
 | `primaryKeySeq` | PK の順序。PK でなければ null |
 | `nullable` | null 許可か |
 | `hasDefault` | 既定値を持つか |
-| `isSetNow` | `now()` を設定する対象か |
+| `isReturning` | `returning` で取得する対象か（[PARAM-006](10-param.md)） |
 | `hasNameMapping` | 命名マッピングを明示指定したか |
 | `toParamColumn()` | バインド変換を適用したプレースホルダ |
 | `toSelectColumn()` | SELECT 変換を適用したカラム指定 |

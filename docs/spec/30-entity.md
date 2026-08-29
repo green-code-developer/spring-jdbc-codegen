@@ -58,8 +58,8 @@ null か否かで動作するため。
 フィールドの型のうち、パッケージを持つものだけを import する。
 重複を除去し、辞書順に並べる。
 
-`java.lang` パッケージの型も import する（`import java.lang.Long;`）。
-プリミティブ型と配列型（`byte[]`）は import しない。
+`java.lang` パッケージの型、プリミティブ型、配列型（`byte[]`）は import しない
+（[NAMING-004](40-naming.md)）。
 
 ## ENTITY-030 @NullUnmarked
 

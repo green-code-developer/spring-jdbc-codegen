@@ -13,7 +13,7 @@ JDBC メタデータが返す `TYPE_NAME` を小文字化してマッピング�
 
 ## TYPE-002 型ごとの変換規則
 
-各 Java 型は次の 4 つの変換規則を持つ。いずれも省略可能で、省略時は変換しない。
+各 Java 型は次の 5 つの規則を持つ。いずれも省略可能で、省略時は変換しない。
 
 | 規則 | 適用箇所 |
 | --- | --- |
@@ -21,6 +21,7 @@ JDBC メタデータが返す `TYPE_NAME` を小文字化してマッピング�
 | バインド変換 | INSERT / UPDATE の SQL 中のプレースホルダ。`{javaPropertyName}` を置換する |
 | SELECT 変換 | SELECT 句のカラム指定。`{columnName}` を置換する |
 | テストデータ生成 | TestRepository が使う値の生成式。`seed` を受け取る |
+| assert 式 | TestRepository が使う検証式。省略時は `assertEquals` |
 
 ## TYPE-003 文字列・識別子
 
@@ -99,7 +100,7 @@ null の場合は文字列 `"null"` として JDBC へ渡る。
 | 項目 | 値 |
 | --- | --- |
 | Java 型 | 指定した FQCN |
-| パラメータ変換 | `String.valueOf({value})` |
+| パラメータ変換 | `{value} == null ? null : {value}.name()` |
 | バインド変換 | `::{DB 型名}` |
 | SELECT 変換 | — |
 | テストデータ生成 | `pickBySeed({FQCN}.class, seed)` |

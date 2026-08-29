@@ -75,7 +75,7 @@ useNullMarked: true
 
 # テスト対象テーブル（省略可）
 #   指定されたテーブルのcrud テストコードを作成します
-#   テーブルにPK がない場合はテストは作成されません
+#   PK がないテーブルはinsert のみのテストになります
 testTargetTable:
   - all_types
   - normal_pk0
@@ -133,7 +133,7 @@ testTargetTable:
 #columnDefinitionClassName: ColumnDefinition
 
 # Mapper クラスの接頭辞（省略可）
-#   初期値 Test
+#   初期値 空文字列
 #mapperClassNamePrefix:
 
 # Mapper クラスの接尾辞（省略可）

@@ -32,7 +32,6 @@ public class BaseColumnDefinition {
     private final String dbSelectTemplate;
     /** DB 側で値が決まり、returning で取得するカラムか */
     private final boolean isReturning;
-    /** Update 対象外 */
     /** カラム名とJava プロパティ名の明示的マッピング */
     private final boolean hasNameMapping;
 

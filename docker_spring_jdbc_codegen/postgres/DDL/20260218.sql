@@ -66,7 +66,7 @@ CREATE TABLE all_types
     col_status_enum      status_enum
 );
 
--- null とdefault のテスト PKなし（自動テスト対象外）
+-- null とdefault のテスト PKなし
 create table normal_pk0 (
     col_text text,
     col_text_not_null text not null,

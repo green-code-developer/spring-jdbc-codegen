@@ -55,7 +55,6 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    private final String dbSelectTemplate;");
         sb.add("    /** DB 側で値が決まり、returning で取得するカラムか */");
         sb.add("    private final boolean isReturning;");
-        sb.add("    /** Update 対象外 */");
         sb.add("    /** カラム名とJava プロパティ名の明示的マッピング */");
         sb.add("    private final boolean hasNameMapping;");
         sb.add("");

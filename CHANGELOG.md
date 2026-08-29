@@ -6,7 +6,7 @@
 
 ## 3.0.0
 
-param.yml の設定を3つ廃止しています。バージョンアップの際は移行作業が必要です。
+param.yml の設定を2つ廃止しています。バージョンアップの際は移行作業が必要です。
 
 ### 破壊的変更
 
@@ -21,17 +21,6 @@ param.yml の設定を3つ廃止しています。バージョンアップの際
   更新させたくないカラムは、データベースのトリガーで元の値へ戻してください。
   `helper.exec()` で手書きしたSQL には効かず、保証にならなかったためです。
   移行方法は [README 5.2](README.md#52-作成者カラム作成日時カラムをupdate-させたくない) を参照してください。
-
-- **`enableNullUnmarkedForEntityPackages` を `useNullMarked` に改名**しました
-
-  旧名は「Entity パッケージに NullUnmarked を付ける」と読めますが、実際には
-  ColumnDefinition への `@Nullable` 付与も制御しており、実態と合っていませんでした。
-  「導入するプロジェクトが `@NullMarked` を使っているか」を表す名前に変更しています。
-
-- **`nullableFqcn` / `nullUnmarkedFqcn` を廃止**しました
-
-  アノテーションは JSpecify で固定です。import 文がハードコードされており、
-  差し替えるとコンパイルできないコードが生成されていたため、実際に使えていた設定ではありません。
 
 - **生成される `ColumnDefinition` のシグネチャが変わりました**
 
@@ -56,6 +45,9 @@ param.yml の設定を3つ廃止しています。バージョンアップの際
 
 - **`insertNotNull()`** — 値がnull のカラムをすべてInsert 対象から外します。null 許可かつ初期値を持つカラムで、初期値を使いたい場合に利用します
 - **`updateNotNull()`** — 値がnull のカラムをset 句から外します。部分更新に利用します
+- **`useNullMarked`** — 導入するプロジェクトが `@NullMarked` を使っている場合に `true` にします。
+  Entity のパッケージに `@NullUnmarked` を付けた package-info.java を生成し、
+  `ColumnDefinition` の null になりうる項目に `@Nullable` を付与します
 
 ### 修正
 

@@ -1,6 +1,6 @@
 # spring jdbc codegen
 
-バージョンごとの変更点は [CHANGELOG.md](CHANGELOG.md) を参照してください。**v3.0 では param.yml の設定を3つ廃止しています。**
+バージョンごとの変更点は [CHANGELOG.md](CHANGELOG.md) を参照してください。**v3.0 では param.yml の設定を2つ廃止しています。**
 
 ## 目次
 
@@ -57,7 +57,7 @@ spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 - Spring JDBC 前提
 - PostgreSQL のみ対応
 - Enum 対応可能
-- Update Insert 除外カラム指定
+- Insert 時にDB の既定値を使うか選択可能
 
 ## 2. 導入と動かし方
 
@@ -100,7 +100,7 @@ spring-jdbc-codegen は、Spring JDBC + PostgreSQL 環境において
 | 終了コード | 意味 |
 | --- | --- |
 | 0 | 正常終了 |
-| 1 | DB へ接続できない、対応していない型があるなど。コードは生成されない |
+| 1 | DB へ接続できない、対応していない型があるなど。生成物が中途半端な状態で残る場合があります |
 | 2 | コードは生成されたが、param.yml に有効でない設定があった |
 
 param.yml のテーブル名やカラム名を打ち間違えた場合、あるいはテーブル定義の変更で
@@ -180,8 +180,9 @@ var id = account.getAccountId(); // 自動採番されたPK を取得
 ```
 ```sql
 -- Spring JDBC に渡されるSQL
-insert into "account" ("name") values (:name);
--- パラメータの :name は "green-code-user" 
+insert into "account" ("name") values (:name) returning "account_id";
+-- パラメータの :name は "green-code-user"
+-- account_id はinsert 対象外のため returning で取得し、entity へ書き戻します
 ```
 
 ### 4.2 int insertNotNull(T entity)
@@ -257,7 +258,7 @@ Columns.{カラム名大文字} でアクセスできます。（IDE の補完�
 - nullable: null許可判定
 - hasDefault: DB カラムに初期値が定義されているか判定
 - primaryKeySeq: プライマリーキーの順序。プライマリーキーでない場合はnull
-- isSetNow: now()を設定するか判定
+- isReturning: returning で取得する対象か判定
 - hasNameMapping: Java プロパティ名の明示的なマッピングを行ったカラムはtrue
 
 ### 4.9 Columns.MAP<String, ColumnDefinition>
@@ -284,6 +285,8 @@ NamedParameterJdbcTemplate をラップして短く記載できるようにし�
 - helper.exec(): namedJdbc.update() のラップ
 
 - long helper.count(): 数値1カラムを取得するselect 文が対象。select count(*) ... を想定
+
+- static helper.pickBySeed(): enum の定数をseed で選ぶ。生成されるテストコードが使用します
 
 ### 4.12 MAPPER (RowMapper)
 
@@ -604,7 +607,7 @@ var list = helper.list(sql, param, AccountEntity.class);
 
 ### 8.3 select 句には Columns.selectAster() を使う
 
-`select *` と書かず `Columns.selectAster()` を使ってください。`interval` 型のように SELECT 時の型変換が必要なカラムを正しく取得するためです。詳しくは「4.8 Columns.selectAster()」を参照してください。
+`select *` と書かず `Columns.selectAster()` を使ってください。`interval` 型のように SELECT 時の型変換が必要なカラムを正しく取得するためです。詳しくは「4.10 Columns.selectAster()」を参照してください。
 
 ### 8.4 条件を指定して更新する、削除する
 
