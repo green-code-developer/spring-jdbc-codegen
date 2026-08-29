@@ -31,7 +31,7 @@ import java.util.Map;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.util.stream.Collectors.toSet;
-import static jp.green_code.spring_jdbc_codegen.Parameter.param;
+import static jp.green_code.spring_jdbc_codegen.Param.param;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -134,19 +134,19 @@ public class Runner {
         System.out.println("========================================");
     }
 
-    static Parameter readParameter(String paramPath) throws IOException {
+    static Param readParameter(String paramPath) throws IOException {
         Yaml yaml = new Yaml();
-        Parameter param;
+        Param param;
         if (isBlank(paramPath)) {
             // テストコード用
             try (InputStream is = Main.class.getClassLoader().getResourceAsStream("param.yml")) {
-                param = yaml.loadAs(is, Parameter.class);
+                param = yaml.loadAs(is, Param.class);
                 param.paramYmlDir = Path.of(System.getProperty("user.dir"), "src/main/resources/param.yml").getParent();
             }
         } else {
             Path path = Path.of(paramPath);
             try (InputStream is = new FileInputStream(path.toFile())) {
-                param = yaml.loadAs(is, Parameter.class);
+                param = yaml.loadAs(is, Param.class);
                 param.paramYmlDir = path.toAbsolutePath().getParent();
             }
         }

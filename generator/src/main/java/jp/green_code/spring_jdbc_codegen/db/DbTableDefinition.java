@@ -1,6 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.db;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 import org.apache.commons.lang3.Strings;
 
 import java.util.ArrayList;
@@ -10,10 +10,10 @@ import static java.util.Comparator.comparing;
 import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
 
 public class DbTableDefinition {
-    final Parameter param;
+    final Param param;
     public final String tableName;
 
-    public DbTableDefinition(Parameter param, String tableName) {
+    public DbTableDefinition(Param param, String tableName) {
         this.param = param;
         this.tableName = tableName;
     }

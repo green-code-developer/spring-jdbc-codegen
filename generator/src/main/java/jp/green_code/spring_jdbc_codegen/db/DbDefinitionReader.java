@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.sql.DatabaseMetaData.columnNullable;
-import static jp.green_code.spring_jdbc_codegen.Parameter.param;
+import static jp.green_code.spring_jdbc_codegen.Param.param;
 
 public class DbDefinitionReader {
 

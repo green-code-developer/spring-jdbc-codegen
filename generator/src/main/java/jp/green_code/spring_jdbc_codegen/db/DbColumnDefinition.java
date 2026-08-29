@@ -5,7 +5,7 @@ import org.jspecify.annotations.NullUnmarked;
 import java.util.List;
 import java.util.Map;
 
-import static jp.green_code.spring_jdbc_codegen.Parameter.param;
+import static jp.green_code.spring_jdbc_codegen.Param.param;
 import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.isBlank;

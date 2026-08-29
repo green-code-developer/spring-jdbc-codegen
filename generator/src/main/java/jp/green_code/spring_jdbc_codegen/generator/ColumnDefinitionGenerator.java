@@ -1,15 +1,15 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 
 import java.util.ArrayList;
 
 import static java.lang.String.join;
 
 public class ColumnDefinitionGenerator {
-    final Parameter param;
+    final Param param;
 
-    public ColumnDefinitionGenerator(Parameter param) {
+    public ColumnDefinitionGenerator(Param param) {
         this.param = param;
     }
 

@@ -9,8 +9,8 @@ import java.util.Map;
 import static jp.green_code.spring_jdbc_codegen.Util.toCamelCase;
 
 @NullUnmarked
-public class Parameter {
-    public static Parameter param;
+public class Param {
+    public static Param param;
     /** param.yml のパス */
     public Path paramYmlDir;
     /** JDBC url */

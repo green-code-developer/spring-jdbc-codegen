@@ -1,13 +1,13 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 
 import java.util.ArrayList;
 
 public class HelperGenerator {
-    final Parameter param;
+    final Param param;
 
-    public HelperGenerator(Parameter param) {
+    public HelperGenerator(Param param) {
         this.param = param;
     }
 

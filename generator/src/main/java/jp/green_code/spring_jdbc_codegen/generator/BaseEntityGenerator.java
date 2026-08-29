@@ -1,6 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 import jp.green_code.spring_jdbc_codegen.db.DbColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 import org.apache.commons.lang3.StringUtils;
@@ -11,9 +11,9 @@ import java.util.List;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class BaseEntityGenerator {
-    final Parameter param;
+    final Param param;
 
-    public BaseEntityGenerator(Parameter param) {
+    public BaseEntityGenerator(Param param) {
         this.param = param;
     }
 

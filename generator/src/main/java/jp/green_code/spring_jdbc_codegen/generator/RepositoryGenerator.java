@@ -1,15 +1,15 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
 
 public class RepositoryGenerator {
-    final Parameter param;
+    final Param param;
     final DbTableDefinition table;
 
-    public RepositoryGenerator(Parameter param, DbTableDefinition table) {
+    public RepositoryGenerator(Param param, DbTableDefinition table) {
         this.param = param;
         this.table = table;
     }

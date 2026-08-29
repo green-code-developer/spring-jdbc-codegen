@@ -1,6 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
@@ -10,10 +10,10 @@ import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class TestBaseRepositoryGenerator {
-    final Parameter param;
+    final Param param;
     final DbTableDefinition table;
 
-    public TestBaseRepositoryGenerator(Parameter param, DbTableDefinition table) {
+    public TestBaseRepositoryGenerator(Param param, DbTableDefinition table) {
         this.param = param;
         this.table = table;
     }

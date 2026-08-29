@@ -1,6 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 import jp.green_code.spring_jdbc_codegen.db.DbColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
@@ -16,10 +16,10 @@ import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class BaseRepositoryGenerator {
-    final Parameter param;
+    final Param param;
     final DbTableDefinition table;
 
-    public BaseRepositoryGenerator(Parameter param, DbTableDefinition table) {
+    public BaseRepositoryGenerator(Param param, DbTableDefinition table) {
         this.param = param;
         this.table = table;
     }

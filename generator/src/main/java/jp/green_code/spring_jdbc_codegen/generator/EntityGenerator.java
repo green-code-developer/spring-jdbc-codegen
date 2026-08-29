@@ -1,14 +1,14 @@
 package jp.green_code.spring_jdbc_codegen.generator;
 
-import jp.green_code.spring_jdbc_codegen.Parameter;
+import jp.green_code.spring_jdbc_codegen.Param;
 import jp.green_code.spring_jdbc_codegen.db.DbTableDefinition;
 
 import java.util.ArrayList;
 
 public class EntityGenerator {
-    final Parameter param;
+    final Param param;
 
-    public EntityGenerator(Parameter param) {
+    public EntityGenerator(Param param) {
         this.param = param;
     }
 
