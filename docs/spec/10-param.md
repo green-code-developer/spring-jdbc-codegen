@@ -99,12 +99,18 @@ columnName2javaPropertyMap:
 
 テーブル名に `"*"` を指定でき、`"*"` が個別テーブル指定より優先される。
 
-## PARAM-009 enableNullUnmarkedForEntityPackages
+## PARAM-009 useNullMarked
 
-既定 `false`。`true` にすると Entity のパッケージに `@NullUnmarked` を付けた
-`package-info.java` を生成する（[ENTITY-030](30-entity.md)）。
+**導入するプロジェクトが `@NullMarked` を使っているか**を指定する。既定 `false`。
 
-`@NullMarked` を使うプロジェクトで、Entity が null を保持できるようにするための設定。
+`true` にすると、生成コードを JSpecify の null 安全に対応させる。
+
+- Entity のパッケージに `@NullUnmarked` を付けた `package-info.java` を生成する
+  （[ENTITY-030](30-entity.md)）。Entity は DB の値を扱うため null を許容する
+- `ColumnDefinition` の null になりうる項目に `@Nullable` を付ける
+  （[REPO-050](31-repository.md)）
+
+`false` の場合、これらのアノテーションと import は出力しない。
 
 ## PARAM-010 命名のカスタマイズ
 

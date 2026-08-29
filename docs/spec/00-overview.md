@@ -87,7 +87,7 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 `RepositoryHelper` と `ColumnDefinition` は実体クラスだが**毎回上書きされる**。
 Entity / Repository / TestRepository の実体クラスとは扱いが異なる。
 
-`package-info` は `enableNullUnmarkedForEntityPackages: true` のときのみ生成する（[ENTITY-030](30-entity.md)）。
+`package-info` は `useNullMarked: true` のときのみ生成する（[ENTITY-030](30-entity.md)）。
 `{base}` 側は毎回、`{entityPackage}` 側は初回のみ上書きする。
 
 ## CORE-005 Base クラスと実体クラス

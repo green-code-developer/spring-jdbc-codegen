@@ -231,7 +231,7 @@ null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` �
 `@Nullable` を付与する。対象はフィールド、コンストラクタ引数、getter の 3 箇所。
 アノテーションは `org.jspecify.annotations.Nullable` で固定とし、差し替えられない。
 
-**この付与は `enableNullUnmarkedForEntityPackages: true` のときだけ行う。**
+**この付与は `useNullMarked: true` のときだけ行う。**
 既定（`false`）では `@Nullable` も import も出力しない。
 
 ## REPO-051 RowMapper

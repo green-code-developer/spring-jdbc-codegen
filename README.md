@@ -416,19 +416,21 @@ param.yml のforceOverwriteImplementation をtrue にすると実体クラスも
 
 ### 5.6 @NullMarked 対応
 
-@NullMarked を使用しているプロジェクトの場合、Entity のパッケージに @NullUnmarked を付与する必要があります。
+**導入するプロジェクトが @NullMarked を使っている場合**は、この設定を `true` にしてください。
 
-Entity クラスでは、データベースの値などを扱うためnull を許容するケースがあるためです。
-
-こちらの設定を入れると、{entityPackage} と{entityPackage}.base にpackage-info.java ファイルを作成し、@NullUnmarked を付与します。
-
-設定例
 ```yml
 # param.yml
-enableNullUnmarkedForEntityPackages: true
+useNullMarked: true
 ```
 
-また、BaseRepository 内のカラム定義などに @Nullable をfウヨします。
+生成コードがJSpecify のnull 安全に対応します。
+
+- `{entityPackage}` と `{entityPackage}.base` にpackage-info.java を作成し、`@NullUnmarked` を付与します
+- `ColumnDefinition` のnull になりうる項目に `@Nullable` を付与します
+
+Entity のパッケージを `@NullUnmarked` にするのは、データベースの値を扱うためnull を許容するケースがあるためです。Entity のフィールドやgetter / setter に個別の `@Nullable` は付きません。
+
+既定は `false` で、これらのアノテーションとimport は出力しません。
 
 
 ## 6. TestRepository の使い方

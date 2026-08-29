@@ -22,6 +22,12 @@ param.yml の設定を3つ廃止しています。バージョンアップの際
   `helper.exec()` で手書きしたSQL には効かず、保証にならなかったためです。
   移行方法は [README 5.2](README.md#52-作成者カラム作成日時カラムをupdate-させたくない) を参照してください。
 
+- **`enableNullUnmarkedForEntityPackages` を `useNullMarked` に改名**しました
+
+  旧名は「Entity パッケージに NullUnmarked を付ける」と読めますが、実際には
+  ColumnDefinition への `@Nullable` 付与も制御しており、実態と合っていませんでした。
+  「導入するプロジェクトが `@NullMarked` を使っているか」を表す名前に変更しています。
+
 - **`nullableFqcn` / `nullUnmarkedFqcn` を廃止**しました
 
   アノテーションは JSpecify で固定です。import 文がハードコードされており、

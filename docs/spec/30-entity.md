@@ -63,7 +63,7 @@ null か否かで動作するため。
 
 ## ENTITY-030 @NullUnmarked
 
-`enableNullUnmarkedForEntityPackages: true`（[PARAM-009](10-param.md)）のとき、
+`useNullMarked: true`（[PARAM-009](10-param.md)）のとき、
 次の 2 つのパッケージに `package-info.java` を生成する。
 
 - `{entityPackage}.{base}` — 毎回上書きする
@@ -87,5 +87,5 @@ import org.jspecify.annotations.NullUnmarked;
 
 | 対象 | 条件 |
 | --- | --- |
-| `ColumnDefinition` と `BaseColumnDefinition`（[REPO-050](31-repository.md)） | `enableNullUnmarkedForEntityPackages: true` のときだけ |
+| `ColumnDefinition` と `BaseColumnDefinition`（[REPO-050](31-repository.md)） | `useNullMarked: true` のときだけ |
 | RowMapper を生成した Repository（[REPO-051](31-repository.md)） | 命名マッピングがあれば無条件 |

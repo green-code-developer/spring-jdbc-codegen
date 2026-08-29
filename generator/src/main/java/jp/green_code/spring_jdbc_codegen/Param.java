@@ -40,7 +40,7 @@ public class Param {
     /** カラム名とJava プロパティ名のマッピング */
     public Map<String, Map<String, String>> columnName2javaPropertyMap = Map.of();
     /** Entity パッケージに @NullMarked を付けるかどうか */
-    public boolean enableNullUnmarkedForEntityPackages;
+    public boolean useNullMarked;
 
     // 以下高度なカスタマイズ用設定
     /** 規定クラスのパッケージ名 base */

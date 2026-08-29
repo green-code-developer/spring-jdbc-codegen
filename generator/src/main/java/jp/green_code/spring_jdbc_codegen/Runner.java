@@ -188,7 +188,7 @@ public class Runner {
         var code = generator.generateEntityCode(tableDef);
         writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, tableDef.toEntityClassName(), code);
 
-        if (param.enableNullUnmarkedForEntityPackages) {
+        if (param.useNullMarked) {
             writeJavaCode(toMainJavaDir(), param.baseEntityPackage(), "package-info",
                     toPackageInfoCode(param.baseEntityPackage()));
             writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, "package-info",

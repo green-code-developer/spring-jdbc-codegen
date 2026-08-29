@@ -20,7 +20,7 @@ public class BaseColumnDefinitionGenerator {
 
         sb.add("package %s;".formatted(param.baseRepositoryPackage()));
         sb.add("");
-        if (param.enableNullUnmarkedForEntityPackages) {
+        if (param.useNullMarked) {
             sb.add("import %s;".formatted(Fqcn.NULLABLE));
             sb.add("");
             nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
@@ -158,7 +158,7 @@ public class BaseColumnDefinitionGenerator {
     }
 
     void addNullableIfNeed(List<String> sb) {
-        if (param.enableNullUnmarkedForEntityPackages) {
+        if (param.useNullMarked) {
             sb.add("    " + Fqcn.toAnnotation(Fqcn.NULLABLE));
         }
     }

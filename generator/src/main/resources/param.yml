@@ -62,10 +62,12 @@ columnName2javaPropertyMap:
   "mapper_no_pk":
     rename_target: renamedNoPkName
 
-# Entity パッケージに @NullUnmarked を付けるかどうか（省略可）
-#   初期値 false(付けない)
-#   付ける場合{entityPackage} と{entityPackage}.{basePackageName} にpackage-info.java を作成します。また、必要な箇所に @Nullable を追加します。
-enableNullUnmarkedForEntityPackages: true
+# 導入するプロジェクトが @NullMarked を使っているか（省略可）
+#   初期値 false
+#   true の場合、生成コードをJSpecify のnull 安全に対応させます
+#     - {entityPackage} と{entityPackage}.{basePackageName} にpackage-info.java を作成し @NullUnmarked を付与
+#     - ColumnDefinition のnull になりうる項目に @Nullable を付与
+useNullMarked: true
 
 # 実体クラスの強制上書き（省略可）
 #   初期値 false(しない)
