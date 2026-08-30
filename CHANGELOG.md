@@ -4,6 +4,27 @@
 
 3.0.0 より前の履歴は `git log` を参照してください。
 
+## 3.1.0
+
+### 追加
+
+- **`RepositoryHelper` に `escapeLike()` を追加しました**（[REPO-061](docs/spec/31-repository.md)）
+
+  LIKE 検索のパターンに含まれる `%` `_` とエスケープ文字自身をエスケープします。
+  バインド変数は SQL の構文としての安全性を守るだけで、値が LIKE パターンとして
+  解釈されることは防げません。`like concat('%', :keyword, '%')` に `search_word` を
+  渡すと `_` が任意の 1 文字として働きます。
+
+  ```java
+  helper.list(sql, Map.of("keyword", RepositoryHelper.escapeLike(keyword)), AccountEntity.class);
+  ```
+
+  エスケープ文字は既定で `\` です。PostgreSQL の LIKE は `escape` 句を省略したときの
+  エスケープ文字が `\` のため、既定を使う限り SQL 側に `escape` 句は要りません。
+  第 2 引数で変更でき、その場合は SQL に `escape` 句を書いてください。
+
+  使い方は [README 8.8](README.md#88-like-検索を行う) を参照してください。
+
 ## 3.0.0
 
 param.yml の設定を2つ廃止しています。バージョンアップの際は移行作業が必要です。

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -189,6 +190,69 @@ public class ExampleHelperUsage {
         assertEquals(2, list.size());
         assertEquals("A", list.get(0).getTextValue());
         assertEquals(2L, list.get(0).getRowCount());
+    }
+
+    /**
+     * LIKE 検索のワイルドカードはバインド変数では無害化されない。
+     * <p>
+     * escapeLike() を通さないと、値に含まれる _ が任意の1文字として働く。
+     */
+    @Test
+    void LIKE検索でワイルドカードをエスケープする() {
+        insert("a_c", "like1");
+        insert("abc", "like2");
+
+        // エスケープしないと _ がワイルドカードになり abc までヒットする
+        assertEquals(2, countByLike("a_c", ""));
+
+        // エスケープすれば a_c だけがヒットする
+        assertEquals(1, countByLike(RepositoryHelper.escapeLike("a_c"), ""));
+    }
+
+    /**
+     * エスケープ文字自身も置換の対象になる。
+     * <p>
+     * 置換の順序を誤ると二重にエスケープされ、この検索は 0 件になる。
+     */
+    @Test
+    void エスケープ文字自身もエスケープされる() {
+        insert("a\\_c", "like3");
+        insert("a_c", "like4");
+
+        assertEquals(1, countByLike(RepositoryHelper.escapeLike("a\\_c"), ""));
+    }
+
+    /**
+     * エスケープ文字は第2引数で変更できる。
+     * <p>
+     * 変更した場合は SQL に escape 句を書く必要がある。書き忘れると
+     * PostgreSQL は既定の \ で解釈するためエスケープが効かない。
+     */
+    @Test
+    void エスケープ文字を変更する() {
+        insert("a%c", "like5");
+        insert("abc", "like6");
+
+        assertEquals(1, countByLike(RepositoryHelper.escapeLike("a%c", '$'), "escape '$'"));
+    }
+
+    /**
+     * ワイルドカード自身をエスケープ文字にはできない。
+     */
+    @Test
+    void エスケープ文字にワイルドカードは指定できない() {
+        assertThrows(IllegalArgumentException.class, () -> RepositoryHelper.escapeLike("a_c", '_'));
+    }
+
+    /**
+     * col_text を LIKE 検索した件数を返す。escapeClause は "escape '$'" など。既定なら空文字
+     */
+    long countByLike(String pattern, String escapeClause) {
+        return helper.count("""
+                select count(*)
+                from normal_pk1
+                where col_text like :keyword %s
+                """.formatted(escapeClause), Map.of("keyword", pattern));
     }
 
     /**

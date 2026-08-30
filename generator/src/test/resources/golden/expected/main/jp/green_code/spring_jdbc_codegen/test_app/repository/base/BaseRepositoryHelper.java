@@ -100,4 +100,19 @@ public abstract class BaseRepositoryHelper {
         int index = Math.floorMod(seed, values.length);
         return values[index];
     }
+
+    public static String escapeLike(String s) {
+        return escapeLike(s, '\\');
+    }
+
+    public static String escapeLike(String s, char escapeChar) {
+        if (escapeChar == '%' || escapeChar == '_') {
+            throw new IllegalArgumentException("エスケープ文字にワイルドカードは指定できません: " + escapeChar);
+        }
+        String e = String.valueOf(escapeChar);
+        // エスケープ文字自身を先に置換しないと、後続の置換で二重にエスケープされる
+        return s.replace(e, e + e)
+                .replace("%", e + "%")
+                .replace("_", e + "_");
+    }
 }

@@ -45,6 +45,7 @@
   - [8.5 更新前の値を条件にする（楽観ロック）](#85-更新前の値を条件にする楽観ロック)
   - [8.6 件数を取得する、単一カラムを取得する](#86-件数を取得する単一カラムを取得する)
   - [8.7 集計やJOIN の結果を受け取る](#87-集計やjoin-の結果を受け取る)
+  - [8.8 LIKE 検索を行う](#88-like-検索を行う)
 
 ## 1. 機能概要
 
@@ -287,6 +288,8 @@ NamedParameterJdbcTemplate をラップして短く記載できるようにし�
 - long helper.count(): 数値1カラムを取得するselect 文が対象。select count(*) ... を想定
 
 - static helper.pickBySeed(): enum の定数をseed で選ぶ。生成されるテストコードが使用します
+
+- static helper.escapeLike(): LIKE 検索のパターンに含まれる `%` `_` をエスケープします。詳しくは「8.8 LIKE 検索を行う」を参照ください
 
 ### 4.12 MAPPER (RowMapper)
 
@@ -596,7 +599,7 @@ var param = new HashMap<String, Object>();
 
 if (name != null) {
     sql.add("and name like :name");
-    param.put("name", name + "%");
+    param.put("name", RepositoryHelper.escapeLike(name) + "%");
 }
 sql.add("order by account_id");
 
@@ -694,3 +697,51 @@ List<AccountSummary> list = helper.list("""
         group by a.status
         """, Map.of(), AccountSummary.class);
 ```
+
+### 8.8 LIKE 検索を行う
+
+**バインド変数は LIKE のワイルドカードを無害化しません。** 値は SQL の構文としては安全に渡りますが、渡った先でパターンとして解釈されます。
+
+```java
+// 誤り。keyword に "search_word" が来ると _ が任意の 1 文字として働き、
+// "search word" や "searchXword" までヒットする
+helper.list("""
+        select %s from account
+        where note like concat('%%', :keyword, '%%')
+        """.formatted(Columns.selectAster()),
+        Map.of("keyword", keyword), AccountEntity.class);
+```
+
+`escapeLike()` を通してから渡してください。
+
+```java
+helper.list("""
+        select %s from account
+        where note like concat('%%', :keyword, '%%')
+        """.formatted(Columns.selectAster()),
+        Map.of("keyword", RepositoryHelper.escapeLike(keyword)), AccountEntity.class);
+```
+
+`escapeLike()` は前後の `%` を付けません。部分一致・前方一致のどちらにするかは呼び出し側で決めてください。
+
+```java
+param.put("keyword", RepositoryHelper.escapeLike(keyword) + "%");   // 前方一致
+```
+
+前方一致であれば `text_pattern_ops` のインデックスが効きます。`%` で始まる部分一致は常に全件走査になります。
+
+#### エスケープ文字を変える
+
+既定のエスケープ文字は `\` です。PostgreSQL の LIKE は `escape` 句を省略したときのエスケープ文字が `\` のため、既定を使う限り SQL 側に `escape` 句は要りません。
+
+第 2 引数で変更できます。**その場合は SQL に `escape` 句を書いてください。** 書き忘れると PostgreSQL は既定の `\` で解釈するため、エスケープが効かず静かに誤った結果になります。
+
+```java
+helper.list("""
+        select %s from account
+        where note like concat('%%', :keyword, '%%') escape '$'
+        """.formatted(Columns.selectAster()),
+        Map.of("keyword", RepositoryHelper.escapeLike(keyword, '$')), AccountEntity.class);
+```
+
+`%` と `_` はエスケープ文字に指定できません。渡すと `IllegalArgumentException` が発生します。

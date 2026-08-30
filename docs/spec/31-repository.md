@@ -264,11 +264,62 @@ null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` �
 | `exec()` | 更新系。更新件数を返す |
 | `count()` | `long` 1 カラムを取得する |
 | `pickBySeed()` | enum の定数を seed で選ぶ。テスト用 |
+| `escapeLike()` | LIKE パターンの特殊文字をエスケープする（[REPO-061](#repo-061-escapelike)） |
 
 `list()` / `optional()` / `single()` は、戻り値の型を `Class<T>` で受け取るものと
-`RowMapper<T>` で受け取るものの 2 系統を持つ。`exec()` / `count()` / `pickBySeed()` に
-この区別はない。
+`RowMapper<T>` で受け取るものの 2 系統を持つ。`exec()` / `count()` / `pickBySeed()` /
+`escapeLike()` にこの区別はない。
 
 `Class<T>` を受け取る系統は、`Class` がプリミティブ・`Number` のサブクラス・`String`
 のいずれかであれば単一カラムとして扱い、それ以外は `BeanPropertyRowMapper` で
 マッピングする。Entity 以外の任意のクラスにも対応できる。
+
+## REPO-061 escapeLike
+
+```java
+public static String escapeLike(String s)
+public static String escapeLike(String s, char escapeChar)
+```
+
+引数の文字列を LIKE パターンの一部として安全に使える形へ変換する。
+`escapeChar` を省略した場合は `\` を使う。
+
+| 入力 | 出力（既定） |
+| --- | --- |
+| `%` | `\%` |
+| `_` | `\_` |
+| `\` | `\\` |
+
+**置換はエスケープ文字自身 → `%` → `_` の順で行う。** 逆順にすると、先の置換が
+付けたエスケープ文字を後の置換が再びエスケープしてしまう。
+
+バインド変数は SQL の構文としての安全性を守るだけで、値が LIKE パターンとして
+解釈されることは防げない。`concat('%', :keyword, '%')` に `search_word` を渡すと
+`_` が任意の 1 文字として働く。呼び出し側で明示的にこのメソッドを通す。
+
+前後の `%` は付けない。前方一致・後方一致・部分一致のどれを求めるかは呼び出し側の
+判断であるため。
+
+## REPO-062 escapeLike のエスケープ文字
+
+既定は `\`。PostgreSQL の LIKE は `escape` 句を省略したときのエスケープ文字が
+`\` であるため、**既定を使う限り SQL 側に `escape` 句は要らない。**
+
+`escapeChar` を指定した場合は、**呼び出し側が SQL に `escape` 句を書く責任を持つ。**
+生成コードは SQL を組み立てないため、両者の対応は検証できない。
+
+```java
+helper.list("select ... where note like concat('%', :keyword, '%') escape '$'",
+        Map.of("keyword", RepositoryHelper.escapeLike(keyword, '$')), ...);
+```
+
+指定を可能にしているのは、`\` が扱いにくい場面があるため。
+
+- `standard_conforming_strings` が off の環境では文字列リテラル中の `\` の解釈が変わる
+- Java のテキストブロックに `escape '\'` と書くには `\\` とエスケープが必要で読みにくい
+- SQL をログや psql へ貼って確認するとき、`\` は目視で追いにくい
+
+`escapeChar` に `%` または `_` を渡した場合は `IllegalArgumentException` を送出する。
+ワイルドカード自身をエスケープ文字にすると、エスケープが自己矛盾するため。
+それ以外の文字は検証しない。妥当性は SQL の `escape` 句との対応で決まり、
+生成コードからは判断できないため。
