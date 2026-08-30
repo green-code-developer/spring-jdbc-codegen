@@ -14,6 +14,7 @@ Entity / Repository / TestRepository を生成する CLI ツール。
 | `test-app/` | 生成結果の検証用 Spring Boot アプリ。生成物は git 管理外 |
 | `docker_spring_jdbc_codegen/` | 検証用 PostgreSQL と DDL |
 | `docs/spec/` | 仕様書（単一の真実） |
+| `docs/backlog.md` | 検討中の機能のメモ。未実装。仕様ではない |
 | `generator/src/test/resources/golden/` | golden テストの入力(param.yml)と期待値(expected) |
 
 generator の主要クラス:
@@ -36,6 +37,8 @@ generator の主要クラス:
 ルール:
 
 - spec にない挙動を実装しない
+- 検討中の機能は `docs/backlog.md` に書く。`docs/spec/` に未実装の記述を置かない。
+  spec 化するときは backlog から該当項目を削除し、同じコミットに含める
 - 実装に合わせて spec を後追いで書き換えない。仕様変更なら 1 に戻る
 - README.md はユーザー向けの入口。仕様の記述は `docs/spec/` を正とする
 - リファクタリング・バグ修正（spec 通りに動いていない箇所の修正）は spec 更新不要
