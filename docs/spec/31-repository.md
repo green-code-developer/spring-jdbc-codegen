@@ -22,7 +22,7 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 | メソッド | 生成条件 |
 | --- | --- |
 | `insertAllColumns` / `insertExcept` | 常に生成する |
-| `insertExceptPk` | PK があり、PK を構成する全カラムが自動採番（[REPO-014](#repo-014-insertexceptpk)） |
+| `insertExceptPk` | PK があり、PK の全カラムを DB 側で決められる（[REPO-014](#repo-014-insertexceptpk)） |
 | `updateAllColumns` / `updateInclude` | PK がある |
 | `findByPk` | PK がある |
 | `deleteByPk` | PK がある |
@@ -142,16 +142,29 @@ public int insertExceptPk({テーブル}Entity entity)
 **PK を構成する全カラムを INSERT 対象から外す。** 内部で `insertExcept` を呼ぶ。
 DB に PK を採番させる、最も頻度の高い形の短縮形。
 
-**PK を構成する全カラムが自動採番のときだけ生成する。** 1 つでも自動採番でない
-カラムが含まれる場合、そこへ null が送られて必ず失敗するため。
+**PK を構成する全カラムを DB 側で決められるときだけ生成する。** 次のいずれかを
+満たすカラムを指す。
 
-自動採番とは、JDBC メタデータの `IS_AUTOINCREMENT` が `YES` のカラムを指す。
-`smallserial` / `serial` / `bigserial` と `generated as identity` の両方が該当する。
+- 自動採番である（JDBC メタデータの `IS_AUTOINCREMENT` が `YES`）
+- 既定値を持つ（`COLUMN_DEF` が空でない）
 
-既定値式（`COLUMN_DEF`）は判定に使わない。`identity` 列は `COLUMN_DEF` が空で
-判別できず、また既定値を持つだけのカラム（`now()` や `'NEW'`）と区別するために
-文字列マッチが必要になるため。`is_identity` は JDBC の `getColumns()` が返さないので、
-自前で判定するには `information_schema` への別クエリが要る。
+1 つでも満たさないカラムが PK に含まれる場合、そこへ値が入らず NOT NULL 違反に
+なるため生成しない。PK カラムは PostgreSQL が暗黙に not null とするため、
+除外して値が入らなければ必ず失敗する。
+
+| PK カラムの例 | `IS_AUTOINCREMENT` | `COLUMN_DEF` | 生成 |
+| --- | --- | --- | --- |
+| `bigserial` | YES | `nextval(...)` | する |
+| `generated as identity` | YES | （空） | する |
+| `timestamptz not null default now()` | NO | `now()` | する |
+| `uuid default gen_random_uuid()` | NO | `gen_random_uuid()` | する |
+| `varchar`（自然キー） | NO | （空） | しない |
+
+**両方を見る必要がある。** `identity` 列は `COLUMN_DEF` が空なので既定値の有無だけでは
+判定できず、`now()` のような既定値を持つ PK は `IS_AUTOINCREMENT` が `NO` になるため。
+
+`is_identity` は JDBC の `getColumns()` が返さないので、自前で判定するには
+`information_schema` への別クエリが要る。
 
 ## REPO-020 updateAllColumns
 

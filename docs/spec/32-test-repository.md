@@ -40,10 +40,10 @@ PK を持たないテーブルも生成する。ただし `findByPk` / `deleteBy
 
 | テーブル | 使うメソッド |
 | --- | --- |
-| PK の全カラムが自動採番 | `insertExceptPk`（[REPO-014](31-repository.md)） |
+| PK の全カラムを DB 側で決められる | `insertExceptPk`（[REPO-014](31-repository.md)） |
 | それ以外 | `insertAllColumns`（[REPO-010](31-repository.md)） |
 
-`insertExceptPk` は PK を INSERT 対象から外し、DB の自動採番を働かせる。
+`insertExceptPk` は PK を INSERT 対象から外し、DB の自動採番や既定値を働かせる。
 採番された値は `returning` で entity へ書き戻される（[REPO-012](31-repository.md)）
 ため、4 で PK を差し替える処理はそのまま成立する。
 それ以外のテーブルでは、生成した PK の値をそのまま insert する。
