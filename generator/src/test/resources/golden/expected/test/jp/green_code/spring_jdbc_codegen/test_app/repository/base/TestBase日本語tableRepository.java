@@ -12,13 +12,7 @@ public abstract class TestBase日本語tableRepository {
         var data = generateTestData(seed);
 
         // insert
-        data.setOrder(null);
-        data.setParam(null);
-        data.setSql(null);
-        data.setHelper(null);
-        data.setJoining(null);
-        data.setList(null);
-        repository.insert(data);
+        repository.insertAllColumns(data);
 
         // select 1回目
         var res = repository.findByPk(data.getOrder(), data.getParam(), data.getSql(), data.getHelper(), data.getJoining(), data.getList(), data.getRenamedJavaName());
@@ -47,7 +41,7 @@ public abstract class TestBase日本語tableRepository {
         data2.setJoining(data.getJoining());
         data2.setList(data.getList());
         data2.setRenamedJavaName(data.getRenamedJavaName());
-        repository.update(data2);
+        repository.updateAllColumns(data2);
 
         // select 2回目
         var res2 = repository.findByPk(data2.getOrder(), data2.getParam(), data2.getSql(), data2.getHelper(), data2.getJoining(), data2.getList(), data2.getRenamedJavaName());

@@ -11,30 +11,30 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import jp.green_code.spring_jdbc_codegen.test_app.entity.QuotedColumnNowEntity;
+import jp.green_code.spring_jdbc_codegen.test_app.entity.IdentityPkEntity;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.ColumnDefinition;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.RepositoryHelper;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 
 /**
- * Table: quoted_column_now
+ * Table: identity_pk
  */
-public abstract class BaseQuotedColumnNowRepository {
+public abstract class BaseIdentityPkRepository {
 
     protected final RepositoryHelper helper;
 
     public static class Columns {
-        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "bigserial", -5, 19, 1, false, true, null, null, false, false);
-        public static final ColumnDefinition UPDATED = new ColumnDefinition("Updated", "updated", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, true, false);
+        public static final ColumnDefinition PK = new ColumnDefinition("pk", "pk", "java.lang.Long", "int8", -5, 19, 1, false, false, null, null, false, false);
         public static final ColumnDefinition COL_TEXT = new ColumnDefinition("col_text", "colText", "java.lang.String", "text", 12, 2147483647, null, true, false, null, null, false, false);
+        public static final ColumnDefinition COL_TEXT_NOT_NULL = new ColumnDefinition("col_text_not_null", "colTextNotNull", "java.lang.String", "text", 12, 2147483647, null, false, false, null, null, false, false);
 
         public static final Map<String, ColumnDefinition> MAP = new LinkedHashMap<>();
 
         static {
             MAP.put("pk", PK);
-            MAP.put("Updated", UPDATED);
             MAP.put("col_text", COL_TEXT);
+            MAP.put("col_text_not_null", COL_TEXT_NOT_NULL);
         }
 
         public static String selectAster() {
@@ -42,7 +42,7 @@ public abstract class BaseQuotedColumnNowRepository {
         }
     }
 
-    public BaseQuotedColumnNowRepository(RepositoryHelper helper) {
+    public BaseIdentityPkRepository(RepositoryHelper helper) {
         this.helper = helper;
     }
 
@@ -57,7 +57,7 @@ public abstract class BaseQuotedColumnNowRepository {
                 throw new IllegalArgumentException("PK は指定できません: " + c.getColumnName());
             }
             if (Columns.MAP.get(c.getColumnName()) != c) {
-                throw new IllegalArgumentException("quoted_column_now のカラムではありません: " + c.getColumnName());
+                throw new IllegalArgumentException("identity_pk のカラムではありません: " + c.getColumnName());
             }
             if (!names.add(c.getColumnName())) {
                 throw new IllegalArgumentException("カラムが重複しています: " + c.getColumnName());
@@ -90,49 +90,49 @@ public abstract class BaseQuotedColumnNowRepository {
         return res;
     }
 
-    protected void copyReturningValues(QuotedColumnNowEntity entity, QuotedColumnNowEntity returning, Set<String> returningColumns) {
+    protected void copyReturningValues(IdentityPkEntity entity, IdentityPkEntity returning, Set<String> returningColumns) {
         if (returningColumns.contains("pk")) {
             entity.setPk(returning.getPk());
-        }
-        if (returningColumns.contains("Updated")) {
-            entity.setUpdated(returning.getUpdated());
         }
         if (returningColumns.contains("col_text")) {
             entity.setColText(returning.getColText());
         }
+        if (returningColumns.contains("col_text_not_null")) {
+            entity.setColTextNotNull(returning.getColTextNotNull());
+        }
     }
 
-    protected int execWithReturning(List<String> sql, Map<String, Object> param, QuotedColumnNowEntity entity, Set<String> returningColumns) {
+    protected int execWithReturning(List<String> sql, Map<String, Object> param, IdentityPkEntity entity, Set<String> returningColumns) {
         if (returningColumns.isEmpty()) {
             return this.helper.exec(sql, param);
         }
         var returningClause = returningColumns.stream().map(c -> Objects.requireNonNull(Columns.MAP.get(c), "Unknown column " + c).toSelectColumn()).collect(joining(", "));
         sql.add("returning %s".formatted(returningClause));
-        var ret = this.helper.optional(sql, param, QuotedColumnNowEntity.class);
+        var ret = this.helper.optional(sql, param, IdentityPkEntity.class);
         ret.ifPresent(r -> copyReturningValues(entity, r, returningColumns));
         return ret.isPresent() ? 1 : 0;
     }
 
     /** 全カラムをINSERT 対象とする */
-    public int insertAllColumns(QuotedColumnNowEntity entity) {
+    public int insertAllColumns(IdentityPkEntity entity) {
         return doInsert(entity, Set.of());
     }
 
     /** 指定したカラムをINSERT 対象から外し、DB の既定値を使う */
-    public int insertExcept(QuotedColumnNowEntity entity, ColumnDefinition first, ColumnDefinition... rest) {
+    public int insertExcept(IdentityPkEntity entity, ColumnDefinition first, ColumnDefinition... rest) {
         var exclude = new LinkedHashSet<String>();
         validateColumns(first, rest, false).forEach(c -> exclude.add(c.getColumnName()));
         return doInsert(entity, exclude);
     }
 
     /** PK をINSERT 対象から外し、DB に値を決めさせる */
-    public int insertExceptPk(QuotedColumnNowEntity entity) {
+    public int insertExceptPk(IdentityPkEntity entity) {
         return insertExcept(entity, Columns.PK);
     }
 
-    protected int doInsert(QuotedColumnNowEntity entity, Set<String> excludeColumns) {
+    protected int doInsert(IdentityPkEntity entity, Set<String> excludeColumns) {
         var sql = new ArrayList<String>();
-        sql.add("insert into \"quoted_column_now\"");
+        sql.add("insert into \"identity_pk\"");
         var insertColumns = toInsertColumns(excludeColumns);
         if (insertColumns.isEmpty()) {
             sql.add("DEFAULT VALUES");
@@ -144,50 +144,50 @@ public abstract class BaseQuotedColumnNowRepository {
         return execWithReturning(sql, param, entity, toInsertReturning(excludeColumns));
     }
 
-    public static Map<String, Object> entityToParam(QuotedColumnNowEntity entity) {
+    public static Map<String, Object> entityToParam(IdentityPkEntity entity) {
         var param = new HashMap<String, Object>();
         param.put("pk", entity.getPk());
-        param.put("updated", entity.getUpdated());
         param.put("colText", entity.getColText());
+        param.put("colTextNotNull", entity.getColTextNotNull());
         return param;
     }
 
     /** PK を除く全カラムを更新する */
-    public int updateAllColumns(QuotedColumnNowEntity entity) {
+    public int updateAllColumns(IdentityPkEntity entity) {
         return doUpdate(entity, Columns.MAP.values().stream().filter(c -> c.getPrimaryKeySeq() == null).toList());
     }
 
     /** 指定したカラムだけを更新する */
-    public int updateInclude(QuotedColumnNowEntity entity, ColumnDefinition first, ColumnDefinition... rest) {
+    public int updateInclude(IdentityPkEntity entity, ColumnDefinition first, ColumnDefinition... rest) {
         return doUpdate(entity, validateColumns(first, rest, true));
     }
 
-    protected int doUpdate(QuotedColumnNowEntity entity, List<ColumnDefinition> setColumns) {
+    protected int doUpdate(IdentityPkEntity entity, List<ColumnDefinition> setColumns) {
         var sql = new ArrayList<String>();
         var param = entityToParam(entity);
         var setClause = setColumns.stream().map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
-        sql.add("update \"quoted_column_now\"");
+        sql.add("update \"identity_pk\"");
         sql.add("set %s".formatted(setClause));
         param.put("__pk1", entity.getPk());
         sql.add("where \"pk\" = :__pk1");
-        return execWithReturning(sql, param, entity, Set.of("Updated"));
+        return execWithReturning(sql, param, entity, Set.of());
     }
 
-    public Optional<QuotedColumnNowEntity> findByPk(Long pk) {
+    public Optional<IdentityPkEntity> findByPk(Long pk) {
         var __sql = new ArrayList<String>();
         __sql.add("select %s".formatted(Columns.selectAster()));
-        __sql.add("from \"quoted_column_now\"");
+        __sql.add("from \"identity_pk\"");
         __sql.add("where \"pk\" = :pk");
 
         var __param = new HashMap<String, Object>();
         __param.put("pk", pk);
 
-        return this.helper.optional(__sql, __param, QuotedColumnNowEntity.class);
+        return this.helper.optional(__sql, __param, IdentityPkEntity.class);
     }
 
     public int deleteByPk(Long pk) {
         var __sql = new ArrayList<String>();
-        __sql.add("delete from \"quoted_column_now\"");
+        __sql.add("delete from \"identity_pk\"");
         __sql.add("where \"pk\" = :pk");
 
         var __param = new HashMap<String, Object>();

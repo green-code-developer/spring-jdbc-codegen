@@ -11,7 +11,7 @@ public abstract class TestBaseNormalPk0Repository {
         var data = generateTestData(seed);
 
         // insert
-        repository.insert(data);
+        repository.insertAllColumns(data);
 
         // PK がないのでselect, update, delete のテストは行わない
     }

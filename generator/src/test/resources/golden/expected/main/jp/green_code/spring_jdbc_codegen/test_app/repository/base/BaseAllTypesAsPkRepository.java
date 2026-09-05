@@ -7,9 +7,11 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,280 +100,46 @@ public abstract class BaseAllTypesAsPkRepository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(AllTypesAsPkEntity entity, boolean excludeNull) {
-        var res = new ArrayList<String>();
-        if (!excludeNull || entity.getColSmallint() != null) {
-            res.add("\"col_smallint\"");
+    /** 他テーブルのカラム、重複指定、PK 指定を弾く */
+    protected List<ColumnDefinition> validateColumns(ColumnDefinition first, ColumnDefinition[] rest, boolean rejectPk) {
+        var columns = new ArrayList<ColumnDefinition>();
+        columns.add(first);
+        columns.addAll(Arrays.asList(rest));
+        var names = new HashSet<String>();
+        for (var c : columns) {
+            if (rejectPk && c.getPrimaryKeySeq() != null) {
+                throw new IllegalArgumentException("PK は指定できません: " + c.getColumnName());
+            }
+            if (Columns.MAP.get(c.getColumnName()) != c) {
+                throw new IllegalArgumentException("all_types_as_pk のカラムではありません: " + c.getColumnName());
+            }
+            if (!names.add(c.getColumnName())) {
+                throw new IllegalArgumentException("カラムが重複しています: " + c.getColumnName());
+            }
         }
-        if (entity.getColSmallserial() != null) {
-            res.add("\"col_smallserial\"");
-        }
-        if (!excludeNull || entity.getColInteger() != null) {
-            res.add("\"col_integer\"");
-        }
-        if (entity.getColSerial() != null) {
-            res.add("\"col_serial\"");
-        }
-        if (!excludeNull || entity.getColBigint() != null) {
-            res.add("\"col_bigint\"");
-        }
-        if (entity.getColBigserial() != null) {
-            res.add("\"col_bigserial\"");
-        }
-        if (!excludeNull || entity.getColReal() != null) {
-            res.add("\"col_real\"");
-        }
-        if (!excludeNull || entity.getColDoublePrecision() != null) {
-            res.add("\"col_double_precision\"");
-        }
-        if (!excludeNull || entity.getColNumeric() != null) {
-            res.add("\"col_numeric\"");
-        }
-        if (!excludeNull || entity.getColBoolean() != null) {
-            res.add("\"col_boolean\"");
-        }
-        if (!excludeNull || entity.getColChar() != null) {
-            res.add("\"col_char\"");
-        }
-        if (!excludeNull || entity.getColVarchar() != null) {
-            res.add("\"col_varchar\"");
-        }
-        if (!excludeNull || entity.getColText() != null) {
-            res.add("\"col_text\"");
-        }
-        if (!excludeNull || entity.getColDate() != null) {
-            res.add("\"col_date\"");
-        }
-        if (!excludeNull || entity.getColTime() != null) {
-            res.add("\"col_time\"");
-        }
-        if (!excludeNull || entity.getColTimeTz() != null) {
-            res.add("\"col_time_tz\"");
-        }
-        if (!excludeNull || entity.getColTimestamp() != null) {
-            res.add("\"col_timestamp\"");
-        }
-        if (!excludeNull || entity.getColTimestampTz() != null) {
-            res.add("\"col_timestamp_tz\"");
-        }
-        if (!excludeNull || entity.getColInterval() != null) {
-            res.add("\"col_interval\"");
-        }
-        if (!excludeNull || entity.getColBytea() != null) {
-            res.add("\"col_bytea\"");
-        }
-        if (!excludeNull || entity.getColUuid() != null) {
-            res.add("\"col_uuid\"");
-        }
-        if (!excludeNull || entity.getColJsonb() != null) {
-            res.add("\"col_jsonb\"");
-        }
-        if (!excludeNull || entity.getColInet() != null) {
-            res.add("\"col_inet\"");
-        }
-        if (!excludeNull || entity.getColCidr() != null) {
-            res.add("\"col_cidr\"");
-        }
-        if (!excludeNull || entity.getColMacaddr() != null) {
-            res.add("\"col_macaddr\"");
-        }
-        if (!excludeNull || entity.getColStatusEnum() != null) {
-            res.add("\"col_status_enum\"");
-        }
-        return res;
+        return columns;
     }
 
-    protected Set<String> toInsertReturning(List<String> insertColumns) {
-        var res = new HashSet<String>();
-        if (insertColumns.isEmpty()) {
-            res.add("col_smallint");
-            res.add("col_smallserial");
-            res.add("col_integer");
-            res.add("col_serial");
-            res.add("col_bigint");
-            res.add("col_bigserial");
-            res.add("col_real");
-            res.add("col_double_precision");
-            res.add("col_numeric");
-            res.add("col_boolean");
-            res.add("col_char");
-            res.add("col_varchar");
-            res.add("col_text");
-            res.add("col_date");
-            res.add("col_time");
-            res.add("col_time_tz");
-            res.add("col_timestamp");
-            res.add("col_timestamp_tz");
-            res.add("col_interval");
-            res.add("col_bytea");
-            res.add("col_uuid");
-            res.add("col_jsonb");
-            res.add("col_inet");
-            res.add("col_cidr");
-            res.add("col_macaddr");
-            res.add("col_status_enum");
-        } else {
-            if (!insertColumns.contains("\"col_smallint\"")) {
-                res.add("col_smallint");
-            }
-            if (!insertColumns.contains("\"col_smallserial\"")) {
-                res.add("col_smallserial");
-            }
-            if (!insertColumns.contains("\"col_integer\"")) {
-                res.add("col_integer");
-            }
-            if (!insertColumns.contains("\"col_serial\"")) {
-                res.add("col_serial");
-            }
-            if (!insertColumns.contains("\"col_bigint\"")) {
-                res.add("col_bigint");
-            }
-            if (!insertColumns.contains("\"col_bigserial\"")) {
-                res.add("col_bigserial");
-            }
-            if (!insertColumns.contains("\"col_real\"")) {
-                res.add("col_real");
-            }
-            if (!insertColumns.contains("\"col_double_precision\"")) {
-                res.add("col_double_precision");
-            }
-            if (!insertColumns.contains("\"col_numeric\"")) {
-                res.add("col_numeric");
-            }
-            if (!insertColumns.contains("\"col_boolean\"")) {
-                res.add("col_boolean");
-            }
-            if (!insertColumns.contains("\"col_char\"")) {
-                res.add("col_char");
-            }
-            if (!insertColumns.contains("\"col_varchar\"")) {
-                res.add("col_varchar");
-            }
-            if (!insertColumns.contains("\"col_text\"")) {
-                res.add("col_text");
-            }
-            if (!insertColumns.contains("\"col_date\"")) {
-                res.add("col_date");
-            }
-            if (!insertColumns.contains("\"col_time\"")) {
-                res.add("col_time");
-            }
-            if (!insertColumns.contains("\"col_time_tz\"")) {
-                res.add("col_time_tz");
-            }
-            if (!insertColumns.contains("\"col_timestamp\"")) {
-                res.add("col_timestamp");
-            }
-            if (!insertColumns.contains("\"col_timestamp_tz\"")) {
-                res.add("col_timestamp_tz");
-            }
-            if (!insertColumns.contains("\"col_interval\"")) {
-                res.add("col_interval");
-            }
-            if (!insertColumns.contains("\"col_bytea\"")) {
-                res.add("col_bytea");
-            }
-            if (!insertColumns.contains("\"col_uuid\"")) {
-                res.add("col_uuid");
-            }
-            if (!insertColumns.contains("\"col_jsonb\"")) {
-                res.add("col_jsonb");
-            }
-            if (!insertColumns.contains("\"col_inet\"")) {
-                res.add("col_inet");
-            }
-            if (!insertColumns.contains("\"col_cidr\"")) {
-                res.add("col_cidr");
-            }
-            if (!insertColumns.contains("\"col_macaddr\"")) {
-                res.add("col_macaddr");
-            }
-            if (!insertColumns.contains("\"col_status_enum\"")) {
-                res.add("col_status_enum");
-            }
-        }
-        return res;
+    protected List<String> toInsertColumns(Set<String> excludeColumns) {
+        return Columns.MAP.values().stream()
+                .filter(c -> !excludeColumns.contains(c.getColumnName()))
+                .map(c -> "\"%s\"".formatted(c.getColumnName()))
+                .toList();
     }
 
-    protected List<String> toInsertValues(AllTypesAsPkEntity entity, boolean excludeNull) {
-        var res = new ArrayList<String>();
-        if (!excludeNull || entity.getColSmallint() != null) {
-            res.add("col_smallint");
-        }
-        if (entity.getColSmallserial() != null) {
-            res.add("col_smallserial");
-        }
-        if (!excludeNull || entity.getColInteger() != null) {
-            res.add("col_integer");
-        }
-        if (entity.getColSerial() != null) {
-            res.add("col_serial");
-        }
-        if (!excludeNull || entity.getColBigint() != null) {
-            res.add("col_bigint");
-        }
-        if (entity.getColBigserial() != null) {
-            res.add("col_bigserial");
-        }
-        if (!excludeNull || entity.getColReal() != null) {
-            res.add("col_real");
-        }
-        if (!excludeNull || entity.getColDoublePrecision() != null) {
-            res.add("col_double_precision");
-        }
-        if (!excludeNull || entity.getColNumeric() != null) {
-            res.add("col_numeric");
-        }
-        if (!excludeNull || entity.getColBoolean() != null) {
-            res.add("col_boolean");
-        }
-        if (!excludeNull || entity.getColChar() != null) {
-            res.add("col_char");
-        }
-        if (!excludeNull || entity.getColVarchar() != null) {
-            res.add("col_varchar");
-        }
-        if (!excludeNull || entity.getColText() != null) {
-            res.add("col_text");
-        }
-        if (!excludeNull || entity.getColDate() != null) {
-            res.add("col_date");
-        }
-        if (!excludeNull || entity.getColTime() != null) {
-            res.add("col_time");
-        }
-        if (!excludeNull || entity.getColTimeTz() != null) {
-            res.add("col_time_tz");
-        }
-        if (!excludeNull || entity.getColTimestamp() != null) {
-            res.add("col_timestamp");
-        }
-        if (!excludeNull || entity.getColTimestampTz() != null) {
-            res.add("col_timestamp_tz");
-        }
-        if (!excludeNull || entity.getColInterval() != null) {
-            res.add("col_interval");
-        }
-        if (!excludeNull || entity.getColBytea() != null) {
-            res.add("col_bytea");
-        }
-        if (!excludeNull || entity.getColUuid() != null) {
-            res.add("col_uuid");
-        }
-        if (!excludeNull || entity.getColJsonb() != null) {
-            res.add("col_jsonb");
-        }
-        if (!excludeNull || entity.getColInet() != null) {
-            res.add("col_inet");
-        }
-        if (!excludeNull || entity.getColCidr() != null) {
-            res.add("col_cidr");
-        }
-        if (!excludeNull || entity.getColMacaddr() != null) {
-            res.add("col_macaddr");
-        }
-        if (!excludeNull || entity.getColStatusEnum() != null) {
-            res.add("col_status_enum");
+    protected List<String> toInsertValues(Set<String> excludeColumns) {
+        return Columns.MAP.values().stream()
+                .filter(c -> !excludeColumns.contains(c.getColumnName()))
+                .map(ColumnDefinition::toParamColumn)
+                .toList();
+    }
+
+    protected Set<String> toInsertReturning(Set<String> excludeColumns) {
+        var res = new LinkedHashSet<String>();
+        for (var c : Columns.MAP.values()) {
+            if (c.isReturning() || excludeColumns.contains(c.getColumnName())) {
+                res.add(c.getColumnName());
+            }
         }
         return res;
     }
@@ -468,29 +236,30 @@ public abstract class BaseAllTypesAsPkRepository {
         return ret.isPresent() ? 1 : 0;
     }
 
-    public int insert(AllTypesAsPkEntity entity) {
-        return doInsert(entity, false);
+    /** 全カラムをINSERT 対象とする */
+    public int insertAllColumns(AllTypesAsPkEntity entity) {
+        return doInsert(entity, Set.of());
     }
 
-    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public int insertNotNull(AllTypesAsPkEntity entity) {
-        return doInsert(entity, true);
+    /** 指定したカラムをINSERT 対象から外し、DB の既定値を使う */
+    public int insertExcept(AllTypesAsPkEntity entity, ColumnDefinition first, ColumnDefinition... rest) {
+        var exclude = new LinkedHashSet<String>();
+        validateColumns(first, rest, false).forEach(c -> exclude.add(c.getColumnName()));
+        return doInsert(entity, exclude);
     }
 
-    protected int doInsert(AllTypesAsPkEntity entity, boolean excludeNull) {
-        var __sql = new ArrayList<String>();
-        __sql.add("insert into \"all_types_as_pk\"");
-        var __insertColumns = toInsertColumns(entity, excludeNull);
-        if (__insertColumns.isEmpty()) {
-            __sql.add("DEFAULT VALUES");
+    protected int doInsert(AllTypesAsPkEntity entity, Set<String> excludeColumns) {
+        var sql = new ArrayList<String>();
+        sql.add("insert into \"all_types_as_pk\"");
+        var insertColumns = toInsertColumns(excludeColumns);
+        if (insertColumns.isEmpty()) {
+            sql.add("DEFAULT VALUES");
         } else {
-            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
-            var __insertValues = toInsertValues(entity, excludeNull);
-            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            __sql.add("values (%s)".formatted(__valuesClause));
+            sql.add("(%s)".formatted(join(", ", insertColumns)));
+            sql.add("values (%s)".formatted(join(", ", toInsertValues(excludeColumns))));
         }
-        var __param = entityToParam(entity);
-        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
+        var param = entityToParam(entity);
+        return execWithReturning(sql, param, entity, toInsertReturning(excludeColumns));
     }
 
     public static Map<String, Object> entityToParam(AllTypesAsPkEntity entity) {
@@ -522,61 +291,6 @@ public abstract class BaseAllTypesAsPkRepository {
         param.put("colMacaddr", entity.getColMacaddr());
         param.put("colStatusEnum", entity.getColStatusEnum() == null ? null : entity.getColStatusEnum().name());
         return param;
-    }
-
-    public int update(AllTypesAsPkEntity entity) {
-        return doUpdateByPk(entity, false, entity.getColSmallint(), entity.getColSmallserial(), entity.getColInteger(), entity.getColSerial(), entity.getColBigint(), entity.getColBigserial(), entity.getColReal(), entity.getColDoublePrecision(), entity.getColNumeric(), entity.getColBoolean(), entity.getColChar(), entity.getColVarchar(), entity.getColText(), entity.getColDate(), entity.getColTime(), entity.getColTimeTz(), entity.getColTimestamp(), entity.getColTimestampTz(), entity.getColInterval(), entity.getColBytea(), entity.getColUuid(), entity.getColJsonb(), entity.getColInet(), entity.getColCidr(), entity.getColMacaddr(), entity.getColStatusEnum());
-    }
-
-    /** 値がnull のカラムをset 句から外して部分更新する */
-    public int updateNotNull(AllTypesAsPkEntity entity) {
-        return doUpdateByPk(entity, true, entity.getColSmallint(), entity.getColSmallserial(), entity.getColInteger(), entity.getColSerial(), entity.getColBigint(), entity.getColBigserial(), entity.getColReal(), entity.getColDoublePrecision(), entity.getColNumeric(), entity.getColBoolean(), entity.getColChar(), entity.getColVarchar(), entity.getColText(), entity.getColDate(), entity.getColTime(), entity.getColTimeTz(), entity.getColTimestamp(), entity.getColTimestampTz(), entity.getColInterval(), entity.getColBytea(), entity.getColUuid(), entity.getColJsonb(), entity.getColInet(), entity.getColCidr(), entity.getColMacaddr(), entity.getColStatusEnum());
-    }
-
-
-    public int updateByPk(AllTypesAsPkEntity entity, Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {
-        return doUpdateByPk(entity, false, colSmallint, colSmallserial, colInteger, colSerial, colBigint, colBigserial, colReal, colDoublePrecision, colNumeric, colBoolean, colChar, colVarchar, colText, colDate, colTime, colTimeTz, colTimestamp, colTimestampTz, colInterval, colBytea, colUuid, colJsonb, colInet, colCidr, colMacaddr, colStatusEnum);
-    }
-
-    protected int doUpdateByPk(AllTypesAsPkEntity entity, boolean excludeNull, Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {
-        var __sql = new ArrayList<String>();
-        var __param = entityToParam(entity);
-        var setClause = Columns.MAP.values().stream()
-                .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)
-                .map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
-        if (setClause.isEmpty()) {
-            throw new IllegalArgumentException("更新対象のカラムがありません");
-        }
-        __sql.add("update \"all_types_as_pk\"");
-        __sql.add("set %s".formatted(setClause));
-        __param.put("__pk1", colSmallint);
-        __param.put("__pk2", colSmallserial);
-        __param.put("__pk3", colInteger);
-        __param.put("__pk4", colSerial);
-        __param.put("__pk5", colBigint);
-        __param.put("__pk6", colBigserial);
-        __param.put("__pk7", colReal);
-        __param.put("__pk8", colDoublePrecision);
-        __param.put("__pk9", colNumeric);
-        __param.put("__pk10", colBoolean);
-        __param.put("__pk11", colChar);
-        __param.put("__pk12", colVarchar);
-        __param.put("__pk13", colText);
-        __param.put("__pk14", colDate);
-        __param.put("__pk15", colTime);
-        __param.put("__pk16", colTimeTz);
-        __param.put("__pk17", colTimestamp);
-        __param.put("__pk18", colTimestampTz);
-        __param.put("__pk19", colInterval);
-        __param.put("__pk20", colBytea);
-        __param.put("__pk21", colUuid);
-        __param.put("__pk22", String.valueOf(colJsonb));
-        __param.put("__pk23", colInet);
-        __param.put("__pk24", colCidr);
-        __param.put("__pk25", colMacaddr);
-        __param.put("__pk26", colStatusEnum == null ? null : colStatusEnum.name());
-        __sql.add("where \"col_smallint\" = :__pk1 AND \"col_smallserial\" = :__pk2 AND \"col_integer\" = :__pk3 AND \"col_serial\" = :__pk4 AND \"col_bigint\" = :__pk5 AND \"col_bigserial\" = :__pk6 AND \"col_real\" = :__pk7 AND \"col_double_precision\" = :__pk8 AND \"col_numeric\" = :__pk9 AND \"col_boolean\" = :__pk10 AND \"col_char\" = :__pk11 AND \"col_varchar\" = :__pk12 AND \"col_text\" = :__pk13 AND \"col_date\" = :__pk14 AND \"col_time\" = :__pk15 AND \"col_time_tz\" = :__pk16 AND \"col_timestamp\" = :__pk17 AND \"col_timestamp_tz\" = :__pk18 AND \"col_interval\" = make_interval(secs => :__pk19) AND \"col_bytea\" = :__pk20 AND \"col_uuid\" = :__pk21 AND \"col_jsonb\" = :__pk22::jsonb AND \"col_inet\" = :__pk23::inet AND \"col_cidr\" = :__pk24::cidr AND \"col_macaddr\" = :__pk25::macaddr AND \"col_status_enum\" = :__pk26::status_enum");
-        return execWithReturning(__sql, __param, entity, Set.of());
     }
 
     public Optional<AllTypesAsPkEntity> findByPk(Short colSmallint, Short colSmallserial, Integer colInteger, Integer colSerial, Long colBigint, Long colBigserial, Float colReal, Double colDoublePrecision, BigDecimal colNumeric, Boolean colBoolean, String colChar, String colVarchar, String colText, LocalDate colDate, LocalTime colTime, OffsetTime colTimeTz, LocalDateTime colTimestamp, OffsetDateTime colTimestampTz, Long colInterval, byte[] colBytea, UUID colUuid, String colJsonb, String colInet, String colCidr, String colMacaddr, StatusEnum colStatusEnum) {

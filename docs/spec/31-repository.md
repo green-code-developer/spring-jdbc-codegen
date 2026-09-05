@@ -23,13 +23,14 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 | --- | --- |
 | `insertAllColumns` / `insertExcept` | 常に生成する |
 | `insertExceptPk` | PK があり、PK の全カラムを DB 側で決められる（[REPO-014](#repo-014-insertexceptpk)） |
-| `updateAllColumns` / `updateInclude` | PK がある |
+| `updateAllColumns` / `updateInclude` | PK があり、PK 以外のカラムがある（[REPO-020](#repo-020-updateallcolumns)） |
 | `findByPk` | PK がある |
 | `deleteByPk` | PK がある |
 | `ROW_MAPPER` と Mapper クラス | 命名マッピングを持つカラムがある |
 
 PK を持たないテーブルには、上の表のうち `insertAllColumns` / `insertExcept` と
-RowMapper しか生成されない。
+RowMapper しか生成されない。PK しかないテーブルには、さらに `findByPk` /
+`deleteByPk` / `insertExceptPk` が加わる。
 
 表に挙げたメソッドのほかに、テーブルの構造によらず次を毎回生成する。
 利用者が override して挙動を変えることを想定している。
@@ -176,6 +177,11 @@ entity の PK を条件に 1 レコードを更新する。
 
 **set 句には PK を除く全カラムを含める。** PK は where 句で使うため、set 句に
 含める意味がない。
+
+**PK 以外のカラムを持たないテーブルには update 系を生成しない。** set 句に含められる
+カラムが 1 つも残らず、UPDATE 文が SQL として成立しないため。`updateInclude` も
+PK は指定できない（[REPO-003](#repo-003-カラム指定の検証)）ので、指定できるカラムが
+存在しない。
 
 v3 までの `updateByPk`（entity とは別に PK 値を受け取り、**PK 自体を更新する**）は
 廃止した。PK を変更する場面が想定しにくく、set 句に PK を含める唯一の理由で

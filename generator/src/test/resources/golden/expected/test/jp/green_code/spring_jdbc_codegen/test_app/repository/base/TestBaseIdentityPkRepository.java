@@ -1,12 +1,12 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
-import jp.green_code.spring_jdbc_codegen.test_app.entity.OmittablePk1Entity;
+import jp.green_code.spring_jdbc_codegen.test_app.entity.IdentityPkEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public abstract class TestBaseOmittablePk1Repository {
+public abstract class TestBaseIdentityPkRepository {
 
-    protected void test(BaseOmittablePk1Repository repository) {
+    protected void test(BaseIdentityPkRepository repository) {
         var seed = 1;
         var data = generateTestData(seed);
 
@@ -20,7 +20,8 @@ public abstract class TestBaseOmittablePk1Repository {
         // insert 後の確認
         var stored = res.orElseThrow();
         assert4pk(data.getPk(), stored.getPk());
-        assert4colTextNotNullDefaultX(data.getColTextNotNullDefaultX(), stored.getColTextNotNullDefaultX());
+        assert4colText(data.getColText(), stored.getColText());
+        assert4colTextNotNull(data.getColTextNotNull(), stored.getColTextNotNull());
 
         // update
         seed++;
@@ -37,7 +38,9 @@ public abstract class TestBaseOmittablePk1Repository {
 
         assert4pk(data2.getPk(), stored2.getPk());
 
-        assert4colTextNotNullDefaultX(data2.getColTextNotNullDefaultX(), stored2.getColTextNotNullDefaultX());
+        assert4colText(data2.getColText(), stored2.getColText());
+
+        assert4colTextNotNull(data2.getColTextNotNull(), stored2.getColTextNotNull());
 
         // delete
         var deleteCount = repository.deleteByPk(data2.getPk());
@@ -48,10 +51,11 @@ public abstract class TestBaseOmittablePk1Repository {
     }
 
 
-    public OmittablePk1Entity generateTestData(int seed) {
-        var entity = new OmittablePk1Entity();
+    public IdentityPkEntity generateTestData(int seed) {
+        var entity = new IdentityPkEntity();
         entity.setPk(generateTestData4pk(seed++));
-        entity.setColTextNotNullDefaultX(generateTestData4colTextNotNullDefaultX(seed));
+        entity.setColText(generateTestData4colText(seed++));
+        entity.setColTextNotNull(generateTestData4colTextNotNull(seed));
         return entity;
     }
 
@@ -59,7 +63,11 @@ public abstract class TestBaseOmittablePk1Repository {
         return (long) seed;
     }
 
-    protected String generateTestData4colTextNotNullDefaultX(int seed) {
+    protected String generateTestData4colText(int seed) {
+        return String.valueOf(seed);
+    }
+
+    protected String generateTestData4colTextNotNull(int seed) {
         return String.valueOf(seed);
     }
 
@@ -68,7 +76,11 @@ public abstract class TestBaseOmittablePk1Repository {
         assertEquals(expected, value);
     }
 
-    protected void assert4colTextNotNullDefaultX(String expected, String value) {
+    protected void assert4colText(String expected, String value) {
+        assertEquals(expected, value.trim());
+    }
+
+    protected void assert4colTextNotNull(String expected, String value) {
         assertEquals(expected, value.trim());
     }
 }

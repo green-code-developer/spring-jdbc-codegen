@@ -71,6 +71,8 @@ public class DbDefinitionReader {
         result.columnSize = columnRs.getInt("COLUMN_SIZE");
         result.nullable = columnRs.getInt("NULLABLE") == columnNullable;
         result.defaultExpression = columnRs.getString("COLUMN_DEF");
+        // serial は COLUMN_DEF がnextval、identity は COLUMN_DEF が空。両方をこの1項目で判定できる
+        result.autoIncrement = "YES".equals(columnRs.getString("IS_AUTOINCREMENT"));
         try {
             // Java に変換できない場合は異常終了させる
             result.toJavaType();

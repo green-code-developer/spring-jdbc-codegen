@@ -5,39 +5,41 @@ import jp.green_code.spring_jdbc_codegen.test_app.repository.OnlyPk1Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * PK しか持たないテーブルの insert 2 種類を確認する。
+ * <p>
+ * only_pk1 は PK 以外のカラムがないため update 系は生成されない（REPO-020）。
+ */
 @SpringBootTest
+@Transactional
 public class TestOnlyPk1Repository {
 
     @Autowired
     OnlyPk1Repository repository;
 
+    /** DB に採番させる。採番された値は returning で書き戻される */
     @Test
-    void test() {
-        // updateByPk を試す
+    void insertExceptPk_はDBに採番させる() {
         var entity = new OnlyPk1Entity();
-        repository.insert(entity);
+        repository.insertExceptPk(entity);
 
+        assertNotNull(entity.getPk());
         assertTrue(repository.findByPk(entity.getPk()).isPresent());
+    }
 
-        // long max から少し引いた値にupdate
-        //   テスト失敗が繰り返されないように
+    /** PK の値を明示して投入する。データ移行や初期データ投入で使う */
+    @Test
+    void insertAllColumns_はPKを明示して登録できる() {
         var largeLong = Long.MAX_VALUE - System.currentTimeMillis();
-        var largeLongEntity = new OnlyPk1Entity();
-        largeLongEntity.setPk(largeLong);
-        repository.updateByPk(largeLongEntity, entity.getPk());
+        var entity = new OnlyPk1Entity();
+        entity.setPk(largeLong);
+        repository.insertAllColumns(entity);
 
-        // 古い値は取得できないはず
         assertTrue(repository.findByPk(largeLong).isPresent());
-        assertTrue(repository.findByPk(entity.getPk()).isEmpty());
-
-        // 存在しないpk をupdate しても例外は発生しない
-        //   returning がないテーブルは helper.exec() で実行し、更新件数を確認しないため
-        repository.update(entity);
-        assertTrue(repository.findByPk(entity.getPk()).isEmpty());
     }
 }

@@ -21,6 +21,7 @@ public class DbColumnDefinition {
     public String primaryKeyName;
     public Short primaryKeySeq;
     public String defaultExpression;
+    public boolean autoIncrement;
 
     public String toLogString() {
         return columnName + " [" + dbTypeName + "] " + (nullable ? "nullable" : "nonnull") + " " + (isPrimaryKey() ? "pk(" + primaryKeySeq + " " + primaryKeyName + ")" : "") + " default[" + defaultExpression + "]";
@@ -47,8 +48,9 @@ public class DbColumnDefinition {
         return !isBlank(primaryKeyName);
     }
 
-    public boolean isInsertOmittable() {
-        return !nullable && hasDefault();
+    /** DB 側で値を決められるカラムか（自動採番または既定値を持つ） */
+    public boolean isDbDeterminable() {
+        return autoIncrement || hasDefault();
     }
 
     public String toGetter() {

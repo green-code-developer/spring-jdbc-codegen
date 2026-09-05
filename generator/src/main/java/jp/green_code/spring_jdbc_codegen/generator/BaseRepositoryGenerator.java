@@ -54,10 +54,11 @@ public class BaseRepositoryGenerator {
         sb.addAll(entityToParam());
         if (!table.pkColumns().isEmpty()) {
             // pk がない場合は、update とfindByPk とdeleteByPk は作れない
-            sb.add("");
-            sb.addAll(update());
-            sb.add("");
-            sb.addAll(updateByPk());
+            if (!table.nonPkColumns().isEmpty()) {
+                // PK しかないテーブルはset 句が空になるため update は作れない
+                sb.add("");
+                sb.addAll(update());
+            }
             sb.add("");
             sb.addAll(findByPk());
             sb.add("");
@@ -78,9 +79,11 @@ public class BaseRepositoryGenerator {
         imports.add("java.util.List");
         imports.add("java.util.Set");
         imports.add("java.util.ArrayList");
+        imports.add("java.util.Arrays");
         imports.add("java.util.HashMap");
         imports.add("java.util.HashSet");
         imports.add("java.util.LinkedHashMap");
+        imports.add("java.util.LinkedHashSet");
         imports.add("java.util.Map");
         imports.add("java.util.Objects");
         if (!table.pkColumns().isEmpty()) {
@@ -132,106 +135,115 @@ public class BaseRepositoryGenerator {
     List<String> insert() {
         var sb = new ArrayList<String>();
         sb.add("");
+        sb.addAll(validateColumns());
+        sb.add("");
         sb.addAll(toInsertColumns());
         sb.add("");
-        sb.addAll(toInsertReturning());
-        sb.add("");
         sb.addAll(toInsertValues());
+        sb.add("");
+        sb.addAll(toInsertReturning());
         sb.add("");
         // execWithReturning から呼ぶため、returning が不要なテーブルでも生成する
         sb.addAll(copyReturningValues());
         sb.add("");
         sb.addAll(execWithReturning());
         sb.add("");
-        sb.add("public int insert(%s entity) {".formatted(table.toEntityClassName()));
-        sb.add("    return doInsert(entity, false);");
+        sb.add("/** 全カラムをINSERT 対象とする */");
+        sb.add("public int insertAllColumns(%s entity) {".formatted(table.toEntityClassName()));
+        sb.add("    return doInsert(entity, Set.of());");
         sb.add("}");
         sb.add("");
-        sb.add("/** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */");
-        sb.add("public int insertNotNull(%s entity) {".formatted(table.toEntityClassName()));
-        sb.add("    return doInsert(entity, true);");
+        sb.add("/** 指定したカラムをINSERT 対象から外し、DB の既定値を使う */");
+        sb.add("public int insertExcept(%s entity, %s first, %s... rest) {".formatted(table.toEntityClassName(), param.columnDefinitionClassName, param.columnDefinitionClassName));
+        sb.add("    var exclude = new LinkedHashSet<String>();");
+        sb.add("    validateColumns(first, rest, false).forEach(c -> exclude.add(c.getColumnName()));");
+        sb.add("    return doInsert(entity, exclude);");
         sb.add("}");
+        if (table.canInsertExceptPk()) {
+            var pkConsts = table.pkColumns().stream().map(c -> "Columns." + c.columnName.toUpperCase(ROOT)).collect(joining(", "));
+            sb.add("");
+            sb.add("/** PK をINSERT 対象から外し、DB に値を決めさせる */");
+            sb.add("public int insertExceptPk(%s entity) {".formatted(table.toEntityClassName()));
+            sb.add("    return insertExcept(entity, %s);".formatted(pkConsts));
+            sb.add("}");
+        }
         sb.add("");
-        sb.add("protected int doInsert(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName()));
-        // ローカル変数は __ を付ける。カラム名がsql / param のときにPK 引数と衝突するため
-        sb.add("    var __sql = new ArrayList<String>();");
-        sb.add("    __sql.add(\"insert into \\\"%s\\\"\");".formatted(table.tableName));
-        sb.add("    var __insertColumns = toInsertColumns(entity, excludeNull);");
-        sb.add("    if (__insertColumns.isEmpty()) {");
-        sb.add("        __sql.add(\"DEFAULT VALUES\");");
+        sb.add("protected int doInsert(%s entity, Set<String> excludeColumns) {".formatted(table.toEntityClassName()));
+        sb.add("    var sql = new ArrayList<String>();");
+        sb.add("    sql.add(\"insert into \\\"%s\\\"\");".formatted(table.tableName));
+        sb.add("    var insertColumns = toInsertColumns(excludeColumns);");
+        sb.add("    if (insertColumns.isEmpty()) {");
+        sb.add("        sql.add(\"DEFAULT VALUES\");");
         sb.add("    } else {");
-        sb.add("        __sql.add(\"(%s)\".formatted(join(\", \", __insertColumns)));");
-        sb.add("        var __insertValues = toInsertValues(entity, excludeNull);");
-        sb.add("        var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(\", \"));");
-        sb.add("        __sql.add(\"values (%s)\".formatted(__valuesClause));");
+        sb.add("        sql.add(\"(%s)\".formatted(join(\", \", insertColumns)));");
+        sb.add("        sql.add(\"values (%s)\".formatted(join(\", \", toInsertValues(excludeColumns))));");
         sb.add("    }");
-        sb.add("    var __param = entityToParam(entity);");
-        sb.add("    return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));");
+        sb.add("    var param = entityToParam(entity);");
+        sb.add("    return execWithReturning(sql, param, entity, toInsertReturning(excludeColumns));");
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
     }
 
-    List<String> toInsertColumns() {
+    /** カラム指定の検証。insert とupdate で共通 */
+    List<String> validateColumns() {
         var sb = new ArrayList<String>();
-        sb.add("protected List<String> toInsertColumns(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName()));
-        sb.add("    var res = new ArrayList<String>();");
-        for (var col : table.columns) {
-            if (col.isInsertOmittable()) {
-                sb.add("    if (entity.%s() != null) {".formatted(col.toGetter()));
-                sb.add("        res.add(\"\\\"%s\\\"\");".formatted(col.columnName));
-                sb.add("    }");
-            } else {
-                sb.add("    if (!excludeNull || entity.%s() != null) {".formatted(col.toGetter()));
-                sb.add("        res.add(\"\\\"%s\\\"\");".formatted(col.columnName));
-                sb.add("    }");
-            }
-        }
-        sb.add("    return res;");
+        sb.add("/** 他テーブルのカラム、重複指定、PK 指定を弾く */");
+        sb.add("protected List<%s> validateColumns(%s first, %s[] rest, boolean rejectPk) {".formatted(
+                param.columnDefinitionClassName, param.columnDefinitionClassName, param.columnDefinitionClassName));
+        sb.add("    var columns = new ArrayList<%s>();".formatted(param.columnDefinitionClassName));
+        sb.add("    columns.add(first);");
+        sb.add("    columns.addAll(Arrays.asList(rest));");
+        sb.add("    var names = new HashSet<String>();");
+        sb.add("    for (var c : columns) {");
+        // 判定の安い順に並べる。PK はフィールド参照だけで済む
+        sb.add("        if (rejectPk && c.getPrimaryKeySeq() != null) {");
+        sb.add("            throw new IllegalArgumentException(\"PK は指定できません: \" + c.getColumnName());");
+        sb.add("        }");
+        sb.add("        if (Columns.MAP.get(c.getColumnName()) != c) {");
+        sb.add("            throw new IllegalArgumentException(\"%s のカラムではありません: \" + c.getColumnName());".formatted(table.tableName));
+        sb.add("        }");
+        sb.add("        if (!names.add(c.getColumnName())) {");
+        sb.add("            throw new IllegalArgumentException(\"カラムが重複しています: \" + c.getColumnName());");
+        sb.add("        }");
+        sb.add("    }");
+        sb.add("    return columns;");
         sb.add("}");
         return sb;
     }
 
-    List<String> toInsertReturning() {
+    List<String> toInsertColumns() {
         var sb = new ArrayList<String>();
-        sb.add("protected Set<String> toInsertReturning(List<String> insertColumns) {");
-        sb.add("    var res = new HashSet<String>();");
-        sb.add("    if (insertColumns.isEmpty()) {");
-        // insert 対象のカラムがない場合はすべてのカラムをreturning 対象とする
-        for (var col : table.columns) {
-            sb.add("        res.add(\"%s\");".formatted(col.columnName));
-        }
-        sb.add("    } else {");
-        // insert 対象から外れたカラムはDB 側で値が決まるため取得する
-        for (var col : table.columns) {
-            if (col.isReturningColumn()) {
-                sb.add("        res.add(\"%s\");".formatted(col.columnName));
-            } else {
-                sb.add("        if (!insertColumns.contains(\"\\\"%s\\\"\")) {".formatted(col.columnName));
-                sb.add("            res.add(\"%s\");".formatted(col.columnName));
-                sb.add("        }");
-            }
-        }
-        sb.add("    }");
-        sb.add("    return res;");
+        sb.add("protected List<String> toInsertColumns(Set<String> excludeColumns) {");
+        sb.add("    return Columns.MAP.values().stream()");
+        sb.add("            .filter(c -> !excludeColumns.contains(c.getColumnName()))");
+        sb.add("            .map(c -> \"\\\"%s\\\"\".formatted(c.getColumnName()))");
+        sb.add("            .toList();");
         sb.add("}");
         return sb;
     }
 
     List<String> toInsertValues() {
         var sb = new ArrayList<String>();
-        sb.add("protected List<String> toInsertValues(%s entity, boolean excludeNull) {".formatted(table.toEntityClassName()));
-        sb.add("    var res = new ArrayList<String>();");
-        for (var col : table.columns) {
-            if (col.isInsertOmittable()) {
-                sb.add("    if (entity.%s() != null) {".formatted(col.toGetter()));
-                sb.add("        res.add(\"%s\");".formatted(col.columnName));
-                sb.add("    }");
-            } else {
-                sb.add("    if (!excludeNull || entity.%s() != null) {".formatted(col.toGetter()));
-                sb.add("        res.add(\"%s\");".formatted(col.columnName));
-                sb.add("    }");
-            }
-        }
+        sb.add("protected List<String> toInsertValues(Set<String> excludeColumns) {");
+        sb.add("    return Columns.MAP.values().stream()");
+        sb.add("            .filter(c -> !excludeColumns.contains(c.getColumnName()))");
+        sb.add("            .map(%s::toParamColumn)".formatted(param.columnDefinitionClassName));
+        sb.add("            .toList();");
+        sb.add("}");
+        return sb;
+    }
+
+    List<String> toInsertReturning() {
+        var sb = new ArrayList<String>();
+        sb.add("protected Set<String> toInsertReturning(Set<String> excludeColumns) {");
+        sb.add("    var res = new LinkedHashSet<String>();");
+        // 全カラムを除外した場合は excludeColumns が全カラム名を含むため、
+        // 「INSERT 対象が1つもなければ全カラム」の規則は下の条件で自然に満たされる
+        sb.add("    for (var c : Columns.MAP.values()) {");
+        sb.add("        if (c.isReturning() || excludeColumns.contains(c.getColumnName())) {");
+        sb.add("            res.add(c.getColumnName());");
+        sb.add("        }");
+        sb.add("    }");
         sb.add("    return res;");
         sb.add("}");
         return sb;
@@ -269,56 +281,37 @@ public class BaseRepositoryGenerator {
 
     List<String> update() {
         var sb = new ArrayList<String>();
-        sb.add("public int update(%s entity) {".formatted(table.toEntityClassName()));
-        var pkArgs = table.pkColumns().stream().map(c -> "entity.%s()".formatted(c.toGetter())).collect(joining(", "));
-        sb.add("    return doUpdateByPk(entity, false, %s);".formatted(pkArgs));
+        sb.add("/** PK を除く全カラムを更新する */");
+        sb.add("public int updateAllColumns(%s entity) {".formatted(table.toEntityClassName()));
+        sb.add("    return doUpdate(entity, Columns.MAP.values().stream().filter(c -> c.getPrimaryKeySeq() == null).toList());");
         sb.add("}");
         sb.add("");
-        sb.add("/** 値がnull のカラムをset 句から外して部分更新する */");
-        sb.add("public int updateNotNull(%s entity) {".formatted(table.toEntityClassName()));
-        sb.add("    return doUpdateByPk(entity, true, %s);".formatted(pkArgs));
-        sb.add("}");
-        return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
-    }
-
-    List<String> updateByPk() {
-        var sb = new ArrayList<String>();
-        if (table.needReturningInUpdate()) {
-            // intelliJ が警告を出すので不要な場合は作成しない
-        }
-        sb.add("");
-        var pkArgs = toPkArgs();
-        sb.add("public int updateByPk(%s entity, %s) {".formatted(table.toEntityClassName(), pkArgs));
-        sb.add("    return doUpdateByPk(entity, false, %s);".formatted(
-                table.pkColumns().stream().map(DbColumnDefinition::toJavaPropertyName).collect(joining(", "))));
+        sb.add("/** 指定したカラムだけを更新する */");
+        sb.add("public int updateInclude(%s entity, %s first, %s... rest) {".formatted(table.toEntityClassName(), param.columnDefinitionClassName, param.columnDefinitionClassName));
+        sb.add("    return doUpdate(entity, validateColumns(first, rest, true));");
         sb.add("}");
         sb.add("");
-        sb.add("protected int doUpdateByPk(%s entity, boolean excludeNull, %s) {".formatted(table.toEntityClassName(), pkArgs));
-        sb.add("    var __sql = new ArrayList<String>();");
-        sb.add("    var __param = entityToParam(entity);");
-        sb.add("    var setClause = Columns.MAP.values().stream()");
-        sb.add("            .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)");
-        sb.add("            .map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
-        sb.add("    if (setClause.isEmpty()) {");
-        sb.add("        throw new IllegalArgumentException(\"更新対象のカラムがありません\");");
-        sb.add("    }");
-        sb.add("    __sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
-        sb.add("    __sql.add(\"set %s\".formatted(setClause));");
+        sb.add("protected int doUpdate(%s entity, List<%s> setColumns) {".formatted(table.toEntityClassName(), param.columnDefinitionClassName));
+        sb.add("    var sql = new ArrayList<String>();");
+        sb.add("    var param = entityToParam(entity);");
+        sb.add("    var setClause = setColumns.stream().map(%s::toUpdateSetClause).collect(joining(\", \"));".formatted(param.toBaseColumnDefinitionClassName()));
+        sb.add("    sql.add(\"update \\\"%s\\\"\");".formatted(table.tableName));
+        sb.add("    sql.add(\"set %s\".formatted(setClause));");
         var pkConditions = new ArrayList<String>();
         var i = 0;
         for (var col : table.pkColumns()) {
             i++;
             pkConditions.add("\\\"%s\\\" = %s".formatted(col.columnName, col.toParamColumn("__pk" + i)));
-            sb.add("    __param.put(\"__pk%d\", %s);".formatted(i, col.toJavaValueExpression(col.toJavaPropertyName())));
+            sb.add("    param.put(\"__pk%d\", %s);".formatted(i, col.toJavaValueExpression("entity.%s()".formatted(col.toGetter()))));
         }
-        sb.add("    __sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
+        sb.add("    sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
 
         if (table.needReturningInUpdate()) {
-            var returningColumns = table.columns.stream().filter(DbColumnDefinition::isReturningColumn).toList();
-            var returningNames = returningColumns.stream().map(c -> "\"%s\"".formatted(c.columnName)).collect(joining(", "));
-            sb.add("    return execWithReturning(__sql, __param, entity, Set.of(%s));".formatted(returningNames));
+            var returningNames = table.columns.stream().filter(DbColumnDefinition::isReturningColumn)
+                    .map(c -> "\"%s\"".formatted(c.columnName)).collect(joining(", "));
+            sb.add("    return execWithReturning(sql, param, entity, Set.of(%s));".formatted(returningNames));
         } else {
-            sb.add("    return execWithReturning(__sql, __param, entity, Set.of());");
+            sb.add("    return execWithReturning(sql, param, entity, Set.of());");
         }
         sb.add("}");
         return sb.stream().map(s -> isBlank(s) ? s : "    " + s).toList();
@@ -338,6 +331,8 @@ public class BaseRepositoryGenerator {
 
     List<String> findByPk() {
         var sb = new ArrayList<String>();
+        // 引数がカラム名由来のため、ローカル変数には __ を付けて衝突を避ける
+        //   カラム名がsql / param のときに引数と同名になる
         var pkArgs = toPkArgs();
         sb.add("public Optional<%s> findByPk(%s) {".formatted(table.toEntityClassName(), pkArgs));
         sb.add("    var __sql = new ArrayList<String>();");

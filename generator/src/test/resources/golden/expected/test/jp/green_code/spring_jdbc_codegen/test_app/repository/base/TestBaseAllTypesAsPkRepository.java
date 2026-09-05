@@ -20,10 +20,7 @@ public abstract class TestBaseAllTypesAsPkRepository {
         var data = generateTestData(seed);
 
         // insert
-        data.setColSmallserial(null);
-        data.setColSerial(null);
-        data.setColBigserial(null);
-        repository.insert(data);
+        repository.insertAllColumns(data);
 
         // select 1回目
         var res = repository.findByPk(data.getColSmallint(), data.getColSmallserial(), data.getColInteger(), data.getColSerial(), data.getColBigint(), data.getColBigserial(), data.getColReal(), data.getColDoublePrecision(), data.getColNumeric(), data.getColBoolean(), data.getColChar(), data.getColVarchar(), data.getColText(), data.getColDate(), data.getColTime(), data.getColTimeTz(), data.getColTimestamp(), data.getColTimestampTz(), data.getColInterval(), data.getColBytea(), data.getColUuid(), data.getColJsonb(), data.getColInet(), data.getColCidr(), data.getColMacaddr(), data.getColStatusEnum());
@@ -58,101 +55,13 @@ public abstract class TestBaseAllTypesAsPkRepository {
         assert4colMacaddr(data.getColMacaddr(), stored.getColMacaddr());
         assert4colStatusEnum(data.getColStatusEnum(), stored.getColStatusEnum());
 
-        // update
-        seed++;
-        var data2 = generateTestData(seed);
-        data2.setColSmallint(data.getColSmallint());
-        data2.setColSmallserial(data.getColSmallserial());
-        data2.setColInteger(data.getColInteger());
-        data2.setColSerial(data.getColSerial());
-        data2.setColBigint(data.getColBigint());
-        data2.setColBigserial(data.getColBigserial());
-        data2.setColReal(data.getColReal());
-        data2.setColDoublePrecision(data.getColDoublePrecision());
-        data2.setColNumeric(data.getColNumeric());
-        data2.setColBoolean(data.getColBoolean());
-        data2.setColChar(data.getColChar());
-        data2.setColVarchar(data.getColVarchar());
-        data2.setColText(data.getColText());
-        data2.setColDate(data.getColDate());
-        data2.setColTime(data.getColTime());
-        data2.setColTimeTz(data.getColTimeTz());
-        data2.setColTimestamp(data.getColTimestamp());
-        data2.setColTimestampTz(data.getColTimestampTz());
-        data2.setColInterval(data.getColInterval());
-        data2.setColBytea(data.getColBytea());
-        data2.setColUuid(data.getColUuid());
-        data2.setColJsonb(data.getColJsonb());
-        data2.setColInet(data.getColInet());
-        data2.setColCidr(data.getColCidr());
-        data2.setColMacaddr(data.getColMacaddr());
-        data2.setColStatusEnum(data.getColStatusEnum());
-        repository.update(data2);
-
-        // select 2回目
-        var res2 = repository.findByPk(data2.getColSmallint(), data2.getColSmallserial(), data2.getColInteger(), data2.getColSerial(), data2.getColBigint(), data2.getColBigserial(), data2.getColReal(), data2.getColDoublePrecision(), data2.getColNumeric(), data2.getColBoolean(), data2.getColChar(), data2.getColVarchar(), data2.getColText(), data2.getColDate(), data2.getColTime(), data2.getColTimeTz(), data2.getColTimestamp(), data2.getColTimestampTz(), data2.getColInterval(), data2.getColBytea(), data2.getColUuid(), data2.getColJsonb(), data2.getColInet(), data2.getColCidr(), data2.getColMacaddr(), data2.getColStatusEnum());
-        assertTrue(res2.isPresent());
-
-        // update 後の確認
-        var stored2 = res2.orElseThrow();
-
-        assert4colSmallint(data2.getColSmallint(), stored2.getColSmallint());
-
-        assert4colSmallserial(data2.getColSmallserial(), stored2.getColSmallserial());
-
-        assert4colInteger(data2.getColInteger(), stored2.getColInteger());
-
-        assert4colSerial(data2.getColSerial(), stored2.getColSerial());
-
-        assert4colBigint(data2.getColBigint(), stored2.getColBigint());
-
-        assert4colBigserial(data2.getColBigserial(), stored2.getColBigserial());
-
-        assert4colReal(data2.getColReal(), stored2.getColReal());
-
-        assert4colDoublePrecision(data2.getColDoublePrecision(), stored2.getColDoublePrecision());
-
-        assert4colNumeric(data2.getColNumeric(), stored2.getColNumeric());
-
-        assert4colBoolean(data2.getColBoolean(), stored2.getColBoolean());
-
-        assert4colChar(data2.getColChar(), stored2.getColChar());
-
-        assert4colVarchar(data2.getColVarchar(), stored2.getColVarchar());
-
-        assert4colText(data2.getColText(), stored2.getColText());
-
-        assert4colDate(data2.getColDate(), stored2.getColDate());
-
-        assert4colTime(data2.getColTime(), stored2.getColTime());
-
-        assert4colTimeTz(data2.getColTimeTz(), stored2.getColTimeTz());
-
-        assert4colTimestamp(data2.getColTimestamp(), stored2.getColTimestamp());
-
-        assert4colTimestampTz(data2.getColTimestampTz(), stored2.getColTimestampTz());
-
-        assert4colInterval(data2.getColInterval(), stored2.getColInterval());
-
-        assert4colBytea(data2.getColBytea(), stored2.getColBytea());
-
-        assert4colUuid(data2.getColUuid(), stored2.getColUuid());
-
-        assert4colJsonb(data2.getColJsonb(), stored2.getColJsonb());
-
-        assert4colInet(data2.getColInet(), stored2.getColInet());
-
-        assert4colCidr(data2.getColCidr(), stored2.getColCidr());
-
-        assert4colMacaddr(data2.getColMacaddr(), stored2.getColMacaddr());
-
-        assert4colStatusEnum(data2.getColStatusEnum(), stored2.getColStatusEnum());
+        // PK 以外のカラムがないのでupdate のテストは行わない
 
         // delete
-        var deleteCount = repository.deleteByPk(data2.getColSmallint(), data2.getColSmallserial(), data2.getColInteger(), data2.getColSerial(), data2.getColBigint(), data2.getColBigserial(), data2.getColReal(), data2.getColDoublePrecision(), data2.getColNumeric(), data2.getColBoolean(), data2.getColChar(), data2.getColVarchar(), data2.getColText(), data2.getColDate(), data2.getColTime(), data2.getColTimeTz(), data2.getColTimestamp(), data2.getColTimestampTz(), data2.getColInterval(), data2.getColBytea(), data2.getColUuid(), data2.getColJsonb(), data2.getColInet(), data2.getColCidr(), data2.getColMacaddr(), data2.getColStatusEnum());
+        var deleteCount = repository.deleteByPk(data.getColSmallint(), data.getColSmallserial(), data.getColInteger(), data.getColSerial(), data.getColBigint(), data.getColBigserial(), data.getColReal(), data.getColDoublePrecision(), data.getColNumeric(), data.getColBoolean(), data.getColChar(), data.getColVarchar(), data.getColText(), data.getColDate(), data.getColTime(), data.getColTimeTz(), data.getColTimestamp(), data.getColTimestampTz(), data.getColInterval(), data.getColBytea(), data.getColUuid(), data.getColJsonb(), data.getColInet(), data.getColCidr(), data.getColMacaddr(), data.getColStatusEnum());
         assertEquals(1, deleteCount);
         // select 3回目
-        var stored3 = repository.findByPk(data2.getColSmallint(), data2.getColSmallserial(), data2.getColInteger(), data2.getColSerial(), data2.getColBigint(), data2.getColBigserial(), data2.getColReal(), data2.getColDoublePrecision(), data2.getColNumeric(), data2.getColBoolean(), data2.getColChar(), data2.getColVarchar(), data2.getColText(), data2.getColDate(), data2.getColTime(), data2.getColTimeTz(), data2.getColTimestamp(), data2.getColTimestampTz(), data2.getColInterval(), data2.getColBytea(), data2.getColUuid(), data2.getColJsonb(), data2.getColInet(), data2.getColCidr(), data2.getColMacaddr(), data2.getColStatusEnum());
+        var stored3 = repository.findByPk(data.getColSmallint(), data.getColSmallserial(), data.getColInteger(), data.getColSerial(), data.getColBigint(), data.getColBigserial(), data.getColReal(), data.getColDoublePrecision(), data.getColNumeric(), data.getColBoolean(), data.getColChar(), data.getColVarchar(), data.getColText(), data.getColDate(), data.getColTime(), data.getColTimeTz(), data.getColTimestamp(), data.getColTimestampTz(), data.getColInterval(), data.getColBytea(), data.getColUuid(), data.getColJsonb(), data.getColInet(), data.getColCidr(), data.getColMacaddr(), data.getColStatusEnum());
         assertTrue(stored3.isEmpty());
     }
 

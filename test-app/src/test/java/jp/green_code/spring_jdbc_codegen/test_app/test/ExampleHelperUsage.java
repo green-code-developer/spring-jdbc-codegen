@@ -2,6 +2,7 @@ package jp.green_code.spring_jdbc_codegen.test_app.test;
 
 import jp.green_code.spring_jdbc_codegen.test_app.entity.NormalPk1Entity;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.NormalPk1Repository;
+import jp.green_code.spring_jdbc_codegen.test_app.repository.base.BaseNormalPk1Repository.Columns;
 import jp.green_code.spring_jdbc_codegen.test_app.repository.RepositoryHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,8 @@ public class ExampleHelperUsage {
         var entity = new NormalPk1Entity();
         entity.setColText(colText);
         entity.setColTextNotNull(notNull);
-        repository.insert(entity);
+        // PK はDB に採番させ、既定値を持つ2カラムはDB の既定値に任せる
+        repository.insertExcept(entity, Columns.PK, Columns.COL_TEXT_NOT_NULL_DEFAULT_X, Columns.COL_TEXT_DEFAULT_Y);
     }
 
     /**

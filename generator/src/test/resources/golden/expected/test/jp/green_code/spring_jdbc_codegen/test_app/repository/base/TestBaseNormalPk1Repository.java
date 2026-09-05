@@ -11,8 +11,7 @@ public abstract class TestBaseNormalPk1Repository {
         var data = generateTestData(seed);
 
         // insert
-        data.setPk(null);
-        repository.insert(data);
+        repository.insertExceptPk(data);
 
         // select 1回目
         var res = repository.findByPk(data.getPk());
@@ -30,7 +29,7 @@ public abstract class TestBaseNormalPk1Repository {
         seed++;
         var data2 = generateTestData(seed);
         data2.setPk(data.getPk());
-        repository.update(data2);
+        repository.updateAllColumns(data2);
 
         // select 2回目
         var res2 = repository.findByPk(data2.getPk());

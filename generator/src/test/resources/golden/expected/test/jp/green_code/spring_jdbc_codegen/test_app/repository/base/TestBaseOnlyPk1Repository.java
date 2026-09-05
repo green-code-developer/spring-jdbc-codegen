@@ -11,8 +11,7 @@ public abstract class TestBaseOnlyPk1Repository {
         var data = generateTestData(seed);
 
         // insert
-        data.setPk(null);
-        repository.insert(data);
+        repository.insertExceptPk(data);
 
         // select 1回目
         var res = repository.findByPk(data.getPk());
@@ -22,26 +21,13 @@ public abstract class TestBaseOnlyPk1Repository {
         var stored = res.orElseThrow();
         assert4pk(data.getPk(), stored.getPk());
 
-        // update
-        seed++;
-        var data2 = generateTestData(seed);
-        data2.setPk(data.getPk());
-        repository.update(data2);
-
-        // select 2回目
-        var res2 = repository.findByPk(data2.getPk());
-        assertTrue(res2.isPresent());
-
-        // update 後の確認
-        var stored2 = res2.orElseThrow();
-
-        assert4pk(data2.getPk(), stored2.getPk());
+        // PK 以外のカラムがないのでupdate のテストは行わない
 
         // delete
-        var deleteCount = repository.deleteByPk(data2.getPk());
+        var deleteCount = repository.deleteByPk(data.getPk());
         assertEquals(1, deleteCount);
         // select 3回目
-        var stored3 = repository.findByPk(data2.getPk());
+        var stored3 = repository.findByPk(data.getPk());
         assertTrue(stored3.isEmpty());
     }
 

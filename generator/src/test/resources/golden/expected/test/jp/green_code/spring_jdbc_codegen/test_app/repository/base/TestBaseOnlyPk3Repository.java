@@ -13,10 +13,7 @@ public abstract class TestBaseOnlyPk3Repository {
         var data = generateTestData(seed);
 
         // insert
-        data.setPk1(null);
-        data.setPk2(null);
-        data.setPk3(null);
-        repository.insert(data);
+        repository.insertExceptPk(data);
 
         // select 1回目
         var res = repository.findByPk(data.getPk1(), data.getPk2(), data.getPk3());
@@ -28,32 +25,13 @@ public abstract class TestBaseOnlyPk3Repository {
         assert4pk2(data.getPk2(), stored.getPk2());
         assert4pk3(data.getPk3(), stored.getPk3());
 
-        // update
-        seed++;
-        var data2 = generateTestData(seed);
-        data2.setPk1(data.getPk1());
-        data2.setPk2(data.getPk2());
-        data2.setPk3(data.getPk3());
-        repository.update(data2);
-
-        // select 2回目
-        var res2 = repository.findByPk(data2.getPk1(), data2.getPk2(), data2.getPk3());
-        assertTrue(res2.isPresent());
-
-        // update 後の確認
-        var stored2 = res2.orElseThrow();
-
-        assert4pk1(data2.getPk1(), stored2.getPk1());
-
-        assert4pk2(data2.getPk2(), stored2.getPk2());
-
-        assert4pk3(data2.getPk3(), stored2.getPk3());
+        // PK 以外のカラムがないのでupdate のテストは行わない
 
         // delete
-        var deleteCount = repository.deleteByPk(data2.getPk1(), data2.getPk2(), data2.getPk3());
+        var deleteCount = repository.deleteByPk(data.getPk1(), data.getPk2(), data.getPk3());
         assertEquals(1, deleteCount);
         // select 3回目
-        var stored3 = repository.findByPk(data2.getPk1(), data2.getPk2(), data2.getPk3());
+        var stored3 = repository.findByPk(data.getPk1(), data.getPk2(), data.getPk3());
         assertTrue(stored3.isEmpty());
     }
 

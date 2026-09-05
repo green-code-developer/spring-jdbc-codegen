@@ -61,12 +61,12 @@ public class TestBaseRepositoryGenerator {
         sb.add("    var data = generateTestData(seed);");
         sb.add("");
         sb.add("    // insert");
-        table.pkColumns().forEach(c -> {
-            if (c.isInsertOmittable()) {
-                sb.add("    data.%s(null);".formatted(c.toSetter()));
-            }
-        });
-        sb.add("    repository.insert(data);");
+        if (table.canInsertExceptPk()) {
+            // PK をDB に決めさせる。採番された値はreturning でdata へ書き戻る
+            sb.add("    repository.insertExceptPk(data);");
+        } else {
+            sb.add("    repository.insertAllColumns(data);");
+        }
         sb.add("");
         if (table.pkColumns().isEmpty()) {
             sb.add("    // PK がないのでselect, update, delete のテストは行わない");
@@ -81,32 +81,40 @@ public class TestBaseRepositoryGenerator {
             for (var col : table.columns) {
                 sb.add("    assert4%s(data.%s(), stored.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
             }
-            sb.add("");
-            sb.add("    // update");
-            sb.add("    seed++;");
-            sb.add("    var data2 = generateTestData(seed);");
-            for (var c : table.pkColumns()) {
-                sb.add("    data2.%s(data.%s());".formatted(c.toSetter(), c.toGetter()));
-            }
-            sb.add("    repository.update(data2);");
-            sb.add("");
-            sb.add("    // select 2回目");
-            var pks2 = table.pkColumns().stream().map(c -> "data2.%s()".formatted(c.toGetter())).collect(joining(", "));
-            sb.add("    var res2 = repository.findByPk(%s);".formatted(pks2));
-            sb.add("    assertTrue(res2.isPresent());");
-            sb.add("");
-            sb.add("    // update 後の確認");
-            sb.add("    var stored2 = res2.orElseThrow();");
-            for (var col : table.columns) {
+            var pksForDelete = pks;
+            if (table.nonPkColumns().isEmpty()) {
+                // PK しかないテーブルはupdate を生成していないため検証できない
                 sb.add("");
-                sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
+                sb.add("    // PK 以外のカラムがないのでupdate のテストは行わない");
+            } else {
+                sb.add("");
+                sb.add("    // update");
+                sb.add("    seed++;");
+                sb.add("    var data2 = generateTestData(seed);");
+                for (var c : table.pkColumns()) {
+                    sb.add("    data2.%s(data.%s());".formatted(c.toSetter(), c.toGetter()));
+                }
+                sb.add("    repository.updateAllColumns(data2);");
+                sb.add("");
+                sb.add("    // select 2回目");
+                var pks2 = table.pkColumns().stream().map(c -> "data2.%s()".formatted(c.toGetter())).collect(joining(", "));
+                sb.add("    var res2 = repository.findByPk(%s);".formatted(pks2));
+                sb.add("    assertTrue(res2.isPresent());");
+                sb.add("");
+                sb.add("    // update 後の確認");
+                sb.add("    var stored2 = res2.orElseThrow();");
+                for (var col : table.columns) {
+                    sb.add("");
+                    sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
+                }
+                pksForDelete = pks2;
             }
             sb.add("");
             sb.add("    // delete");
-            sb.add("    var deleteCount = repository.deleteByPk(%s);".formatted(pks2));
+            sb.add("    var deleteCount = repository.deleteByPk(%s);".formatted(pksForDelete));
             sb.add("    assertEquals(1, deleteCount);");
             sb.add("    // select 3回目");
-            sb.add("    var stored3 = repository.findByPk(%s);".formatted(pks2));
+            sb.add("    var stored3 = repository.findByPk(%s);".formatted(pksForDelete));
             sb.add("    assertTrue(stored3.isEmpty());");
         }
         sb.add("}");

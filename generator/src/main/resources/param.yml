@@ -91,6 +91,7 @@ testTargetTable:
   - 日本語Table
   - coverage_test
   - quoted_column_now
+  - identity_pk
 
 #
 # 以下、高度な設定

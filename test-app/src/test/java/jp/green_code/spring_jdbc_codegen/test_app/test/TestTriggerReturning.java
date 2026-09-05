@@ -36,7 +36,7 @@ public class TestTriggerReturning {
         entity.setColText("inserted");
         entity.setUpdatedAt(OLD); // Java から古い値を渡す
 
-        repository.insert(entity);
+        repository.insertExceptPk(entity);
 
         // トリガーが now() で上書きした値が returning で戻っている
         assertTrue(entity.getUpdatedAt().isAfter(OLD),
@@ -50,12 +50,12 @@ public class TestTriggerReturning {
     void update時にトリガーの値がentityへ反映される() {
         var entity = new TriggerTestEntity();
         entity.setColText("inserted");
-        repository.insert(entity);
+        repository.insertExceptPk(entity);
         var insertedAt = entity.getUpdatedAt();
 
         entity.setColText("updated");
         entity.setUpdatedAt(OLD); // 再び古い値を渡す
-        repository.update(entity);
+        repository.updateAllColumns(entity);
 
         assertTrue(entity.getUpdatedAt().isAfter(OLD),
                 "トリガーの値が entity へ反映されていない: " + entity.getUpdatedAt());
@@ -63,5 +63,19 @@ public class TestTriggerReturning {
         assertEquals("updated", stored.getColText());
         assertEquals(stored.getUpdatedAt(), entity.getUpdatedAt());
         assertTrue(!entity.getUpdatedAt().isBefore(insertedAt));
+    }
+
+    /**
+     * 該当レコードがなくても例外は送出せず 0 を返す（REPO-021）。
+     * returning があるテーブルは helper.optional() で受ける経路。
+     */
+    @Test
+    void 存在しないPKへのupdateは0件を返す() {
+        var entity = new TriggerTestEntity();
+        entity.setPk(Long.MAX_VALUE);
+        entity.setColText("none");
+        entity.setUpdatedAt(OLD);
+
+        assertEquals(0, repository.updateAllColumns(entity));
     }
 }

@@ -2,9 +2,11 @@ package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,50 +48,46 @@ public abstract class BaseOnlyPk3Repository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(OnlyPk3Entity entity, boolean excludeNull) {
-        var res = new ArrayList<String>();
-        if (entity.getPk1() != null) {
-            res.add("\"pk1\"");
+    /** 他テーブルのカラム、重複指定、PK 指定を弾く */
+    protected List<ColumnDefinition> validateColumns(ColumnDefinition first, ColumnDefinition[] rest, boolean rejectPk) {
+        var columns = new ArrayList<ColumnDefinition>();
+        columns.add(first);
+        columns.addAll(Arrays.asList(rest));
+        var names = new HashSet<String>();
+        for (var c : columns) {
+            if (rejectPk && c.getPrimaryKeySeq() != null) {
+                throw new IllegalArgumentException("PK は指定できません: " + c.getColumnName());
+            }
+            if (Columns.MAP.get(c.getColumnName()) != c) {
+                throw new IllegalArgumentException("only_pk3 のカラムではありません: " + c.getColumnName());
+            }
+            if (!names.add(c.getColumnName())) {
+                throw new IllegalArgumentException("カラムが重複しています: " + c.getColumnName());
+            }
         }
-        if (entity.getPk2() != null) {
-            res.add("\"pk2\"");
-        }
-        if (entity.getPk3() != null) {
-            res.add("\"pk3\"");
-        }
-        return res;
+        return columns;
     }
 
-    protected Set<String> toInsertReturning(List<String> insertColumns) {
-        var res = new HashSet<String>();
-        if (insertColumns.isEmpty()) {
-            res.add("pk1");
-            res.add("pk2");
-            res.add("pk3");
-        } else {
-            if (!insertColumns.contains("\"pk1\"")) {
-                res.add("pk1");
-            }
-            if (!insertColumns.contains("\"pk2\"")) {
-                res.add("pk2");
-            }
-            if (!insertColumns.contains("\"pk3\"")) {
-                res.add("pk3");
-            }
-        }
-        return res;
+    protected List<String> toInsertColumns(Set<String> excludeColumns) {
+        return Columns.MAP.values().stream()
+                .filter(c -> !excludeColumns.contains(c.getColumnName()))
+                .map(c -> "\"%s\"".formatted(c.getColumnName()))
+                .toList();
     }
 
-    protected List<String> toInsertValues(OnlyPk3Entity entity, boolean excludeNull) {
-        var res = new ArrayList<String>();
-        if (entity.getPk1() != null) {
-            res.add("pk1");
-        }
-        if (entity.getPk2() != null) {
-            res.add("pk2");
-        }
-        if (entity.getPk3() != null) {
-            res.add("pk3");
+    protected List<String> toInsertValues(Set<String> excludeColumns) {
+        return Columns.MAP.values().stream()
+                .filter(c -> !excludeColumns.contains(c.getColumnName()))
+                .map(ColumnDefinition::toParamColumn)
+                .toList();
+    }
+
+    protected Set<String> toInsertReturning(Set<String> excludeColumns) {
+        var res = new LinkedHashSet<String>();
+        for (var c : Columns.MAP.values()) {
+            if (c.isReturning() || excludeColumns.contains(c.getColumnName())) {
+                res.add(c.getColumnName());
+            }
         }
         return res;
     }
@@ -117,29 +115,35 @@ public abstract class BaseOnlyPk3Repository {
         return ret.isPresent() ? 1 : 0;
     }
 
-    public int insert(OnlyPk3Entity entity) {
-        return doInsert(entity, false);
+    /** 全カラムをINSERT 対象とする */
+    public int insertAllColumns(OnlyPk3Entity entity) {
+        return doInsert(entity, Set.of());
     }
 
-    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public int insertNotNull(OnlyPk3Entity entity) {
-        return doInsert(entity, true);
+    /** 指定したカラムをINSERT 対象から外し、DB の既定値を使う */
+    public int insertExcept(OnlyPk3Entity entity, ColumnDefinition first, ColumnDefinition... rest) {
+        var exclude = new LinkedHashSet<String>();
+        validateColumns(first, rest, false).forEach(c -> exclude.add(c.getColumnName()));
+        return doInsert(entity, exclude);
     }
 
-    protected int doInsert(OnlyPk3Entity entity, boolean excludeNull) {
-        var __sql = new ArrayList<String>();
-        __sql.add("insert into \"only_pk3\"");
-        var __insertColumns = toInsertColumns(entity, excludeNull);
-        if (__insertColumns.isEmpty()) {
-            __sql.add("DEFAULT VALUES");
+    /** PK をINSERT 対象から外し、DB に値を決めさせる */
+    public int insertExceptPk(OnlyPk3Entity entity) {
+        return insertExcept(entity, Columns.PK1, Columns.PK2, Columns.PK3);
+    }
+
+    protected int doInsert(OnlyPk3Entity entity, Set<String> excludeColumns) {
+        var sql = new ArrayList<String>();
+        sql.add("insert into \"only_pk3\"");
+        var insertColumns = toInsertColumns(excludeColumns);
+        if (insertColumns.isEmpty()) {
+            sql.add("DEFAULT VALUES");
         } else {
-            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
-            var __insertValues = toInsertValues(entity, excludeNull);
-            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            __sql.add("values (%s)".formatted(__valuesClause));
+            sql.add("(%s)".formatted(join(", ", insertColumns)));
+            sql.add("values (%s)".formatted(join(", ", toInsertValues(excludeColumns))));
         }
-        var __param = entityToParam(entity);
-        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
+        var param = entityToParam(entity);
+        return execWithReturning(sql, param, entity, toInsertReturning(excludeColumns));
     }
 
     public static Map<String, Object> entityToParam(OnlyPk3Entity entity) {
@@ -148,38 +152,6 @@ public abstract class BaseOnlyPk3Repository {
         param.put("pk2", entity.getPk2());
         param.put("pk3", entity.getPk3());
         return param;
-    }
-
-    public int update(OnlyPk3Entity entity) {
-        return doUpdateByPk(entity, false, entity.getPk1(), entity.getPk2(), entity.getPk3());
-    }
-
-    /** 値がnull のカラムをset 句から外して部分更新する */
-    public int updateNotNull(OnlyPk3Entity entity) {
-        return doUpdateByPk(entity, true, entity.getPk1(), entity.getPk2(), entity.getPk3());
-    }
-
-
-    public int updateByPk(OnlyPk3Entity entity, Long pk1, OffsetDateTime pk2, UUID pk3) {
-        return doUpdateByPk(entity, false, pk1, pk2, pk3);
-    }
-
-    protected int doUpdateByPk(OnlyPk3Entity entity, boolean excludeNull, Long pk1, OffsetDateTime pk2, UUID pk3) {
-        var __sql = new ArrayList<String>();
-        var __param = entityToParam(entity);
-        var setClause = Columns.MAP.values().stream()
-                .filter(c -> !excludeNull || __param.get(c.getJavaPropertyName()) != null)
-                .map(BaseColumnDefinition::toUpdateSetClause).collect(joining(", "));
-        if (setClause.isEmpty()) {
-            throw new IllegalArgumentException("更新対象のカラムがありません");
-        }
-        __sql.add("update \"only_pk3\"");
-        __sql.add("set %s".formatted(setClause));
-        __param.put("__pk1", pk1);
-        __param.put("__pk2", pk2);
-        __param.put("__pk3", pk3);
-        __sql.add("where \"pk1\" = :__pk1 AND \"pk2\" = :__pk2 AND \"pk3\" = :__pk3");
-        return execWithReturning(__sql, __param, entity, Set.of());
     }
 
     public Optional<OnlyPk3Entity> findByPk(Long pk1, OffsetDateTime pk2, UUID pk3) {

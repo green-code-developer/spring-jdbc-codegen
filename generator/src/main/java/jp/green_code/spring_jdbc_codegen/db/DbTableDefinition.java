@@ -68,9 +68,14 @@ public class DbTableDefinition {
                 Strings.CS.contains(c.toJavaType().generateDateSnippet(), "pickBySeed"));
     }
 
-    // Insert 時にreturning が必要かどうか
-    public boolean needReturningInInsert() {
-        return columns.stream().anyMatch(c -> c.isReturningColumn() || c.isInsertOmittable());
+    // PK 以外のカラム。update 系のset 句の対象
+    public List<DbColumnDefinition> nonPkColumns() {
+        return columns.stream().filter(c -> !c.isPrimaryKey()).toList();
+    }
+
+    // insertExceptPk を生成できるか。PK を除外しても DB が値を埋められる場合のみ
+    public boolean canInsertExceptPk() {
+        return !pkColumns().isEmpty() && pkColumns().stream().allMatch(DbColumnDefinition::isDbDeterminable);
     }
 
     // Update 時にreturning が必要かどうか

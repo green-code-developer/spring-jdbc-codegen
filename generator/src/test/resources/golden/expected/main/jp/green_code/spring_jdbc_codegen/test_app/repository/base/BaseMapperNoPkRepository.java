@@ -1,9 +1,11 @@
 package jp.green_code.spring_jdbc_codegen.test_app.repository.base;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,40 +48,46 @@ public abstract class BaseMapperNoPkRepository {
         this.helper = helper;
     }
 
-    protected List<String> toInsertColumns(MapperNoPkEntity entity, boolean excludeNull) {
-        var res = new ArrayList<String>();
-        if (!excludeNull || entity.getRenamedNoPkName() != null) {
-            res.add("\"rename_target\"");
-        }
-        if (!excludeNull || entity.getOtherCol() != null) {
-            res.add("\"other_col\"");
-        }
-        return res;
-    }
-
-    protected Set<String> toInsertReturning(List<String> insertColumns) {
-        var res = new HashSet<String>();
-        if (insertColumns.isEmpty()) {
-            res.add("rename_target");
-            res.add("other_col");
-        } else {
-            if (!insertColumns.contains("\"rename_target\"")) {
-                res.add("rename_target");
+    /** 他テーブルのカラム、重複指定、PK 指定を弾く */
+    protected List<ColumnDefinition> validateColumns(ColumnDefinition first, ColumnDefinition[] rest, boolean rejectPk) {
+        var columns = new ArrayList<ColumnDefinition>();
+        columns.add(first);
+        columns.addAll(Arrays.asList(rest));
+        var names = new HashSet<String>();
+        for (var c : columns) {
+            if (rejectPk && c.getPrimaryKeySeq() != null) {
+                throw new IllegalArgumentException("PK は指定できません: " + c.getColumnName());
             }
-            if (!insertColumns.contains("\"other_col\"")) {
-                res.add("other_col");
+            if (Columns.MAP.get(c.getColumnName()) != c) {
+                throw new IllegalArgumentException("mapper_no_pk のカラムではありません: " + c.getColumnName());
+            }
+            if (!names.add(c.getColumnName())) {
+                throw new IllegalArgumentException("カラムが重複しています: " + c.getColumnName());
             }
         }
-        return res;
+        return columns;
     }
 
-    protected List<String> toInsertValues(MapperNoPkEntity entity, boolean excludeNull) {
-        var res = new ArrayList<String>();
-        if (!excludeNull || entity.getRenamedNoPkName() != null) {
-            res.add("rename_target");
-        }
-        if (!excludeNull || entity.getOtherCol() != null) {
-            res.add("other_col");
+    protected List<String> toInsertColumns(Set<String> excludeColumns) {
+        return Columns.MAP.values().stream()
+                .filter(c -> !excludeColumns.contains(c.getColumnName()))
+                .map(c -> "\"%s\"".formatted(c.getColumnName()))
+                .toList();
+    }
+
+    protected List<String> toInsertValues(Set<String> excludeColumns) {
+        return Columns.MAP.values().stream()
+                .filter(c -> !excludeColumns.contains(c.getColumnName()))
+                .map(ColumnDefinition::toParamColumn)
+                .toList();
+    }
+
+    protected Set<String> toInsertReturning(Set<String> excludeColumns) {
+        var res = new LinkedHashSet<String>();
+        for (var c : Columns.MAP.values()) {
+            if (c.isReturning() || excludeColumns.contains(c.getColumnName())) {
+                res.add(c.getColumnName());
+            }
         }
         return res;
     }
@@ -104,29 +112,30 @@ public abstract class BaseMapperNoPkRepository {
         return ret.isPresent() ? 1 : 0;
     }
 
-    public int insert(MapperNoPkEntity entity) {
-        return doInsert(entity, false);
+    /** 全カラムをINSERT 対象とする */
+    public int insertAllColumns(MapperNoPkEntity entity) {
+        return doInsert(entity, Set.of());
     }
 
-    /** 値がnull のカラムをINSERT 対象から外し、DB の既定値を使う */
-    public int insertNotNull(MapperNoPkEntity entity) {
-        return doInsert(entity, true);
+    /** 指定したカラムをINSERT 対象から外し、DB の既定値を使う */
+    public int insertExcept(MapperNoPkEntity entity, ColumnDefinition first, ColumnDefinition... rest) {
+        var exclude = new LinkedHashSet<String>();
+        validateColumns(first, rest, false).forEach(c -> exclude.add(c.getColumnName()));
+        return doInsert(entity, exclude);
     }
 
-    protected int doInsert(MapperNoPkEntity entity, boolean excludeNull) {
-        var __sql = new ArrayList<String>();
-        __sql.add("insert into \"mapper_no_pk\"");
-        var __insertColumns = toInsertColumns(entity, excludeNull);
-        if (__insertColumns.isEmpty()) {
-            __sql.add("DEFAULT VALUES");
+    protected int doInsert(MapperNoPkEntity entity, Set<String> excludeColumns) {
+        var sql = new ArrayList<String>();
+        sql.add("insert into \"mapper_no_pk\"");
+        var insertColumns = toInsertColumns(excludeColumns);
+        if (insertColumns.isEmpty()) {
+            sql.add("DEFAULT VALUES");
         } else {
-            __sql.add("(%s)".formatted(join(", ", __insertColumns)));
-            var __insertValues = toInsertValues(entity, excludeNull);
-            var __valuesClause = __insertValues.stream().map(c -> Columns.MAP.get(c) == null ? c : Columns.MAP.get(c).toParamColumn()).collect(joining(", "));
-            __sql.add("values (%s)".formatted(__valuesClause));
+            sql.add("(%s)".formatted(join(", ", insertColumns)));
+            sql.add("values (%s)".formatted(join(", ", toInsertValues(excludeColumns))));
         }
-        var __param = entityToParam(entity);
-        return execWithReturning(__sql, __param, entity, toInsertReturning(__insertColumns));
+        var param = entityToParam(entity);
+        return execWithReturning(sql, param, entity, toInsertReturning(excludeColumns));
     }
 
     public static Map<String, Object> entityToParam(MapperNoPkEntity entity) {
