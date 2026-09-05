@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 @SpringBootTest
 @Transactional
-public class TestNotNullVariants {
+public class TestColumnSelection {
 
     @Autowired
     CoverageTestRepository repository;
@@ -86,7 +86,12 @@ public class TestNotNullVariants {
         assertNull(repository.findByPk(entity.getPk()).orElseThrow().getColNullableDefault());
     }
 
-    /** updateInclude は指定しなかったカラムを set 句に含めないため既存の値が残る */
+    /**
+     * updateInclude は指定しなかったカラムを set 句に含めないため既存の値が残る。
+     * <p>
+     * col_nullable_default には値をセットしたうえで指定から外している。
+     * 対象カラムが entity の値ではなく引数だけで決まることを確認するため。
+     */
     @Test
     void updateInclude_は指定しなかったカラムを更新しない() {
         var entity = newEntity();
@@ -96,6 +101,7 @@ public class TestNotNullVariants {
         var partial = new CoverageTestEntity();
         partial.setPk(entity.getPk());
         partial.setColNotnullNodefault("updated");
+        partial.setColNullableDefault("updated"); // 値はあるが指定しない
         repository.updateInclude(partial, Columns.COL_NOTNULL_NODEFAULT);
 
         var stored = repository.findByPk(entity.getPk()).orElseThrow();
