@@ -43,19 +43,12 @@ public abstract class TestBaseNormalPk3Repository {
 
         // update 後の確認
         var stored2 = res2.orElseThrow();
-
         assert4pk1(data2.getPk1(), stored2.getPk1());
-
         assert4pk2(data2.getPk2(), stored2.getPk2());
-
         assert4pk3(data2.getPk3(), stored2.getPk3());
-
         assert4colText(data2.getColText(), stored2.getColText());
-
         assert4colTextNotNull(data2.getColTextNotNull(), stored2.getColTextNotNull());
-
         assert4colTextNotNullDefaultX(data2.getColTextNotNullDefaultX(), stored2.getColTextNotNullDefaultX());
-
         assert4colTextDefaultY(data2.getColTextDefaultY(), stored2.getColTextDefaultY());
 
         // delete

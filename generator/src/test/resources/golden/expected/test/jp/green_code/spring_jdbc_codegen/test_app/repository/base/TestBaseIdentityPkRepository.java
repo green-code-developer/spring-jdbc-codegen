@@ -35,11 +35,8 @@ public abstract class TestBaseIdentityPkRepository {
 
         // update 後の確認
         var stored2 = res2.orElseThrow();
-
         assert4pk(data2.getPk(), stored2.getPk());
-
         assert4colText(data2.getColText(), stored2.getColText());
-
         assert4colTextNotNull(data2.getColTextNotNull(), stored2.getColTextNotNull());
 
         // delete

@@ -104,7 +104,6 @@ public class TestBaseRepositoryGenerator {
                 sb.add("    // update 後の確認");
                 sb.add("    var stored2 = res2.orElseThrow();");
                 for (var col : table.columns) {
-                    sb.add("");
                     sb.add("    assert4%s(data2.%s(), stored2.%s());".formatted(col.toJavaPropertyName(), col.toGetter(), col.toGetter()));
                 }
                 pksForDelete = pks2;

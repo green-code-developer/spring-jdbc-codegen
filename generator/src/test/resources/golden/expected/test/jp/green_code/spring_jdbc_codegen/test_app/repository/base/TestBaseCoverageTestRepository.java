@@ -43,21 +43,13 @@ public abstract class TestBaseCoverageTestRepository {
 
         // update 後の確認
         var stored2 = res2.orElseThrow();
-
         assert4pk(data2.getPk(), stored2.getPk());
-
         assert4colNullableDefault(data2.getColNullableDefault(), stored2.getColNullableDefault());
-
         assert4colNotnullNodefault(data2.getColNotnullNodefault(), stored2.getColNotnullNodefault());
-
         assert4colNowWithDefault(data2.getColNowWithDefault(), stored2.getColNowWithDefault());
-
         assert4updatedAt(data2.getUpdatedAt(), stored2.getUpdatedAt());
-
         assert4colEnumDefault(data2.getColEnumDefault(), stored2.getColEnumDefault());
-
         assert4colEnumNullableDefault(data2.getColEnumNullableDefault(), stored2.getColEnumNullableDefault());
-
         assert4mappedNullableJavaName(data2.getMappedNullableJavaName(), stored2.getMappedNullableJavaName());
 
         // delete

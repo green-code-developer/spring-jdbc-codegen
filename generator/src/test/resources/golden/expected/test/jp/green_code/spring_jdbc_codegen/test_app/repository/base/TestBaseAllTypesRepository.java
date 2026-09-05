@@ -77,77 +77,41 @@ public abstract class TestBaseAllTypesRepository {
 
         // update 後の確認
         var stored2 = res2.orElseThrow();
-
         assert4pk(data2.getPk(), stored2.getPk());
-
         assert4colSmallint(data2.getColSmallint(), stored2.getColSmallint());
-
         assert4colSmallserial(data2.getColSmallserial(), stored2.getColSmallserial());
-
         assert4colInteger(data2.getColInteger(), stored2.getColInteger());
-
         assert4colSerial(data2.getColSerial(), stored2.getColSerial());
-
         assert4colBigint(data2.getColBigint(), stored2.getColBigint());
-
         assert4colBigserial(data2.getColBigserial(), stored2.getColBigserial());
-
         assert4colReal(data2.getColReal(), stored2.getColReal());
-
         assert4colDoublePrecision(data2.getColDoublePrecision(), stored2.getColDoublePrecision());
-
         assert4colNumeric(data2.getColNumeric(), stored2.getColNumeric());
-
         assert4colBoolean(data2.getColBoolean(), stored2.getColBoolean());
-
         assert4colChar(data2.getColChar(), stored2.getColChar());
-
         assert4colVarchar(data2.getColVarchar(), stored2.getColVarchar());
-
         assert4colText(data2.getColText(), stored2.getColText());
-
         assert4colDate(data2.getColDate(), stored2.getColDate());
-
         assert4colTime(data2.getColTime(), stored2.getColTime());
-
         assert4colTimeTz(data2.getColTimeTz(), stored2.getColTimeTz());
-
         assert4colTimestamp(data2.getColTimestamp(), stored2.getColTimestamp());
-
         assert4colTimestampTz(data2.getColTimestampTz(), stored2.getColTimestampTz());
-
         assert4colInterval(data2.getColInterval(), stored2.getColInterval());
-
         assert4colBytea(data2.getColBytea(), stored2.getColBytea());
-
         assert4colUuid(data2.getColUuid(), stored2.getColUuid());
-
         assert4colJson(data2.getColJson(), stored2.getColJson());
-
         assert4colJsonb(data2.getColJsonb(), stored2.getColJsonb());
-
         assert4colXml(data2.getColXml(), stored2.getColXml());
-
         assert4colInet(data2.getColInet(), stored2.getColInet());
-
         assert4colCidr(data2.getColCidr(), stored2.getColCidr());
-
         assert4colMacaddr(data2.getColMacaddr(), stored2.getColMacaddr());
-
         assert4colBox(data2.getColBox(), stored2.getColBox());
-
         assert4colPoint(data2.getColPoint(), stored2.getColPoint());
-
         assert4colLine(data2.getColLine(), stored2.getColLine());
-
         assert4colLseg(data2.getColLseg(), stored2.getColLseg());
-
         assert4colPath(data2.getColPath(), stored2.getColPath());
-
         assert4colPolygon(data2.getColPolygon(), stored2.getColPolygon());
-
         assert4colCircle(data2.getColCircle(), stored2.getColCircle());
-
         assert4colStatusEnum(data2.getColStatusEnum(), stored2.getColStatusEnum());
 
         // delete

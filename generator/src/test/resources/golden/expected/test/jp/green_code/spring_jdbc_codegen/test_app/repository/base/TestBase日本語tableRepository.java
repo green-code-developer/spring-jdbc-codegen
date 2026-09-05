@@ -49,25 +49,15 @@ public abstract class TestBase日本語tableRepository {
 
         // update 後の確認
         var stored2 = res2.orElseThrow();
-
         assert4order(data2.getOrder(), stored2.getOrder());
-
         assert4param(data2.getParam(), stored2.getParam());
-
         assert4sql(data2.getSql(), stored2.getSql());
-
         assert4helper(data2.getHelper(), stored2.getHelper());
-
         assert4joining(data2.getJoining(), stored2.getJoining());
-
         assert4list(data2.getList(), stored2.getList());
-
         assert4renamedJavaName(data2.getRenamedJavaName(), stored2.getRenamedJavaName());
-
         assert4where(data2.getWhere(), stored2.getWhere());
-
         assert4select(data2.getSelect(), stored2.getSelect());
-
         assert4abc(data2.getAbc(), stored2.getAbc());
 
         // delete

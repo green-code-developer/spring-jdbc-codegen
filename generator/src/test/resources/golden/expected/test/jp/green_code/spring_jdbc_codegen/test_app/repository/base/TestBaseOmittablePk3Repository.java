@@ -40,13 +40,9 @@ public abstract class TestBaseOmittablePk3Repository {
 
         // update 後の確認
         var stored2 = res2.orElseThrow();
-
         assert4pk1(data2.getPk1(), stored2.getPk1());
-
         assert4pk2(data2.getPk2(), stored2.getPk2());
-
         assert4pk3(data2.getPk3(), stored2.getPk3());
-
         assert4colTextNotNullDefaultX(data2.getColTextNotNullDefaultX(), stored2.getColTextNotNullDefaultX());
 
         // delete
