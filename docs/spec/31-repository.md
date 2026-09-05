@@ -21,13 +21,15 @@ Base クラスは `RepositoryHelper` を `protected final` フィールドとし
 
 | メソッド | 生成条件 |
 | --- | --- |
-| `insert` / `insertNotNull` | 常に生成する |
-| `update` / `updateByPk` / `updateNotNull` | PK がある |
+| `insertAllColumns` / `insertExcept` | 常に生成する |
+| `insertExceptPk` | PK があり、PK を構成する全カラムが自動採番（[REPO-014](#repo-014-insertexceptpk)） |
+| `updateAllColumns` / `updateInclude` | PK がある |
 | `findByPk` | PK がある |
 | `deleteByPk` | PK がある |
 | `ROW_MAPPER` と Mapper クラス | 命名マッピングを持つカラムがある |
 
-PK を持たないテーブルには、上の表のうち `insert` / `insertNotNull` と RowMapper しか生成されない。
+PK を持たないテーブルには、上の表のうち `insertAllColumns` / `insertExcept` と
+RowMapper しか生成されない。
 
 表に挙げたメソッドのほかに、テーブルの構造によらず次を毎回生成する。
 利用者が override して挙動を変えることを想定している。
@@ -40,13 +42,31 @@ PK を持たないテーブルには、上の表のうち `insert` / `insertNotN
 | `toInsertReturning()` | INSERT の returning 対象を決める |
 | `copyReturningValues()` | `returning` で取得した値を entity へ書き戻す。insert / update 共通 |
 | `execWithReturning()` | `returning` 句の組み立てと実行。insert / update 共通 |
-| `doInsert()` / `doUpdateByPk()` | insert / update の本体。`excludeNull` で対象カラムを切り替える |
+| `validateColumns()` | カラム指定を検証する（[REPO-003](#repo-003-カラム指定の検証)）。insert / update 共通 |
+| `doInsert()` / `doUpdate()` | insert / update の本体。対象カラムの集合を受け取る |
 
-## REPO-010 insert
+## REPO-003 カラム指定の検証
+
+`insertExcept` と `updateInclude` は `ColumnDefinition` を可変長引数で受け取る。
+次を実行時に検証し、違反した場合は `IllegalArgumentException` を送出する。
+
+| 検証 | 対象 | 理由 |
+| --- | --- | --- |
+| 自テーブルの `Columns.MAP` に存在するカラムか | 両方 | `ColumnDefinition` の型は全テーブル共通のため、他テーブルの定数を渡してもコンパイルが通る |
+| 同じカラムを重複指定していないか | 両方 | 列リストや set 句が重複し、SQL エラーになる |
+| PK を指定していないか | `updateInclude` | PK は where 句で使う。set 句に含める用途がない（[REPO-020](#repo-020-updateallcolumns)） |
+
+引数を `(ColumnDefinition first, ColumnDefinition... rest)` の形にすることで、
+**指定が 0 件のケースはコンパイル時に防ぐ。**
+
+## REPO-010 insertAllColumns
 
 ```java
-public int insert({テーブル}Entity entity)
+public int insertAllColumns({テーブル}Entity entity)
 ```
+
+**全カラムを INSERT 対象とする。** entity の値をそのまま送るため、値が null の
+カラムには null が入る。
 
 **戻り値は処理された件数。** DB 側で決まった値は**引数の entity に書き戻す**
 （[REPO-012](#repo-012-insert-後の書き戻し)）。生成されるメソッドはいずれも
@@ -60,71 +80,96 @@ insert into "テーブル名" ("col1", "col2") values (:col1, :col2) returning .
 
 テーブル名とカラム名は常にダブルクォートで囲む。
 
+**自動採番の PK を持つテーブルでこのメソッドを使うと、PK に null が送られて
+NOT NULL 違反になる。** DB に採番させる場合は
+[`insertExceptPk`](#repo-014-insertexceptpk) を使う。このメソッドは、PK の値を
+明示して投入したい場合（データ移行、初期データ投入、自然キーのテーブル）に用いる。
+
 ## REPO-011 insert 対象カラムの決定
 
-カラムごとに次の順で判定する。
+**INSERT 対象カラムはメソッドと引数だけで決まる。entity の値は判定に使わない。**
 
-1. **not null 制約があり、かつ既定値を持つ**カラム → entity の値が null のときだけ除外する
-2. それ以外 → 常に含める
+| メソッド | INSERT 対象カラム |
+| --- | --- |
+| `insertAllColumns` | 全カラム |
+| `insertExcept` | 全カラムから、引数で指定されたカラムを除いたもの |
+| `insertExceptPk` | 全カラムから PK を除いたもの |
 
-1 の条件を満たすカラムを省略した場合、DB の既定値が使われる。`bigserial` の
-自動採番はこの規則で機能する。
+**除外したカラムには DB の既定値が使われる。**
 
 対象カラムが 1 つもない場合は `insert into "t" DEFAULT VALUES` を発行する。
+
+v3 までは entity の値が null かどうかで対象を決めていた。この規則では
+「null を入れたい」と「既定値を使いたい」を区別できないため廃止した。
 
 ## REPO-012 insert 後の書き戻し
 
 次のカラムを `returning` 句で取得し、entity へ書き戻す。
 
 - `returningColumnsByTable` 対象のカラム（[PARAM-006](10-param.md)）
-- [REPO-011](#repo-011-insert-対象カラムの決定) の 2 で除外されたカラム
+- **INSERT 対象から除外されたカラム**（[REPO-011](#repo-011-insert-対象カラムの決定)）
+
+除外したカラムは「値を DB に決めさせたカラム」であるため、その結果を取得する。
+`insertExceptPk` で採番された PK が entity へ入るのはこの規則による。
+
+両者が重複する場合は 1 つにまとめる。
 
 insert 対象カラムが 1 つもなかった場合は**全カラム**を `returning` の対象とする。
 
 `returning` の対象が 1 つもない場合は `returning` 句を出力せず、書き戻しも行わない。
 
-## REPO-013 insertNotNull
+## REPO-013 insertExcept
 
 ```java
-public int insertNotNull({テーブル}Entity entity)
+public int insertExcept({テーブル}Entity entity, ColumnDefinition first, ColumnDefinition... rest)
 ```
 
-**値が null のカラムをすべて INSERT 対象から外す。** DB の既定値を使いたい場合に用いる。
+**指定したカラムを INSERT 対象から外す。** DB の既定値を使いたいカラムを指定する。
 
-[REPO-011](#repo-011-insert-対象カラムの決定) との違いは除外の条件だけで、それ以外の
-振る舞いは `insert` と同じ。
+引数の検証は [REPO-003](#repo-003-カラム指定の検証)。対象カラムの決め方
+（[REPO-011](#repo-011-insert-対象カラムの決定)）以外の振る舞いは
+`insertAllColumns` と同じ。
 
-| | 除外するカラム |
-| --- | --- |
-| `insert` | not null かつ既定値を持つカラムのうち、値が null のもの |
-| `insertNotNull` | 値が null のカラムすべて |
+除外したカラムは `returning` で取得され、entity へ書き戻される
+（[REPO-012](#repo-012-insert-後の書き戻し)）。既定値を知る手段がこれになる。
 
-`insert` は「null を入れられないカラムだけ既定値に任せる」という判断をするため、
-**nullable かつ既定値を持つカラム**では既定値が使われず null が入る。
-そのカラムに既定値を使いたい場合に `insertNotNull` を用いる。
-
-対象カラムが 1 つもない場合は `DEFAULT VALUES` を発行する。書き戻しの規則も
-`insert` と同じで、除外したカラムを `returning` で取得して entity へ反映する
-（[REPO-012](#repo-012-insert-後の書き戻し)）。
-
-## REPO-020 update
+## REPO-014 insertExceptPk
 
 ```java
-public int update({テーブル}Entity entity)
+public int insertExceptPk({テーブル}Entity entity)
 ```
 
-entity の PK を条件に 1 レコードを更新する。内部で `updateByPk` を呼ぶ。
+**PK を構成する全カラムを INSERT 対象から外す。** 内部で `insertExcept` を呼ぶ。
+DB に PK を採番させる、最も頻度の高い形の短縮形。
+
+**PK を構成する全カラムが自動採番のときだけ生成する。** 1 つでも自動採番でない
+カラムが含まれる場合、そこへ null が送られて必ず失敗するため。
+
+自動採番とは、JDBC メタデータの `IS_AUTOINCREMENT` が `YES` のカラムを指す。
+`smallserial` / `serial` / `bigserial` と `generated as identity` の両方が該当する。
+
+既定値式（`COLUMN_DEF`）は判定に使わない。`identity` 列は `COLUMN_DEF` が空で
+判別できず、また既定値を持つだけのカラム（`now()` や `'NEW'`）と区別するために
+文字列マッチが必要になるため。`is_identity` は JDBC の `getColumns()` が返さないので、
+自前で判定するには `information_schema` への別クエリが要る。
+
+## REPO-020 updateAllColumns
 
 ```java
-public int updateByPk({テーブル}Entity entity, {PK の型} pk1, ...)
+public int updateAllColumns({テーブル}Entity entity)
 ```
 
-`updateByPk` は entity とは別に PK 値を受け取る。**PK 自体を更新する**用途に使う。
+entity の PK を条件に 1 レコードを更新する。
 
-set 句には全カラムを含める。
+**set 句には PK を除く全カラムを含める。** PK は where 句で使うため、set 句に
+含める意味がない。
 
-更新させたくないカラムは、DB のトリガーで元の値へ戻す。生成コードは
-どのカラムを更新してよいかを判断しない。
+v3 までの `updateByPk`（entity とは別に PK 値を受け取り、**PK 自体を更新する**）は
+廃止した。PK を変更する場面が想定しにくく、set 句に PK を含める唯一の理由で
+あったため。必要な場合は `helper.exec()` で手書きする。
+
+更新させたくないカラムは、[`updateInclude`](#repo-022-updateinclude) で対象から
+外すか、DB のトリガーで元の値へ戻す。
 
 where 句のプレースホルダは `__pk1` から始まる連番を使う。entity 側のプレースホルダ名
 （Java プロパティ名）と衝突させないため。
@@ -142,35 +187,31 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 取得して entity へ書き戻す。取得は `helper.optional()` で行い、該当レコードが
 なければ書き戻しをせず 0 を返す。
 
-## REPO-022 updateNotNull
+**set 句に含まれるかどうかは書き戻しの対象に影響しない。** insert とは異なり、
+set 句から外したカラムを `returning` に加えることはしない。更新対象から外した
+カラムは「触らなかった」だけであり、値を知る必要がないため。
+
+## REPO-022 updateInclude
 
 ```java
-public int updateNotNull({テーブル}Entity entity)
+public int updateInclude({テーブル}Entity entity, ColumnDefinition first, ColumnDefinition... rest)
 ```
 
-**値が null のカラムを set 句から外す。** 部分更新に用いる。
+**指定したカラムだけを set 句に含める。** 部分更新に用いる。
 
-| | set 句に含めるカラム |
+| メソッド | set 句に含めるカラム |
 | --- | --- |
-| `update` | 全カラム。null なら null で更新する |
-| `updateNotNull` | 値が null でないカラムのみ |
+| `updateAllColumns` | PK を除く全カラム |
+| `updateInclude` | 引数で指定されたカラム |
 
-`update` は entity の状態をそのまま DB へ反映するため、変更したいカラムだけを
-セットした entity を渡すと、他のカラムが null で上書きされる。部分更新には
-`updateNotNull` を用いる。
+**対象カラムは引数だけで決まり、entity の値は判定に使わない。** 指定したカラムの
+値が null なら NULL で更新する。**nullable なカラムを NULL に戻せる。**
 
-逆に **nullable なカラムへ null を設定したい場合は `update` を使う。**
-`updateNotNull` では「null にしたい」と「指定しなかった」を区別できない。
+引数の検証は [REPO-003](#repo-003-カラム指定の検証)。PK を指定した場合は
+`IllegalArgumentException` を送出する。
 
-`returningColumnsByTable` 対象のカラムも、値が null なら set 句から外す。
-DB 側で値が決まるカラムであっても、Java から値を送らないことに変わりはない。
-
-set 句が空になる場合は `IllegalArgumentException` を送出する。更新対象のない
-UPDATE 文は SQL として成立しないため。ただし PK も set 句に含まれ、呼び出し時点で
-PK は非 null であるため、実際にこの状態になることはない。保険として残している。
-
-PK を変更する用途の `updateNotNullByPk` は生成しない。部分更新と PK 変更を
-同時に行う場面が想定しにくいため。必要な場合は `helper.exec()` で手書きする。
+v3 までの `updateNotNull`（値が null のカラムを set 句から外す）は廃止した。
+null が「NULL にしたい」と「更新しない」の 2 つの意味を持ち、区別できなかったため。
 
 結果の判定と書き戻しは [REPO-021](#repo-021-update-の結果判定) と同じ。
 
@@ -193,9 +234,9 @@ public int deleteByPk({PK の型} pk1, ...)
 
 ## REPO-041 PK 引数の順序
 
-`updateByPk` / `findByPk` / `deleteByPk` の PK 引数は、**主キー制約における順序**
-（`KEY_SEQ`）で並べる。カラムの定義順ではない。`update` は entity から PK を
-取り出すため引数を持たない。
+`findByPk` / `deleteByPk` の PK 引数は、**主キー制約における順序**
+（`KEY_SEQ`）で並べる。カラムの定義順ではない。`updateAllColumns` /
+`updateInclude` は entity から PK を取り出すため引数を持たない。
 
 ## REPO-050 Columns クラス
 

@@ -39,8 +39,8 @@ protected Long accountId;
 ```
 
 **すべてのフィールドはラッパー型**を使う（`long` ではなく `Long`）。not null 制約の
-有無にかかわらず null を保持できる。INSERT 時の省略判定（[REPO-011](31-repository.md)）が
-null か否かで動作するため。
+有無にかかわらず null を保持できる。nullable なカラムが null を取りうることと、
+DB が採番する前の PK を表現できる必要があるため。
 
 例外は `bytea` に対応する `byte[]` のみ。
 

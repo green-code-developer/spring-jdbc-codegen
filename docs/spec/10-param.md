@@ -69,6 +69,11 @@ returningColumnsByTable:
 トリガーが上書きすればその結果を取得する。トリガーがなければ Java の値が
 そのまま入り、同じ値を取得する。
 
+ここに指定するのは**毎回値が変わるカラム**（`updated_at` など）だけでよい。
+INSERT で既定値を使いたいカラムは [`insertExcept`](31-repository.md) で
+除外すれば、除外したカラムとして自動的に `returning` の対象になる
+（[REPO-012](31-repository.md)）。設定に書くと UPDATE のたびにも取得することになる。
+
 v2 までの `setNowColumnsByTable` を置き換える。あちらは SQL に `now()` を
 書き込んでいたが、値の決定は DB 側（トリガー）に任せ、このツールは
 **結果の取得だけを行う**。`now()` 以外の加工をするトリガーにも対応できる。

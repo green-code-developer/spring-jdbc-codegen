@@ -28,17 +28,25 @@ PK を持たないテーブルも生成する。ただし `findByPk` / `deleteBy
 
 `test()` は 1 つのレコードに対して次を順に実行する。
 
-1. seed 1 でテストデータを生成し、**insert 省略可能な PK**（[REPO-011](31-repository.md)）を
-   null にして `insert`
+1. seed 1 でテストデータを生成して insert する
 2. `findByPk` で取得できることを確認
 3. insert した値と取得した値を比較
-4. seed 2 でテストデータを生成し、PK を 1 で採番された値に差し替えて `update`
+4. seed 2 でテストデータを生成し、PK を 1 で採番された値に差し替えて `updateAllColumns`
 5. `findByPk` で取得し、update した値と比較
 6. `deleteByPk` で 1 件削除されることを確認
 7. `findByPk` が空を返すことを確認
 
-1 で null にするのは PK のうち「not null かつ既定値を持つ」カラムだけで、
-DB の自動採番を働かせるため。それ以外の PK は生成した値のまま insert する。
+1 で使う insert のメソッドはテーブルによって変わる。
+
+| テーブル | 使うメソッド |
+| --- | --- |
+| PK の全カラムが自動採番 | `insertExceptPk`（[REPO-014](31-repository.md)） |
+| それ以外 | `insertAllColumns`（[REPO-010](31-repository.md)） |
+
+`insertExceptPk` は PK を INSERT 対象から外し、DB の自動採番を働かせる。
+採番された値は `returning` で entity へ書き戻される（[REPO-012](31-repository.md)）
+ため、4 で PK を差し替える処理はそのまま成立する。
+それ以外のテーブルでは、生成した PK の値をそのまま insert する。
 
 次の場合は 1 の insert までで終わり、2 以降を行わない。
 
@@ -48,9 +56,9 @@ DB の自動採番を働かせるため。それ以外の PK は生成した値�
 
 **全カラムを検証する。** insert 後・update 後とも、投入した値と取得した値を比較する。
 
-`returningColumnsByTable` 対象のカラムも同じ規則で検証する。DB が確定させた値が
-entity へ書き戻される（[REPO-012](31-repository.md)）ため、投入した値との比較が
-成立する。ただしトリガーが値を書き換える場合は一致しないため、実体クラスで
+`returningColumnsByTable` 対象のカラムと、INSERT 対象から除外したカラムも
+同じ規則で検証する。DB が確定させた値が entity へ書き戻される
+（[REPO-012](31-repository.md)）ため、投入した値との比較が成立する。ただしトリガーが値を書き換える場合は一致しないため、実体クラスで
 `assert4{プロパティ名}` を override する。
 
 DB のトリガーで値を書き換えるカラムは、この検証と食い違う可能性がある。

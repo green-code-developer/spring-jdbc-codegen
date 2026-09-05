@@ -56,3 +56,39 @@
 
 **golden の全ファイルに差分が出る。** 19 テーブル分すべてが変わるため、
 差分レビューでは「コメント行の追加以外に変化がないこと」を確認する。
+
+## 除外カラムの returning を抑止する手段
+
+状態: 見送り
+
+`insertExcept` で除外したカラムは全て `returning` の対象になる（[REPO-012](spec/31-repository.md)）。
+抑止する手段は用意しない。
+
+INSERT で除外したカラムから返るのは**テーブル定義の既定値**である。既定値は DDL に
+書かれたリテラルなので、転送量が問題になるほど大きいことも、取得を避けたいほど
+機微であることも想定しにくい。抑止する動機が見つからないため見送る。
+
+再検討するとすれば、トリガーが INSERT 時に大きな値を計算するような場合。その実例が
+出たら `insertExceptReturning(entity, List<ColumnDefinition> returning, ColumnDefinition... except)`
+のように**名前を分けた**メソッドを足す。引数の型だけが違うオーバーロードは、
+`insertExcept(entity, List.of(A))` と `insertExcept(entity, A)` が正反対の意味になり
+どちらもコンパイルが通るため採らない。
+
+## バッチ insert
+
+状態: 検討中
+
+現状は 1 件ずつしか insert できない。大量投入では `NamedParameterJdbcTemplate` の
+`batchUpdate` を使いたい。
+
+メソッド名は `insertAll(List<T> entities)` を想定している。1 件用の全カラム insert を
+`insertAllColumns` としたのは、この名前を空けておくため。
+
+## PK 自体を更新する手段
+
+状態: 見送り
+
+v3 の `updateByPk(entity, pk)` は PK 自体を更新する用途だった。v4 で廃止した。
+
+PK を変更する場面が想定しにくく、これを残すためだけに `updateAllColumns` の set 句へ
+PK を含める必要が生じるため。必要な場合は `helper.exec()` で手書きする。

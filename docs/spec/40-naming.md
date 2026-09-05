@@ -67,7 +67,7 @@ getter / setter はプロパティ名の先頭を大文字にして `get` / `set
 生成する SQL では、テーブル名とカラム名を常にダブルクォートで囲む。
 大文字や日本語を含む識別子でも動作する。
 
-プレースホルダ名には Java プロパティ名を使う。`updateByPk` の where 句のみ
+プレースホルダ名には Java プロパティ名を使う。UPDATE の where 句のみ
 `__pk1` からの連番を使う（[REPO-020](31-repository.md)）。
 
 ## NAMING-010 命名に関する制約
