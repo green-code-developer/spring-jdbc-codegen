@@ -78,6 +78,9 @@ protected {型} generateTestData4{プロパティ名}(int seed)
 `generateTestData()` が全フィールドについて `generateTestData4{プロパティ名}()` を
 呼ぶ。seed はフィールドごとに 1 ずつ増える。
 
+**`{型}` は Entity のフィールドと同じ型**（[ENTITY-010](30-entity.md)）。
+非 null のカラムがプリミティブなら戻り値もプリミティブになる。
+
 型ごとの生成式は [TYPE-002](20-type-mapping.md) の「テストデータ生成」に従う。
 固定値を使いたい場合は実体クラスで `generateTestData4{プロパティ名}()` を override する。
 
@@ -87,7 +90,9 @@ protected {型} generateTestData4{プロパティ名}(int seed)
 protected void assert4{プロパティ名}({型} expected, {型} value)
 ```
 
-フィールドごとに生成する。既定は `assertEquals`。型によって異なる検証を行う場合がある
+フィールドごとに生成する。`{型}` は Entity のフィールドと同じ型（[ENTITY-010](30-entity.md)）。
+
+既定は `assertEquals`。型によって異なる検証を行う場合がある
 （文字列は `trim()` 後に比較、`BigDecimal` は `compareTo`、`byte[]` は
 `assertArrayEquals`）。
 

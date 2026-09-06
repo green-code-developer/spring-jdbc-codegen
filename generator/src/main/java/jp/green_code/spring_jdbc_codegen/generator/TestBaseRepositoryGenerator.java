@@ -136,7 +136,7 @@ public class TestBaseRepositoryGenerator {
             if (isBlank(col.toJavaType().generateDateSnippet())) {
                 System.out.printf("致命的 table:%s column:%s 対応できない型です(javaTestSnippet not found)%n", table.tableName, col.columnName);
             } else {
-                sb.add("protected %s generateTestData4%s(int seed) {".formatted(col.javaSimpleTypeName(), col.toJavaPropertyName()));
+                sb.add("protected %s generateTestData4%s(int seed) {".formatted(col.toFieldTypeName(), col.toJavaPropertyName()));
                 sb.add("    %s".formatted(col.toJavaType().generateDateSnippet()));
                 sb.add("}");
             }
@@ -148,7 +148,7 @@ public class TestBaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         for (var col : table.columns) {
             sb.add("");
-            sb.add("protected void assert4%s(%s expected, %s value) {".formatted(col.toJavaPropertyName(), col.javaSimpleTypeName(), col.javaSimpleTypeName()));
+            sb.add("protected void assert4%s(%s expected, %s value) {".formatted(col.toJavaPropertyName(), col.toFieldTypeName(), col.toFieldTypeName()));
             if (isBlank(col.toJavaType().assertSnippet())) {
                 sb.add("    assertEquals(expected, value);");
             } else {

@@ -96,23 +96,23 @@ public abstract class TestBasePrimitiveDefaultRepository {
         return (long) seed;
     }
 
-    protected Long generateTestData4colLong(int seed) {
+    protected long generateTestData4colLong(int seed) {
         return (long) seed;
     }
 
-    protected Integer generateTestData4colInt(int seed) {
+    protected int generateTestData4colInt(int seed) {
         return seed;
     }
 
-    protected Short generateTestData4colShort(int seed) {
+    protected short generateTestData4colShort(int seed) {
         return (short) seed;
     }
 
-    protected Boolean generateTestData4colBool(int seed) {
+    protected boolean generateTestData4colBool(int seed) {
         return seed %2 == 0;
     }
 
-    protected Double generateTestData4colDouble(int seed) {
+    protected double generateTestData4colDouble(int seed) {
         return (double) seed;
     }
 
@@ -149,23 +149,23 @@ public abstract class TestBasePrimitiveDefaultRepository {
         assertEquals(expected, value);
     }
 
-    protected void assert4colLong(Long expected, Long value) {
+    protected void assert4colLong(long expected, long value) {
         assertEquals(expected, value);
     }
 
-    protected void assert4colInt(Integer expected, Integer value) {
+    protected void assert4colInt(int expected, int value) {
         assertEquals(expected, value);
     }
 
-    protected void assert4colShort(Short expected, Short value) {
+    protected void assert4colShort(short expected, short value) {
         assertEquals(expected, value);
     }
 
-    protected void assert4colBool(Boolean expected, Boolean value) {
+    protected void assert4colBool(boolean expected, boolean value) {
         assertEquals(expected, value);
     }
 
-    protected void assert4colDouble(Double expected, Double value) {
+    protected void assert4colDouble(double expected, double value) {
         assertEquals(expected, value);
     }
 
