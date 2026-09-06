@@ -36,6 +36,7 @@ public abstract class BasePrimitiveDefaultRepository {
         public static final ColumnDefinition COL_TIMESTAMPTZ = new ColumnDefinition("col_timestamptz", "colTimestamptz", "java.time.OffsetDateTime", "timestamptz", 93, 35, null, false, true, null, null, false, false);
         public static final ColumnDefinition COL_DATE = new ColumnDefinition("col_date", "colDate", "java.time.LocalDate", "date", 91, 13, null, false, true, null, null, false, false);
         public static final ColumnDefinition COL_UUID = new ColumnDefinition("col_uuid", "colUuid", "java.util.UUID", "uuid", 1111, 2147483647, null, false, true, null, null, false, false);
+        public static final ColumnDefinition COL_UUID_FUNC = new ColumnDefinition("col_uuid_func", "colUuidFunc", "java.util.UUID", "uuid", 1111, 2147483647, null, false, true, null, null, false, false);
         public static final ColumnDefinition COL_ENUM = new ColumnDefinition("col_enum", "colEnum", "jp.green_code.spring_jdbc_codegen.test_app.StatusEnum", "status_enum", 12, 2147483647, null, false, true, ":{javaPropertyName}::status_enum", null, false, false);
         public static final ColumnDefinition COL_NO_DEFAULT = new ColumnDefinition("col_no_default", "colNoDefault", "java.lang.String", "text", 12, 2147483647, null, false, false, null, null, false, false);
 
@@ -53,6 +54,7 @@ public abstract class BasePrimitiveDefaultRepository {
             MAP.put("col_timestamptz", COL_TIMESTAMPTZ);
             MAP.put("col_date", COL_DATE);
             MAP.put("col_uuid", COL_UUID);
+            MAP.put("col_uuid_func", COL_UUID_FUNC);
             MAP.put("col_enum", COL_ENUM);
             MAP.put("col_no_default", COL_NO_DEFAULT);
         }
@@ -144,6 +146,9 @@ public abstract class BasePrimitiveDefaultRepository {
         if (returningColumns.contains("col_uuid")) {
             entity.setColUuid(returning.getColUuid());
         }
+        if (returningColumns.contains("col_uuid_func")) {
+            entity.setColUuidFunc(returning.getColUuidFunc());
+        }
         if (returningColumns.contains("col_enum")) {
             entity.setColEnum(returning.getColEnum());
         }
@@ -207,6 +212,7 @@ public abstract class BasePrimitiveDefaultRepository {
         param.put("colTimestamptz", entity.getColTimestamptz());
         param.put("colDate", entity.getColDate());
         param.put("colUuid", entity.getColUuid());
+        param.put("colUuidFunc", entity.getColUuidFunc());
         param.put("colEnum", entity.getColEnum() == null ? null : entity.getColEnum().name());
         param.put("colNoDefault", entity.getColNoDefault());
         return param;

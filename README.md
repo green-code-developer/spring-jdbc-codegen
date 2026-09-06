@@ -626,9 +626,10 @@ DB の既定値をEntity のフィールドの初期値へ変換できるのは�
 | `java.lang.Boolean` | `true` | `true` |
 | `java.lang.Float` / `Double` | `1.5` | `1.5d` |
 | `java.math.BigDecimal` | `0.5` | `new BigDecimal("0.5")` |
+| `java.util.UUID` | `'9529478b-...'::uuid` | `UUID.fromString("9529478b-...")` |
 | enum | `'NEW'::status_enum` | `StatusEnum.NEW` |
 | `java.time.LocalDate` / `LocalTime` / `LocalDateTime` | `'2000-01-01'::date` | `LocalDate.parse("2000-01-01")` |
-| `java.time.OffsetTime` / `OffsetDateTime` | `'2000-01-01 00:00:00+09'::timestamptz` | `OffsetDateTime.parse("2000-01-01T00:00+09:00")` |
+| `java.time.OffsetTime` / `OffsetDateTime` | `'2000-01-01 00:00:00+09'::timestamptz` | `OffsetDateTime.parse("2000-01-01T00:00:00+09:00")` |
 
 **`byte[]`（bytea）と `interval` は対象外です。** 既定値を持っていても初期化せず、そのカラムは `@Nullable` になります。
 

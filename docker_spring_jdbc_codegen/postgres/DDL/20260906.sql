@@ -13,6 +13,8 @@ create table primitive_default (
     col_timestamptz timestamptz      not null default '2000-01-01 00:00:00+09',
     col_date        date             not null default '2000-01-01',
     col_uuid        uuid             not null default '9529478b-20d7-4232-ba79-000000000001',
+    -- 関数の既定値は変換対象外なので @Nullable になる
+    col_uuid_func   uuid             not null default gen_random_uuid(),
     col_enum        status_enum      not null default 'DONE',
     -- 既定値なし。@Nullable のままになる
     col_no_default  text             not null

@@ -45,6 +45,9 @@ public abstract class BasePrimitiveDefaultEntity {
     /** col_uuid */
     protected UUID colUuid = UUID.fromString("9529478b-20d7-4232-ba79-000000000001");
 
+    /** col_uuid_func */
+    protected @Nullable UUID colUuidFunc;
+
     /** col_enum */
     protected StatusEnum colEnum = StatusEnum.DONE;
 
@@ -137,6 +140,14 @@ public abstract class BasePrimitiveDefaultEntity {
 
     public void setColUuid(UUID colUuid) {
         this.colUuid = colUuid;
+    }
+
+    public @Nullable UUID getColUuidFunc() {
+        return colUuidFunc;
+    }
+
+    public void setColUuidFunc(@Nullable UUID colUuidFunc) {
+        this.colUuidFunc = colUuidFunc;
     }
 
     public StatusEnum getColEnum() {

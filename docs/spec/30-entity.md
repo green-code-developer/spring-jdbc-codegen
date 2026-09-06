@@ -116,9 +116,10 @@ DB の既定値を Java の値へ変換してフィールドの初期値にす�
 | `Boolean` | `true` | `true` |
 | `Float` / `Double` | `1.5` | `1.5d` |
 | `BigDecimal` | `0.5` | `new BigDecimal("0.5")` |
+| `UUID` | `'9529478b-...'::uuid` | `UUID.fromString("9529478b-...")` |
 | enum | `'NEW'::status_enum` | `StatusEnum.NEW` |
 | `LocalDate` / `LocalTime` / `LocalDateTime` | `'2000-01-01'::date` | `LocalDate.parse("2000-01-01")` |
-| `OffsetTime` / `OffsetDateTime` | `'2000-01-01 00:00:00+09'::timestamptz` | `OffsetDateTime.parse("2000-01-01T00:00+09:00")` |
+| `OffsetTime` / `OffsetDateTime` | `'2000-01-01 00:00:00+09'::timestamptz` | `OffsetDateTime.parse("2000-01-01T00:00:00+09:00")` |
 
 `byte[]`（`bytea`）と `interval` は**対象外**とする。前者はリテラルの表現が煩雑で、
 後者は `Long`（秒）へ変換する規則が既定値の文法と対応しないため。
@@ -177,6 +178,8 @@ enum は定数名を直接参照するため、値が Java の識別子として
 ## ENTITY-020 import
 
 フィールドの型のうち、パッケージを持つものだけを import する。
+`@Nullable` のフィールドが 1 つでもある場合は `org.jspecify.annotations.Nullable`
+も import する（[ENTITY-030](#entity-030-null-安全)）。
 重複を除去し、辞書順に並べる。
 
 `java.lang` パッケージの型、プリミティブ型、配列型（`byte[]`）は import しない

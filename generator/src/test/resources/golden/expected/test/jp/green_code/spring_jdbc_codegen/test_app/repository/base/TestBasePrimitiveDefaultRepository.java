@@ -36,6 +36,7 @@ public abstract class TestBasePrimitiveDefaultRepository {
         assert4colTimestamptz(data.getColTimestamptz(), stored.getColTimestamptz());
         assert4colDate(data.getColDate(), stored.getColDate());
         assert4colUuid(data.getColUuid(), stored.getColUuid());
+        assert4colUuidFunc(data.getColUuidFunc(), stored.getColUuidFunc());
         assert4colEnum(data.getColEnum(), stored.getColEnum());
         assert4colNoDefault(data.getColNoDefault(), stored.getColNoDefault());
 
@@ -62,6 +63,7 @@ public abstract class TestBasePrimitiveDefaultRepository {
         assert4colTimestamptz(data2.getColTimestamptz(), stored2.getColTimestamptz());
         assert4colDate(data2.getColDate(), stored2.getColDate());
         assert4colUuid(data2.getColUuid(), stored2.getColUuid());
+        assert4colUuidFunc(data2.getColUuidFunc(), stored2.getColUuidFunc());
         assert4colEnum(data2.getColEnum(), stored2.getColEnum());
         assert4colNoDefault(data2.getColNoDefault(), stored2.getColNoDefault());
 
@@ -87,6 +89,7 @@ public abstract class TestBasePrimitiveDefaultRepository {
         entity.setColTimestamptz(generateTestData4colTimestamptz(seed++));
         entity.setColDate(generateTestData4colDate(seed++));
         entity.setColUuid(generateTestData4colUuid(seed++));
+        entity.setColUuidFunc(generateTestData4colUuidFunc(seed++));
         entity.setColEnum(generateTestData4colEnum(seed++));
         entity.setColNoDefault(generateTestData4colNoDefault(seed));
         return entity;
@@ -133,6 +136,10 @@ public abstract class TestBasePrimitiveDefaultRepository {
     }
 
     protected UUID generateTestData4colUuid(int seed) {
+        return UUID.fromString("9529478b-20d7-4232-ba79-"+String.format("%012d", seed));
+    }
+
+    protected UUID generateTestData4colUuidFunc(int seed) {
         return UUID.fromString("9529478b-20d7-4232-ba79-"+String.format("%012d", seed));
     }
 
@@ -186,6 +193,10 @@ public abstract class TestBasePrimitiveDefaultRepository {
     }
 
     protected void assert4colUuid(UUID expected, UUID value) {
+        assertEquals(expected, value);
+    }
+
+    protected void assert4colUuidFunc(UUID expected, UUID value) {
         assertEquals(expected, value);
     }
 
