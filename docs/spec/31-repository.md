@@ -107,7 +107,7 @@ v3 までは entity の値が null かどうかで対象を決めていた。こ
 
 次のカラムを `returning` 句で取得し、entity へ書き戻す。
 
-- `returningColumnsByTable` 対象のカラム（[PARAM-006](10-param.md)）
+- `dbDeterminedColumnsByTable` 対象のカラム（[PARAM-006](10-param.md)）
 - **INSERT 対象から除外されたカラム**（[REPO-011](#repo-011-insert-対象カラムの決定)）
 
 除外したカラムは「値を DB に決めさせたカラム」であるため、その結果を取得する。
@@ -202,7 +202,7 @@ JDBC へ渡す。** enum 型の PK でこれを怠ると実行時エラーにな
 判断する。楽観ロックのように「0 件が正常な結果」となる場合があるため、
 例外ではなく件数で伝える。
 
-`returningColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
+`dbDeterminedColumnsByTable` 対象のカラムがある場合、`returning` 句で更新後の値を
 取得して entity へ書き戻す。取得は `helper.optional()` で行い、該当レコードが
 なければ書き戻しをせず 0 を返す。
 
@@ -291,9 +291,7 @@ Base クラスの内部に `public static class Columns` を生成する。
 null になりうる `primaryKeySeq` / `dbParamTemplate` / `dbSelectTemplate` には
 `@Nullable` を付与する。対象はフィールド、コンストラクタ引数、getter の 3 箇所。
 アノテーションは `org.jspecify.annotations.Nullable` で固定とし、差し替えられない。
-
-**この付与は `useNullMarked: true` のときだけ行う。**
-既定（`false`）では `@Nullable` も import も出力しない。
+設定によらず常に出力する（[ENTITY-030](30-entity.md)）。
 
 ## REPO-051 RowMapper
 

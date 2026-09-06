@@ -40,7 +40,7 @@
 
 ## PARAM-004 テーブル・カラム指定の共通形式
 
-`returningColumnsByTable` は次の形式をとる。
+`dbDeterminedColumnsByTable` は次の形式をとる。
 
 ```yml
 キー:
@@ -53,30 +53,38 @@
 テーブル名に `"*"` を指定すると全テーブルが対象になる。`"*"` の指定と
 個別テーブルの指定は**どちらか一方に含まれれば該当**する（和集合）。
 
-## PARAM-006 returningColumnsByTable
+## PARAM-006 dbDeterminedColumnsByTable
 
-トリガーなど **DB 側で値が決まるカラム**を指定する。INSERT / UPDATE の
-`returning` 句に含め、DB が確定させた値を entity へ書き戻す
-（[REPO-012](31-repository.md)、[REPO-021](31-repository.md)）。
+トリガーなど **DB 側で値が決まるカラム**を指定する。
 
 ```yml
-returningColumnsByTable:
+dbDeterminedColumnsByTable:
   "*":
     - updated_at
 ```
+
+指定したカラムには 2 つの効果がある。
+
+| 効果 | 内容 |
+| --- | --- |
+| `returning` | INSERT / UPDATE の `returning` 句に含め、DB が確定させた値を entity へ書き戻す（[REPO-012](31-repository.md)、[REPO-021](31-repository.md)） |
+| null 許容 | Entity のフィールドを `@Nullable` にする（[ENTITY-010](30-entity.md)） |
 
 **INSERT / UPDATE の対象カラムには影響しない。** Java の値はそのまま送られ、
 トリガーが上書きすればその結果を取得する。トリガーがなければ Java の値が
 そのまま入り、同じ値を取得する。
 
-ここに指定するのは**毎回値が変わるカラム**（`updated_at` など）だけでよい。
-INSERT で既定値を使いたいカラムは [`insertExcept`](31-repository.md) で
-除外すれば、除外したカラムとして自動的に `returning` の対象になる
-（[REPO-012](31-repository.md)）。設定に書くと UPDATE のたびにも取得することになる。
+ここに指定するのは、**値を送っても DB 側で上書きされるカラム**だけでよい。
+INSERT 対象から外したカラムは、除外した時点で `returning` の対象になる
+（[REPO-012](31-repository.md)）ため、指定は要らない。
 
-v2 までの `setNowColumnsByTable` を置き換える。あちらは SQL に `now()` を
-書き込んでいたが、値の決定は DB 側（トリガー）に任せ、このツールは
-**結果の取得だけを行う**。`now()` 以外の加工をするトリガーにも対応できる。
+- serial / identity の PK → `insertExceptPk` で除外される。指定不要
+- `now()` などの関数を既定値に持つカラム → `insertExcept` で除外する。指定不要
+- **トリガーが上書きするカラム → 指定が必要**
+
+v3 までの `returningColumnsByTable` を改名した。`returning` は実現手段の名前で、
+このカラムがどういう性質かを表していなかった。null 許容の判断にも使うようになり、
+手段の名前では説明できなくなったため。
 
 ## PARAM-007 enumJavaTypeMappings
 
@@ -103,19 +111,6 @@ columnName2javaPropertyMap:
 そのテーブルの Repository に RowMapper を生成する（[REPO-050](31-repository.md)）。
 
 テーブル名に `"*"` を指定でき、`"*"` が個別テーブル指定より優先される。
-
-## PARAM-009 useNullMarked
-
-**導入するプロジェクトが `@NullMarked` を使っているか**を指定する。既定 `false`。
-
-`true` にすると、生成コードを JSpecify の null 安全に対応させる。
-
-- Entity のパッケージに `@NullUnmarked` を付けた `package-info.java` を生成する
-  （[ENTITY-030](30-entity.md)）。Entity は DB の値を扱うため null を許容する
-- `ColumnDefinition` の null になりうる項目に `@Nullable` を付ける
-  （[REPO-050](31-repository.md)）
-
-`false` の場合、これらのアノテーションと import は出力しない。
 
 ## PARAM-010 命名のカスタマイズ
 
@@ -150,7 +145,7 @@ param.yml の設定が実在するテーブル・カラムを指しているか�
 | --- | --- |
 | `excludedTableNames` | 列挙されたテーブルが実在するか |
 | `testTargetTable` | 列挙されたテーブルが実在するか |
-| `returningColumnsByTable` | テーブルとカラムが実在するか |
+| `dbDeterminedColumnsByTable` | テーブルとカラムが実在するか |
 | `columnName2javaPropertyMap` | テーブルとカラムが実在するか |
 | `enumJavaTypeMappings` | その DB 型を使っているカラムが存在するか |
 
@@ -173,6 +168,6 @@ param.yml の設定が実在するテーブル・カラムを指しているか�
 ========================================
 param.yml に有効でない設定が 2 件あります
   警告: testTargetTable のテーブル "account_master" は存在しません
-  警告: returningColumnsByTable のカラム "updated_at" はどのテーブルにも存在しません
+  警告: dbDeterminedColumnsByTable のカラム "updated_at" はどのテーブルにも存在しません
 ========================================
 ```

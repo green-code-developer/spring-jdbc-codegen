@@ -92,6 +92,12 @@ null の場合は文字列 `"null"` として JDBC へ渡る。
 
 `byte[]` はプリミティブ配列なので import を生成しない（[NAMING-004](40-naming.md)）。
 
+## TYPE-009 既定値の変換
+
+DB の既定値を Entity のフィールドの初期値へ変換できる型は
+[ENTITY-012](30-entity.md) に列挙する。対象外の型は既定値を持っていても
+初期化せず、そのカラムは `@Nullable` になる（[ENTITY-010](30-entity.md)）。
+
 ## TYPE-010 enum 型の追加
 
 `enumJavaTypeMappings`（[PARAM-007](10-param.md)）で登録した DB 型は、次の規則で

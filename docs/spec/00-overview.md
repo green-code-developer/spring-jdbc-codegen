@@ -82,13 +82,9 @@ java -jar spring_jdbc_codegen-x.x.jar /path/to/param.yml
 | `{repositoryPackage}` | `{columnDefinitionClassName}` | 1 つ | 毎回 |
 | テスト側 `{repositoryPackage}.{base}` | `TestBase{テーブル}Repository` | テスト対象のみ | 毎回 |
 | テスト側 `{repositoryPackage}` | `Test{テーブル}Repository` | テスト対象のみ | 初回のみ |
-| `{entityPackage}` と `.{base}` | `package-info` | 各 1 つ | 下記参照 |
 
 `RepositoryHelper` と `ColumnDefinition` は実体クラスだが**毎回上書きされる**。
 Entity / Repository / TestRepository の実体クラスとは扱いが異なる。
-
-`package-info` は `useNullMarked: true` のときのみ生成する（[ENTITY-030](30-entity.md)）。
-`{base}` 側は毎回、`{entityPackage}` 側は初回のみ上書きする。
 
 ## CORE-005 Base クラスと実体クラス
 

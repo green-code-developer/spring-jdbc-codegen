@@ -60,7 +60,7 @@ PK で削除する。
 
 **全カラムを検証する。** insert 後・update 後とも、投入した値と取得した値を比較する。
 
-`returningColumnsByTable` 対象のカラムと、INSERT 対象から除外したカラムも
+`dbDeterminedColumnsByTable` 対象のカラムと、INSERT 対象から除外したカラムも
 同じ規則で検証する。DB が確定させた値が entity へ書き戻される
 （[REPO-012](31-repository.md)）ため、投入した値との比較が成立する。ただしトリガーが値を書き換える場合は一致しないため、実体クラスで
 `assert4{プロパティ名}` を override する。
