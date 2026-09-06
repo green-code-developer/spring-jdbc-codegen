@@ -27,8 +27,8 @@ public class Param {
     public String repositoryPackage;
     /** 除外テーブル名 spring_session, spring_session_attribute */
     public List<String> excludedTableNames = List.of();
-    /** DB 側で値が決まるカラム。returning で取得して entity へ書き戻す */
-    public Map<String, List<String>> returningColumnsByTable = Map.of();
+    /** DB 側で値が決まるカラム。returning で取得して entity へ書き戻し、Entity のフィールドを @Nullable にする */
+    public Map<String, List<String>> dbDeterminedColumnsByTable = Map.of();
     /** テスト対象テーブル */
     public List<String> testTargetTable = List.of();
     /** Enum 型 */
@@ -39,9 +39,6 @@ public class Param {
     public String testJavaDir;
     /** カラム名とJava プロパティ名のマッピング */
     public Map<String, Map<String, String>> columnName2javaPropertyMap = Map.of();
-    /** Entity パッケージに @NullMarked を付けるかどうか */
-    public boolean useNullMarked;
-
     // 以下高度なカスタマイズ用設定
     /** 規定クラスのパッケージ名 base */
     public String basePackageName = "base";

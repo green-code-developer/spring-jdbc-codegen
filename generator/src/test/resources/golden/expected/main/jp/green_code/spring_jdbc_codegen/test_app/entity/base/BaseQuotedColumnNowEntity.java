@@ -1,6 +1,7 @@
 package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 
 import java.time.OffsetDateTime;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Table: quoted_column_now
@@ -8,35 +9,35 @@ import java.time.OffsetDateTime;
 public abstract class BaseQuotedColumnNowEntity {
 
     /** pk */
-    protected Long pk;
+    protected @Nullable Long pk;
 
     /** Updated */
-    protected OffsetDateTime updated;
+    protected @Nullable OffsetDateTime updated;
 
     /** col_text */
-    protected String colText;
+    protected @Nullable String colText;
 
-    public Long getPk() {
+    public @Nullable Long getPk() {
         return pk;
     }
 
-    public void setPk(Long pk) {
+    public void setPk(@Nullable Long pk) {
         this.pk = pk;
     }
 
-    public OffsetDateTime getUpdated() {
+    public @Nullable OffsetDateTime getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(@Nullable OffsetDateTime updated) {
         this.updated = updated;
     }
 
-    public String getColText() {
+    public @Nullable String getColText() {
         return colText;
     }
 
-    public void setColText(String colText) {
+    public void setColText(@Nullable String colText) {
         this.colText = colText;
     }
 }

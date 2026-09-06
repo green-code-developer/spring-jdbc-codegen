@@ -14,11 +14,11 @@
   - [3.4 動作確認済みの構成](#34-動作確認済みの構成)
   - [3.5 Lombok を使わない](#35-lombok-を使わない)
 - [4. {テーブル名}Repository クラスの使い方](#4-テーブル名repository-クラスの使い方)
-  - [4.1 int insert(T entity)](#41-int-insertt-entity)
-  - [4.2 int insertNotNull(T entity)](#42-int-insertnotnullt-entity)
-  - [4.3 int update(T entity)](#43-int-updatet-entity)
-  - [4.4 int updateNotNull(T entity)](#44-int-updatenotnullt-entity)
-  - [4.5 int updateByPk(T entity, pk)](#45-int-updatebypkt-entity-pk)
+  - [4.1 int insertAllColumns(T entity)](#41-int-insertallcolumnst-entity)
+  - [4.2 int insertExcept(T entity, ColumnDefinition... columns)](#42-int-insertexceptt-entity-columndefinition-columns)
+  - [4.3 int insertExceptPk(T entity)](#43-int-insertexceptpkt-entity)
+  - [4.4 int updateAllColumns(T entity)](#44-int-updateallcolumnst-entity)
+  - [4.5 int updateInclude(T entity, ColumnDefinition... columns)](#45-int-updateincludet-entity-columndefinition-columns)
   - [4.6 `Optional<Entity> findByPk(pk)`](#46-optionalentity-findbypkpk)
   - [4.7 int deleteByPk(pk)](#47-int-deletebypkpk)
   - [4.8 class Columns](#48-class-columns)
@@ -32,11 +32,12 @@
   - [5.3 トリガーが決めた値をentity へ反映したい](#53-トリガーが決めた値をentity-へ反映したい)
   - [5.4 カラム名とJava プロパティ名の明示的なマッピング](#54-カラム名とjava-プロパティ名の明示的なマッピング)
   - [5.5 Base クラス](#55-base-クラス)
-  - [5.6 @NullMarked 対応](#56-nullmarked-対応)
+  - [5.6 Entity のnull 安全](#56-entity-のnull-安全)
 - [6. TestRepository の使い方](#6-testrepository-の使い方)
   - [6.1 テストデータ作成で固定値を指定したい](#61-テストデータ作成で固定値を指定したい)
 - [7. DB 型とJava 型の変換表](#7-db-型とjava-型の変換表)
-  - [7.1 対応外の型](#71-対応外の型)
+  - [7.1 既定値の変換に対応する型](#71-既定値の変換に対応する型)
+  - [7.2 対応外の型](#72-対応外の型)
 - [8. 手書きSQL の書き方](#8-手書きsql-の書き方)
   - [8.1 どこに書くか](#81-どこに書くか)
   - [8.2 SQL の組み立て方](#82-sql-の組み立て方)
@@ -125,6 +126,7 @@ CI で確実に検知したい場合は終了コードを判定してくださ�
 - Spring JDBC
 - Apache Commons Lang3
 - Postgres JDBC driver
+- JSpecify（Spring Boot に含まれるため記載は不要）
 
 参考 build.gradle
 ```groovy
@@ -162,80 +164,139 @@ Lombok がなくてもそれほど困らない一方、IDE のバージョンア
 
 ## 4. {テーブル名}Repository クラスの使い方
 
-### 4.1 int insert(T entity)
+この章の例はすべて次のテーブルを使います。
 
-1レコードのinsert を行います。
-
-**戻り値は処理された件数です。** DB が決めた値は引数のentity へ書き戻されます。生成されるメソッドはいずれも件数を返し、entity への反映は引数を通じて行います。
-
-not null 制約ありかつ初期値を持つカラムに対して、entity 中のフィールドの値がnull であった場合は、 insert 対象から外されます。外されたカラムは、DB カラムに定義された初期値がセットされます。insert が終わるとその初期値が引数 entity へセットされます。プライマリーキーの自動採番などはinsert 後のentity から取得できます。
-
-```java
-// java
-var account = new AccountEntity();
-// account_id はbigserial 型なので、省略時は自動採番されます
-account.setAccountId(null);
-account.setName("green-code-user");
-accountRepository.insert(account);
-var id = account.getAccountId(); // 自動採番されたPK を取得
-```
 ```sql
--- Spring JDBC に渡されるSQL
-insert into "account" ("name") values (:name) returning "account_id";
--- パラメータの :name は "green-code-user"
--- account_id はinsert 対象外のため returning で取得し、entity へ書き戻します
+create table account (
+    account_id bigserial   primary key,
+    name       text        not null default '',
+    status     varchar     not null default 'NEW',
+    created_at timestamptz not null default now(),
+    note       text                                 -- null 許可
+);
 ```
 
-### 4.2 int insertNotNull(T entity)
+生成されるEntity は次のようになります（[5.6 Entity のnull 安全](#56-entity-のnull-安全)）。
 
-値がnull のカラムを**すべて**Insert 対象から外します。DB の既定値を使いたい場合に利用します。
+```java
+public abstract class BaseAccountEntity {
+    protected @Nullable Long accountId;            // bigserial。採番前はnull
+    protected String name = "";                    // 既定値で初期化
+    protected String status = "NEW";               // 既定値で初期化
+    protected @Nullable OffsetDateTime createdAt;  // now() は変換対象外
+    protected @Nullable String note;               // null 許可
+}
+```
 
-insert() との違いは除外する条件だけです。
+**戻り値はいずれも処理された件数です。** DB が決めた値は引数のentity へ書き戻されます。entity への反映は戻り値ではなく引数を通じて行います。
 
-| メソッド | 除外するカラム |
-| --- | --- |
-| `insert` | not null 制約ありかつ初期値を持つカラムのうち、値がnull のもの |
-| `insertNotNull` | 値がnull のカラムすべて |
+**SQL の実行に失敗した場合は例外が送出されます。** 実行はSpring JDBC に任せているため、制約違反などの例外はそちらから送出されたものがそのまま伝わります。
 
-insert() は「null を入れられないカラムだけ初期値に任せる」という判断をするため、**null 許可かつ初期値を持つカラム**では初期値が使われずnull が入ります。そのカラムに初期値を使いたい場合にinsertNotNull() を利用してください。
+### 4.1 int insertAllColumns(T entity)
+
+**全カラムをinsert の対象とします。** entity の値がそのまま送られるため、値がnull のカラムにはnull が入ります。
+
+```java
+var account = new AccountEntity();
+account.setAccountId(100L);                  // PK の値を明示して登録する
+account.setName("green-code-user");
+account.setCreatedAt(OffsetDateTime.now());  // DB に任せず値を指定する
+accountRepository.insertAllColumns(account);
+// status は初期値の "NEW" がそのまま送られます
+```
+
+**全カラムを送るため、not null 制約のあるカラムはすべて値が必要です。** 既定値で初期化されるカラム（この例の `status`）はそのままで構いませんが、`created_at` のように初期値を持たないカラムは値をセットしてください。DB の既定値に任せたい場合は、次の `insertExcept()` で対象から外します。
+
+**自動採番のPK を持つテーブルでこのメソッドを使うと、PK にnull が送られてnot null 制約違反になります。** DB に採番させる場合は [4.3 insertExceptPk()](#43-int-insertexceptpkt-entity) を使ってください。このメソッドは、PK の値を明示して投入したい場合（データ移行、初期データ投入、自然キーのテーブル）に使います。
+
+### 4.2 int insertExcept(T entity, ColumnDefinition... columns)
+
+**指定したカラムをinsert の対象から外します。** DB の既定値を使いたいカラムを指定してください。
+
+外したカラムは`returning` で取得され、entity へ書き戻されます。DB が決めた値を知る手段がこれになります。
 
 ```java
 var account = new AccountEntity();
 account.setName("green-code-user");
-account.setStatus(null); // status は null 許可 かつ 初期値 'NEW' を持つ
-accountRepository.insertNotNull(account);
-var status = account.getStatus(); // "NEW" が入り、entity へ書き戻されます
+// account_id の採番と created_at の now() をDB に決めさせる
+accountRepository.insertExcept(account, Columns.ACCOUNT_ID, Columns.CREATED_AT);
+var id = account.getAccountId();          // 採番された値
+var createdAt = account.getCreatedAt();   // DB が入れた時刻
+```
+発行されるSQL
+```sql
+insert into "account" ("name", "status", "note") values (:name, :status, :note)
+returning "account_id", "created_at";
 ```
 
-### 4.3 int update(T entity)
 
-entity のプライマリーキーをキーとして、該当するレコードを1件更新します。プライマリーキーを持たないテーブルには、このメソッドは生成されません。
+### 4.3 int insertExceptPk(T entity)
 
-**該当するレコードが存在しなくても例外は発生しません。** 戻り値が0 になるので、呼び出し側で判断してください。楽観ロックのように「0件が正常な結果」となる場合があるため、例外ではなく件数で伝えます。
+**PK をinsert の対象から外します。** 内部で`insertExcept()` を呼ぶ短縮形で、最も使用頻度の高い形です。
 
-**全カラムがUpdate の対象です。** entity にセットしなかったカラムはnull で上書きされます。findByPk() で取得したentity を変更して渡すか、後述のupdateNotNull() を利用してください。
+```java
+var account = new AccountEntity();
+account.setName("green-code-user");
+account.setCreatedAt(OffsetDateTime.now());  // PK 以外は値が必要
+accountRepository.insertExceptPk(account);
+var id = account.getAccountId(); // 採番された値
+```
+発行されるSQL
+```sql
+insert into "account" ("name", "status", "created_at", "note")
+values (:name, :status, :createdAt, :note)
+returning "account_id";
+```
 
-### 4.4 int updateNotNull(T entity)
+**外れるのはPK だけです。** `created_at` のようにDB へ値を決めさせたいカラムが他にもある場合は、[4.2 insertExcept()](#42-int-insertexceptt-entity-columndefinition-columns) でまとめて指定してください。
 
-値がnull のカラムをset 句から外します。**部分更新**に利用します。
+**PK を構成する全カラムをDB 側で決められるテーブルにのみ生成されます。** 具体的には、PK の各カラムが自動採番（`serial` / `bigserial` / `identity`）であるか、既定値を持つ場合です。1つでも当てはまらないカラムがPK に含まれる場合、PK を外すとnot null 制約違反になるため生成されません。
+
+### 4.4 int updateAllColumns(T entity)
+
+entity のプライマリーキーをキーとして、該当するレコードを1件更新します。
+
+**PK を除く全カラムがUpdate の対象です。** entity にセットしなかったカラムはnull で上書きされます。`findByPk()` で取得したentity を変更して渡すか、[4.5 updateInclude()](#45-int-updateincludet-entity-columndefinition-columns) を使ってください。
+
+**該当するレコードが存在しなくても例外は発生しません。** 戻り値が0 になるので、呼び出し側で判断してください。楽観ロックのように「0件が正常な結果」となる場合があるため、例外ではなく件数で伝えます。insert は1件を追加する文なので、成功すれば必ず1 になり0 にはなりません。
+
+プライマリーキーを持たないテーブルと、**PK 以外のカラムを持たないテーブル**には生成されません。後者はset 句に含められるカラムが残らないためです。
+
+### 4.5 int updateInclude(T entity, ColumnDefinition... columns)
+
+**指定したカラムだけをset 句に含めます。部分更新**に利用します。
 
 | メソッド | set 句に含めるカラム |
 | --- | --- |
-| `update` | 全カラム。null ならnull で更新します |
-| `updateNotNull` | 値がnull でないカラムのみ |
+| `updateAllColumns` | PK を除く全カラム |
+| `updateInclude` | 引数で指定したカラム |
 
 ```java
 var account = new AccountEntity();
 account.setAccountId(1L);
-account.setName("green-code-user"); // name だけ更新する
-accountRepository.updateNotNull(account);
+account.setName("green-code-user");
+accountRepository.updateInclude(account, Columns.NAME); // name だけ更新する
+```
+発行されるSQL
+```sql
+update "account" set "name" = :name where "account_id" = :__pk1;
+-- パラメータの :name は "green-code-user"
+-- パラメータの :__pk1 は 1（entity のPK）
 ```
 
-逆に、**null 許可のカラムへnull を設定したい場合はupdate() を利用してください。** updateNotNull() では「null にしたい」と「指定しなかった」を区別できません。
+**対象カラムは引数だけで決まり、entity の値は判定に使いません。** 指定したカラムの値がnull ならNULL で更新します。null 許可のカラムをNULL へ戻せます。
 
-### 4.5 int updateByPk(T entity, pk)
+```java
+account.setNote(null);
+accountRepository.updateInclude(account, Columns.NOTE); // note を NULL にする
+```
+発行されるSQL
+```sql
+update "account" set "note" = :note where "account_id" = :__pk1;
+-- パラメータの :note は null
+```
 
-pk をキーとして、該当するレコードを1件更新します。update() との違いは、entity 内のプライマリーキーをキーとしない点です。PK をUpdate する場合に使用します。その他の性質はupdate() と同じです。
+PK は指定できません（where 句で使うため）。指定すると`IllegalArgumentException` になります。
 
 ### 4.6 `Optional<Entity> findByPk(pk)`
 
@@ -351,17 +412,21 @@ create trigger refresh_meta_columns_trigger
     for each row execute function refresh_meta_columns();
 ```
 
-トリガーが書き換えた値をentity へ反映したい場合は、`returningColumnsByTable` に登録してください（「5.3 トリガーが決めた値をentity へ反映したい」を参照）。登録しない場合、entity は Java でセットした値を保持したままになります。
+[4.5 updateInclude()](#45-int-updateincludet-entity-columndefinition-columns) で更新対象を絞る方法もありますが、トリガーであれば経路を問わず必ず適用されます。両方を併用しても構いません。
+
+トリガーが書き換えた値をentity へ反映したい場合は、`dbDeterminedColumnsByTable` に登録してください（「5.3 トリガーが決めた値をentity へ反映したい」を参照）。登録しない場合、entity は Java でセットした値を保持したままになります。
 
 生成されるテストコードは全カラムについて「投入した値と取得した値が一致すること」を検証するため、トリガーで書き換わるカラムがあると失敗します。実体クラスで `assert4{プロパティ名}` を override してください。
 
 ### 5.3 トリガーが決めた値をentity へ反映したい
 
-`updated_at` のように **DB 側で値が決まるカラム**は、param.yml の `returningColumnsByTable` に登録します。Insert / Update の後、`returning` 句で取得した値がentity にセットされます。
+`updated_at` のように **DB 側で値が決まるカラム**は、param.yml の `dbDeterminedColumnsByTable` に登録します。Insert / Update の後、`returning` 句で取得した値がentity にセットされます。あわせてEntity のフィールドが `@Nullable` になります。
+
+登録が必要なのは、**値を送ってもDB 側で上書きされるカラム**だけです。insert の対象から外したカラムは、外した時点で `returning` の対象になるため登録は要りません。
 
 ```yml
 # param.yml
-returningColumnsByTable:
+dbDeterminedColumnsByTable:
    "*":
       - updated_at
 ```
@@ -420,24 +485,43 @@ Entity, Repository, TestRepository 等、いずれも Base クラスとその実
 
 param.yml のforceOverwriteImplementation をtrue にすると実体クラスも再作成されます。（デフォルトfalse）
 
-### 5.6 @NullMarked 対応
+### 5.6 Entity のnull 安全
 
-**導入するプロジェクトが @NullMarked を使っている場合**は、この設定を `true` にしてください。
+生成コードはJSpecify の `@Nullable` を常に出力します。設定は要りません。
 
-```yml
-# param.yml
-useNullMarked: true
+**Entity のフィールドが非null になるのは、次の3条件をすべて満たすカラムだけです。**
+
+1. not null 制約がある
+2. リテラルの既定値を持ち、Java の値へ変換できる（[7. DB 型とJava 型の変換表](#7-db-型とjava-型の変換表)）
+3. `dbDeterminedColumnsByTable` に登録されていない
+
+| カラム | フィールド |
+| --- | --- |
+| 3条件をすべて満たす・数値 / 真偽 | プリミティブ（`long` など）＋ 既定値で初期化 |
+| 3条件をすべて満たす・文字列や日付時刻などの参照型 | 非null ＋ 既定値で初期化 |
+| それ以外 | `@Nullable` のラッパー型 |
+
+```java
+// account テーブル
+//   account_id bigserial primary key
+//   name       text not null default ''
+//   updated_by bigint not null default -1
+//   note       text                        （null 許可）
+public abstract class BaseAccountEntity {
+    protected @Nullable Long accountId;   // nextval のため変換対象外
+    protected String name = "";           // 非null ＋ 既定値
+    protected long updatedBy = -1L;       // プリミティブ ＋ 既定値
+    protected @Nullable String note;      // null 許可
+}
 ```
 
-生成コードがJSpecify のnull 安全に対応します。
+**既定値を写すだけで、値を捏造することはありません。** 初期値は、そのカラムをinsert の対象から外した場合と同じ値になります。既定値を持たないカラムには書ける初期値がないため `@Nullable` になります。
 
-- `{entityPackage}` と `{entityPackage}.base` にpackage-info.java を作成し、`@NullUnmarked` を付与します
-- `ColumnDefinition` のnull になりうる項目に `@Nullable` を付与します
+`nextval()` や `now()` のような関数の既定値は、実行のたびに値が変わるため変換しません。自動採番のPK が `@Nullable` になるのはこのためで、採番前をnull で表せます。
 
-Entity のパッケージを `@NullUnmarked` にするのは、データベースの値を扱うためnull を許容するケースがあるためです。Entity のフィールドやgetter / setter に個別の `@Nullable` は付きません。
+#### 手書きSQL で使う場合の注意
 
-既定は `false` で、これらのアノテーションとimport は出力しません。
-
+Entity は**単一テーブルの1行**を表します。not null 制約のあるカラムがプリミティブや非null で生成されるため、外部結合などでそのカラムにNULL が返る問い合わせをEntity で受けると、プリミティブではマッピングで例外になり、参照型では型と実態が食い違います。そうした問い合わせは専用のクラスで受けてください（[8.7 集計やJOIN の結果を受け取る](#87-集計やjoin-の結果を受け取る)）。
 
 ## 6. TestRepository の使い方
 
@@ -531,7 +615,28 @@ protected Long generateTestData4updatedBy(int seed) {
 
 ※ null を扱うため、primitive 型は使用しません。
 
-### 7.1 対応外の型
+### 7.1 既定値の変換に対応する型
+
+DB の既定値をEntity のフィールドの初期値へ変換できるのは、次のJava 型だけです（[5.6 Entity のnull 安全](#56-entity-のnull-安全)）。
+
+| Java 型 | 既定値の例 | 生成される初期値 |
+| --- | --- | --- |
+| `java.lang.String` | `'X'::text` | `"X"` |
+| `java.lang.Short` / `Integer` / `Long` | `'-1'::integer` | `-1L` |
+| `java.lang.Boolean` | `true` | `true` |
+| `java.lang.Float` / `Double` | `1.5` | `1.5d` |
+| `java.math.BigDecimal` | `0.5` | `new BigDecimal("0.5")` |
+| enum | `'NEW'::status_enum` | `StatusEnum.NEW` |
+| `java.time.LocalDate` / `LocalTime` / `LocalDateTime` | `'2000-01-01'::date` | `LocalDate.parse("2000-01-01")` |
+| `java.time.OffsetTime` / `OffsetDateTime` | `'2000-01-01 00:00:00+09'::timestamptz` | `OffsetDateTime.parse("2000-01-01T00:00+09:00")` |
+
+**`byte[]`（bytea）と `interval` は対象外です。** 既定値を持っていても初期化せず、そのカラムは `@Nullable` になります。
+
+受け入れる既定値の形は「クォート済みリテラル（型キャストは任意）」と「数値・真偽のリテラル」の2つだけです。`nextval()` のような関数呼び出しは変換しません。形が合っていても変換に失敗する値（`'infinity'::timestamptz` など）は、生成時に検出して `@Nullable` に落とします。
+
+**タイムゾーンを持つ型の初期値は、生成に使うDB のTimeZone 設定に依存します。** 同じDDL でも設定が違えば `+09:00` と `+00:00` のように表記が変わります（指す時刻は同じです）。
+
+### 7.2 対応外の型
 
 | 区分   | DB 型          | Java 型 |
 |------|---------------|--------|

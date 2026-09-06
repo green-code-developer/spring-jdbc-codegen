@@ -1,5 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 
+import org.jspecify.annotations.Nullable;
 
 /**
  * Table: only_pk1
@@ -7,13 +8,13 @@ package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 public abstract class BaseOnlyPk1Entity {
 
     /** pk */
-    protected Long pk;
+    protected @Nullable Long pk;
 
-    public Long getPk() {
+    public @Nullable Long getPk() {
         return pk;
     }
 
-    public void setPk(Long pk) {
+    public void setPk(@Nullable Long pk) {
         this.pk = pk;
     }
 }

@@ -1,5 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 
+import org.jspecify.annotations.Nullable;
 
 /**
  * Table: identity_pk
@@ -7,35 +8,35 @@ package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 public abstract class BaseIdentityPkEntity {
 
     /** pk */
-    protected Long pk;
+    protected @Nullable Long pk;
 
     /** col_text */
-    protected String colText;
+    protected @Nullable String colText;
 
     /** col_text_not_null */
-    protected String colTextNotNull;
+    protected @Nullable String colTextNotNull;
 
-    public Long getPk() {
+    public @Nullable Long getPk() {
         return pk;
     }
 
-    public void setPk(Long pk) {
+    public void setPk(@Nullable Long pk) {
         this.pk = pk;
     }
 
-    public String getColText() {
+    public @Nullable String getColText() {
         return colText;
     }
 
-    public void setColText(String colText) {
+    public void setColText(@Nullable String colText) {
         this.colText = colText;
     }
 
-    public String getColTextNotNull() {
+    public @Nullable String getColTextNotNull() {
         return colTextNotNull;
     }
 
-    public void setColTextNotNull(String colTextNotNull) {
+    public void setColTextNotNull(@Nullable String colTextNotNull) {
         this.colTextNotNull = colTextNotNull;
     }
 }

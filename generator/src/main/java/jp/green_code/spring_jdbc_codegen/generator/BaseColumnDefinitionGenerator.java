@@ -20,11 +20,9 @@ public class BaseColumnDefinitionGenerator {
 
         sb.add("package %s;".formatted(param.baseRepositoryPackage()));
         sb.add("");
-        if (param.useNullMarked) {
-            sb.add("import %s;".formatted(Fqcn.NULLABLE));
-            sb.add("");
-            nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
-        }
+        sb.add("import %s;".formatted(Fqcn.NULLABLE));
+        sb.add("");
+        nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
         sb.add("import static org.apache.commons.lang3.StringUtils.isBlank;");
         sb.add("");
         sb.add("public class %s {".formatted(param.toBaseColumnDefinitionClassName()));
@@ -41,17 +39,17 @@ public class BaseColumnDefinitionGenerator {
         sb.add("    /** DB カラムサイズ */");
         sb.add("    private final Integer columnSize;");
         sb.add("    /** DB プライマリーキー順番（プライマリーキーでなければnull）*/");
-        addNullableIfNeed(sb);
+        addNullable(sb);
         sb.add("    private final Integer primaryKeySeq;");
         sb.add("    /** DB null許可 */");
         sb.add("    private final boolean nullable;");
         sb.add("    /** DB デフォルト値あり */");
         sb.add("    private final boolean hasDefault;");
         sb.add("    /** Javaフィールド名と型キャスト用のテンプレート（内部用） */");
-        addNullableIfNeed(sb);
+        addNullable(sb);
         sb.add("    private final String dbParamTemplate;");
         sb.add("    /** カラム名と型キャスト用のテンプレート（内部用） */");
-        addNullableIfNeed(sb);
+        addNullable(sb);
         sb.add("    private final String dbSelectTemplate;");
         sb.add("    /** DB 側で値が決まり、returning で取得するカラムか */");
         sb.add("    private final boolean isReturning;");
@@ -98,7 +96,7 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        return columnSize;");
         sb.add("    }");
         sb.add("");
-        addNullableIfNeed(sb);
+        addNullable(sb);
         sb.add("    public Integer getPrimaryKeySeq() {");
         sb.add("        return primaryKeySeq;");
         sb.add("    }");
@@ -111,12 +109,12 @@ public class BaseColumnDefinitionGenerator {
         sb.add("        return hasDefault;");
         sb.add("    }");
         sb.add("");
-        addNullableIfNeed(sb);
+        addNullable(sb);
         sb.add("    public String getDbParamTemplate() {");
         sb.add("        return dbParamTemplate;");
         sb.add("    }");
         sb.add("");
-        addNullableIfNeed(sb);
+        addNullable(sb);
         sb.add("    public String getDbSelectTemplate() {");
         sb.add("        return dbSelectTemplate;");
         sb.add("    }");
@@ -156,9 +154,7 @@ public class BaseColumnDefinitionGenerator {
         return join("\n", sb);
     }
 
-    void addNullableIfNeed(List<String> sb) {
-        if (param.useNullMarked) {
-            sb.add("    " + Fqcn.toAnnotation(Fqcn.NULLABLE));
-        }
+    void addNullable(List<String> sb) {
+        sb.add("    " + Fqcn.toAnnotation(Fqcn.NULLABLE));
     }
 }

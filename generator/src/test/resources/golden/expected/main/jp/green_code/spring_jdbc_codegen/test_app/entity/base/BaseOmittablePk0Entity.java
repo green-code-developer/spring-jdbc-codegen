@@ -7,7 +7,7 @@ package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 public abstract class BaseOmittablePk0Entity {
 
     /** col_text_not_null_default_x */
-    protected String colTextNotNullDefaultX;
+    protected String colTextNotNullDefaultX = "X";
 
     public String getColTextNotNullDefaultX() {
         return colTextNotNullDefaultX;

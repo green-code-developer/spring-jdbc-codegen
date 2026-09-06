@@ -113,7 +113,7 @@ public class BaseRepositoryGenerator {
         var sb = new ArrayList<String>();
         sb.add("public static class Columns {");
         for (var col : table.columns) {
-            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isReturningColumn(), col.hasNameMapping()));
+            sb.add("    public static final %s %s = new %s(\"%s\", \"%s\", \"%s\", \"%s\", %s, %s, %s, %s, %s, %s, %s, %s, %s);".formatted(param.columnDefinitionClassName, col.columnName.toUpperCase(ROOT), param.columnDefinitionClassName, col.columnName, col.toJavaPropertyName(), col.toJavaType().fqcn(), col.dbTypeName, col.jdbcType, col.columnSize, col.primaryKeySeq, col.nullable, col.hasDefault(), ofNullable(col.toJavaType().dbParamTemplate()).map("\"%s\""::formatted).orElse("null"), ofNullable(col.toJavaType().dbSelectTemplate()).map("\"%s\""::formatted).orElse("null"), col.isDbDetermined(), col.hasNameMapping()));
         }
         sb.add("");
         sb.add("    public static final Map<String, %s> MAP = new LinkedHashMap<>();".formatted(param.columnDefinitionClassName));
@@ -307,7 +307,7 @@ public class BaseRepositoryGenerator {
         sb.add("    sql.add(\"where %s\");".formatted(join(" AND ", pkConditions)));
 
         if (table.needReturningInUpdate()) {
-            var returningNames = table.columns.stream().filter(DbColumnDefinition::isReturningColumn)
+            var returningNames = table.columns.stream().filter(DbColumnDefinition::isDbDetermined)
                     .map(c -> "\"%s\"".formatted(c.columnName)).collect(joining(", "));
             sb.add("    return execWithReturning(sql, param, entity, Set.of(%s));".formatted(returningNames));
         } else {

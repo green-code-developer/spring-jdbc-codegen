@@ -35,14 +35,14 @@ testJavaDir: ../../../../build/golden-actual/test
 enumJavaTypeMappings:
   status_enum: jp.green_code.spring_jdbc_codegen.test_app.StatusEnum
 
-# returning 取得カラム（省略可）
+# DB 側で値が決まるカラム（省略可）
 #   トリガーなどDB 側で値が決まるカラムを指定します
 #   insert やupdate の後、returning で取得してentity へ書き戻します
 #   テーブル名とカラム名を下の形式で指定します
 #   table_name:
 #     - column_name
 #   テーブルに* を指定すると全テーブルのカラムが対象となります
-returningColumnsByTable:
+dbDeterminedColumnsByTable:
   "*":
     - updated_at
   "only_pk3_now":
@@ -67,13 +67,6 @@ columnName2javaPropertyMap:
   "mapper_no_pk":
     rename_target: renamedNoPkName
 
-# 導入するプロジェクトが @NullMarked を使っているか（省略可）
-#   初期値 false
-#   true の場合、生成コードをJSpecify のnull 安全に対応させます
-#     - {entityPackage} と{entityPackage}.{basePackageName} にpackage-info.java を作成し @NullUnmarked を付与
-#     - ColumnDefinition のnull になりうる項目に @Nullable を付与
-useNullMarked: true
-
 # 実体クラスの強制上書き（省略可）
 #   初期値 false(しない)
 forceOverwriteImplementation: true
@@ -97,6 +90,7 @@ testTargetTable:
   - coverage_test
   - quoted_column_now
   - identity_pk
+  - primitive_default
 
 #
 # 以下、高度な設定

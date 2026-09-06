@@ -21,10 +21,8 @@ public class ColumnDefinitionGenerator {
         sb.add("");
 
         sb.add("import %s.%s;".formatted(param.baseRepositoryPackage(), param.toBaseColumnDefinitionClassName()));
-        if (param.useNullMarked) {
-            sb.add("import %s;".formatted(Fqcn.NULLABLE));
-            nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
-        }
+        sb.add("import %s;".formatted(Fqcn.NULLABLE));
+        nullable = Fqcn.toAnnotation(Fqcn.NULLABLE) + " ";
         sb.add("");
 
         sb.add("public class %s extends %s {".formatted(param.columnDefinitionClassName, param.toBaseColumnDefinitionClassName()));

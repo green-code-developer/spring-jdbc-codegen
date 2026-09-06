@@ -8,6 +8,7 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.util.UUID;
 import jp.green_code.spring_jdbc_codegen.test_app.StatusEnum;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Table: all_types_as_pk
@@ -15,288 +16,288 @@ import jp.green_code.spring_jdbc_codegen.test_app.StatusEnum;
 public abstract class BaseAllTypesAsPkEntity {
 
     /** col_smallint */
-    protected Short colSmallint;
+    protected @Nullable Short colSmallint;
 
     /** col_smallserial */
-    protected Short colSmallserial;
+    protected @Nullable Short colSmallserial;
 
     /** col_integer */
-    protected Integer colInteger;
+    protected @Nullable Integer colInteger;
 
     /** col_serial */
-    protected Integer colSerial;
+    protected @Nullable Integer colSerial;
 
     /** col_bigint */
-    protected Long colBigint;
+    protected @Nullable Long colBigint;
 
     /** col_bigserial */
-    protected Long colBigserial;
+    protected @Nullable Long colBigserial;
 
     /** col_real */
-    protected Float colReal;
+    protected @Nullable Float colReal;
 
     /** col_double_precision */
-    protected Double colDoublePrecision;
+    protected @Nullable Double colDoublePrecision;
 
     /** col_numeric */
-    protected BigDecimal colNumeric;
+    protected @Nullable BigDecimal colNumeric;
 
     /** col_boolean */
-    protected Boolean colBoolean;
+    protected @Nullable Boolean colBoolean;
 
     /** col_char */
-    protected String colChar;
+    protected @Nullable String colChar;
 
     /** col_varchar */
-    protected String colVarchar;
+    protected @Nullable String colVarchar;
 
     /** col_text */
-    protected String colText;
+    protected @Nullable String colText;
 
     /** col_date */
-    protected LocalDate colDate;
+    protected @Nullable LocalDate colDate;
 
     /** col_time */
-    protected LocalTime colTime;
+    protected @Nullable LocalTime colTime;
 
     /** col_time_tz */
-    protected OffsetTime colTimeTz;
+    protected @Nullable OffsetTime colTimeTz;
 
     /** col_timestamp */
-    protected LocalDateTime colTimestamp;
+    protected @Nullable LocalDateTime colTimestamp;
 
     /** col_timestamp_tz */
-    protected OffsetDateTime colTimestampTz;
+    protected @Nullable OffsetDateTime colTimestampTz;
 
     /** col_interval */
-    protected Long colInterval;
+    protected @Nullable Long colInterval;
 
     /** col_bytea */
-    protected byte[] colBytea;
+    protected byte @Nullable [] colBytea;
 
     /** col_uuid */
-    protected UUID colUuid;
+    protected @Nullable UUID colUuid;
 
     /** col_jsonb */
-    protected String colJsonb;
+    protected @Nullable String colJsonb;
 
     /** col_inet */
-    protected String colInet;
+    protected @Nullable String colInet;
 
     /** col_cidr */
-    protected String colCidr;
+    protected @Nullable String colCidr;
 
     /** col_macaddr */
-    protected String colMacaddr;
+    protected @Nullable String colMacaddr;
 
     /** col_status_enum */
-    protected StatusEnum colStatusEnum;
+    protected @Nullable StatusEnum colStatusEnum;
 
-    public Short getColSmallint() {
+    public @Nullable Short getColSmallint() {
         return colSmallint;
     }
 
-    public void setColSmallint(Short colSmallint) {
+    public void setColSmallint(@Nullable Short colSmallint) {
         this.colSmallint = colSmallint;
     }
 
-    public Short getColSmallserial() {
+    public @Nullable Short getColSmallserial() {
         return colSmallserial;
     }
 
-    public void setColSmallserial(Short colSmallserial) {
+    public void setColSmallserial(@Nullable Short colSmallserial) {
         this.colSmallserial = colSmallserial;
     }
 
-    public Integer getColInteger() {
+    public @Nullable Integer getColInteger() {
         return colInteger;
     }
 
-    public void setColInteger(Integer colInteger) {
+    public void setColInteger(@Nullable Integer colInteger) {
         this.colInteger = colInteger;
     }
 
-    public Integer getColSerial() {
+    public @Nullable Integer getColSerial() {
         return colSerial;
     }
 
-    public void setColSerial(Integer colSerial) {
+    public void setColSerial(@Nullable Integer colSerial) {
         this.colSerial = colSerial;
     }
 
-    public Long getColBigint() {
+    public @Nullable Long getColBigint() {
         return colBigint;
     }
 
-    public void setColBigint(Long colBigint) {
+    public void setColBigint(@Nullable Long colBigint) {
         this.colBigint = colBigint;
     }
 
-    public Long getColBigserial() {
+    public @Nullable Long getColBigserial() {
         return colBigserial;
     }
 
-    public void setColBigserial(Long colBigserial) {
+    public void setColBigserial(@Nullable Long colBigserial) {
         this.colBigserial = colBigserial;
     }
 
-    public Float getColReal() {
+    public @Nullable Float getColReal() {
         return colReal;
     }
 
-    public void setColReal(Float colReal) {
+    public void setColReal(@Nullable Float colReal) {
         this.colReal = colReal;
     }
 
-    public Double getColDoublePrecision() {
+    public @Nullable Double getColDoublePrecision() {
         return colDoublePrecision;
     }
 
-    public void setColDoublePrecision(Double colDoublePrecision) {
+    public void setColDoublePrecision(@Nullable Double colDoublePrecision) {
         this.colDoublePrecision = colDoublePrecision;
     }
 
-    public BigDecimal getColNumeric() {
+    public @Nullable BigDecimal getColNumeric() {
         return colNumeric;
     }
 
-    public void setColNumeric(BigDecimal colNumeric) {
+    public void setColNumeric(@Nullable BigDecimal colNumeric) {
         this.colNumeric = colNumeric;
     }
 
-    public Boolean getColBoolean() {
+    public @Nullable Boolean getColBoolean() {
         return colBoolean;
     }
 
-    public void setColBoolean(Boolean colBoolean) {
+    public void setColBoolean(@Nullable Boolean colBoolean) {
         this.colBoolean = colBoolean;
     }
 
-    public String getColChar() {
+    public @Nullable String getColChar() {
         return colChar;
     }
 
-    public void setColChar(String colChar) {
+    public void setColChar(@Nullable String colChar) {
         this.colChar = colChar;
     }
 
-    public String getColVarchar() {
+    public @Nullable String getColVarchar() {
         return colVarchar;
     }
 
-    public void setColVarchar(String colVarchar) {
+    public void setColVarchar(@Nullable String colVarchar) {
         this.colVarchar = colVarchar;
     }
 
-    public String getColText() {
+    public @Nullable String getColText() {
         return colText;
     }
 
-    public void setColText(String colText) {
+    public void setColText(@Nullable String colText) {
         this.colText = colText;
     }
 
-    public LocalDate getColDate() {
+    public @Nullable LocalDate getColDate() {
         return colDate;
     }
 
-    public void setColDate(LocalDate colDate) {
+    public void setColDate(@Nullable LocalDate colDate) {
         this.colDate = colDate;
     }
 
-    public LocalTime getColTime() {
+    public @Nullable LocalTime getColTime() {
         return colTime;
     }
 
-    public void setColTime(LocalTime colTime) {
+    public void setColTime(@Nullable LocalTime colTime) {
         this.colTime = colTime;
     }
 
-    public OffsetTime getColTimeTz() {
+    public @Nullable OffsetTime getColTimeTz() {
         return colTimeTz;
     }
 
-    public void setColTimeTz(OffsetTime colTimeTz) {
+    public void setColTimeTz(@Nullable OffsetTime colTimeTz) {
         this.colTimeTz = colTimeTz;
     }
 
-    public LocalDateTime getColTimestamp() {
+    public @Nullable LocalDateTime getColTimestamp() {
         return colTimestamp;
     }
 
-    public void setColTimestamp(LocalDateTime colTimestamp) {
+    public void setColTimestamp(@Nullable LocalDateTime colTimestamp) {
         this.colTimestamp = colTimestamp;
     }
 
-    public OffsetDateTime getColTimestampTz() {
+    public @Nullable OffsetDateTime getColTimestampTz() {
         return colTimestampTz;
     }
 
-    public void setColTimestampTz(OffsetDateTime colTimestampTz) {
+    public void setColTimestampTz(@Nullable OffsetDateTime colTimestampTz) {
         this.colTimestampTz = colTimestampTz;
     }
 
-    public Long getColInterval() {
+    public @Nullable Long getColInterval() {
         return colInterval;
     }
 
-    public void setColInterval(Long colInterval) {
+    public void setColInterval(@Nullable Long colInterval) {
         this.colInterval = colInterval;
     }
 
-    public byte[] getColBytea() {
+    public byte @Nullable [] getColBytea() {
         return colBytea;
     }
 
-    public void setColBytea(byte[] colBytea) {
+    public void setColBytea(byte @Nullable [] colBytea) {
         this.colBytea = colBytea;
     }
 
-    public UUID getColUuid() {
+    public @Nullable UUID getColUuid() {
         return colUuid;
     }
 
-    public void setColUuid(UUID colUuid) {
+    public void setColUuid(@Nullable UUID colUuid) {
         this.colUuid = colUuid;
     }
 
-    public String getColJsonb() {
+    public @Nullable String getColJsonb() {
         return colJsonb;
     }
 
-    public void setColJsonb(String colJsonb) {
+    public void setColJsonb(@Nullable String colJsonb) {
         this.colJsonb = colJsonb;
     }
 
-    public String getColInet() {
+    public @Nullable String getColInet() {
         return colInet;
     }
 
-    public void setColInet(String colInet) {
+    public void setColInet(@Nullable String colInet) {
         this.colInet = colInet;
     }
 
-    public String getColCidr() {
+    public @Nullable String getColCidr() {
         return colCidr;
     }
 
-    public void setColCidr(String colCidr) {
+    public void setColCidr(@Nullable String colCidr) {
         this.colCidr = colCidr;
     }
 
-    public String getColMacaddr() {
+    public @Nullable String getColMacaddr() {
         return colMacaddr;
     }
 
-    public void setColMacaddr(String colMacaddr) {
+    public void setColMacaddr(@Nullable String colMacaddr) {
         this.colMacaddr = colMacaddr;
     }
 
-    public StatusEnum getColStatusEnum() {
+    public @Nullable StatusEnum getColStatusEnum() {
         return colStatusEnum;
     }
 
-    public void setColStatusEnum(StatusEnum colStatusEnum) {
+    public void setColStatusEnum(@Nullable StatusEnum colStatusEnum) {
         this.colStatusEnum = colStatusEnum;
     }
 }

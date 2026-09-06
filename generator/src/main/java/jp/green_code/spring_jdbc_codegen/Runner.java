@@ -84,7 +84,7 @@ public class Runner {
                 warnings.add("testTargetTable のテーブル \"%s\" は存在しません".formatted(t));
             }
         }
-        warnings.addAll(validateColumnSetting("returningColumnsByTable", param.returningColumnsByTable, tables));
+        warnings.addAll(validateColumnSetting("dbDeterminedColumnsByTable", param.dbDeterminedColumnsByTable, tables));
         var mappingKeys = new LinkedHashMap<String, Collection<String>>();
         param.columnName2javaPropertyMap.forEach((k, v) -> mappingKeys.put(k, v.keySet()));
         warnings.addAll(validateColumnSetting("columnName2javaPropertyMap", mappingKeys, tables));
@@ -187,22 +187,6 @@ public class Runner {
         var generator = new EntityGenerator(param);
         var code = generator.generateEntityCode(tableDef);
         writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, tableDef.toEntityClassName(), code);
-
-        if (param.useNullMarked) {
-            writeJavaCode(toMainJavaDir(), param.baseEntityPackage(), "package-info",
-                    toPackageInfoCode(param.baseEntityPackage()));
-            writeJavaCodeIfAbsent(toMainJavaDir(), param.entityPackage, "package-info",
-                    toPackageInfoCode(param.entityPackage));
-        }
-    }
-
-    /** Entity のパッケージに @NullUnmarked を付ける package-info を組み立てる */
-    static String toPackageInfoCode(String packageName) {
-        return """
-                %s
-                package %s;
-
-                import %s;""".formatted(Fqcn.toAnnotation(Fqcn.NULL_UNMARKED), packageName, Fqcn.NULL_UNMARKED);
     }
 
     void writeJavaCode(String dir, String packageName, String className, String code) throws IOException {

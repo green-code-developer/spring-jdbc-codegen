@@ -81,7 +81,7 @@ public class DbTableDefinition {
     // Update 時にreturning が必要かどうか
     public boolean needReturningInUpdate() {
         // UPDATE 対象外のカラムは set 句に含まれず値が変わらないため returning しない
-        return columns.stream().anyMatch(DbColumnDefinition::isReturningColumn);
+        return columns.stream().anyMatch(DbColumnDefinition::isDbDetermined);
     }
 
     public boolean needCustomMapper() {

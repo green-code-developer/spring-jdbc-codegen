@@ -1,5 +1,6 @@
 package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 
+import org.jspecify.annotations.Nullable;
 
 /**
  * Table: normal_pk0
@@ -7,30 +8,30 @@ package jp.green_code.spring_jdbc_codegen.test_app.entity.base;
 public abstract class BaseNormalPk0Entity {
 
     /** col_text */
-    protected String colText;
+    protected @Nullable String colText;
 
     /** col_text_not_null */
-    protected String colTextNotNull;
+    protected @Nullable String colTextNotNull;
 
     /** col_text_not_null_default_x */
-    protected String colTextNotNullDefaultX;
+    protected String colTextNotNullDefaultX = "X";
 
     /** col_text_default_y */
-    protected String colTextDefaultY;
+    protected String colTextDefaultY = "y";
 
-    public String getColText() {
+    public @Nullable String getColText() {
         return colText;
     }
 
-    public void setColText(String colText) {
+    public void setColText(@Nullable String colText) {
         this.colText = colText;
     }
 
-    public String getColTextNotNull() {
+    public @Nullable String getColTextNotNull() {
         return colTextNotNull;
     }
 
-    public void setColTextNotNull(String colTextNotNull) {
+    public void setColTextNotNull(@Nullable String colTextNotNull) {
         this.colTextNotNull = colTextNotNull;
     }
 
